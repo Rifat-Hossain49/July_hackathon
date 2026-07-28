@@ -1,0 +1,28 @@
+# Agent internal data
+.puku/
+*.plan.md
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Android and Gradle
+.gradle/
+build/
+**/build/
+local.properties
+*.apk
+*.aab
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
