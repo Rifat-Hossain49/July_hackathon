@@ -20,9 +20,15 @@ class ProtocolError(Exception):
     """Raised when a payload violates the declared protocol schema.
 
     AT-20 asserts ``code == "SCHEMA_INVALID"`` for the schema-validation
-    boundary. Other code values are reserved for future boundaries
-    (oversized payload, signature invalid, expired, etc.) that are out of
-    scope for this M0 slice.
+    boundary. The slice-2 boundaries introduce two more codes:
+
+    * ``"HUMAN_CONFIRMATION_MISSING"`` (AT-02): a capsule payload passes
+      schema validation but ``human_confirmed`` is ``False``. The capsule
+      must not be scheduled, sent, or persisted.
+    * ``"SNAPSHOT_INVALID"`` / ``"SNAPSHOT_CORRUPTED"`` (AT-07): a
+      persisted progress snapshot cannot be loaded because the JSON is
+      malformed or the recorded SHA-256 no longer matches the stored
+      bytes.
     """
 
     def __init__(self, code: str, detail: str, *, object_id: str | None = None) -> None:

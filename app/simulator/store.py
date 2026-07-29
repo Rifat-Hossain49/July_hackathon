@@ -59,6 +59,18 @@ class ContentAddressedStore:
 
     # -- ingest -------------------------------------------------------------
 
+    def _descriptor(self, chunk: Chunk) -> dict:
+        """Build the JSON payload that crosses the validation boundary."""
+        return {
+            "schema": "shongket.fragment.v1",
+            "object_id": chunk.object_id,
+            "representation_id": chunk.representation_id,
+            "chunk_index": chunk.chunk_index,
+            "chunk_size": len(chunk.payload),
+            "byte_range": [chunk.byte_range[0], chunk.byte_range[1]],
+            "hash": chunk.sha256,
+        }
+
     def put_chunk(self, chunk: Chunk) -> None:
         """Validate, verify SHA-256, dedup, store.
 
@@ -68,7 +80,7 @@ class ContentAddressedStore:
             On schema validation failure (AT-20) or corrupted payload
             (AT-10). Nothing is persisted in either case.
         """
-        descriptor = _fragment_descriptor_from(chunk)
+        descriptor = self._descriptor(chunk)
         # Schema-validation boundary first (AT-20).
         try:
             validation.validate_payload("shongket.fragment.v1", descriptor)
@@ -102,16 +114,34 @@ class ContentAddressedStore:
         self._fragments[key] = chunk
         self.stats.stored += 1
 
+    # -- snapshot / restore (slice 2 / AT-07) -------------------------------
 
-def _fragment_descriptor_from(chunk: Chunk) -> dict:
-    """Build a ``shongket.fragment.v1`` descriptor for schema validation."""
-    return {
-        "schema": "shongket.fragment.v1",
-        "object_id": chunk.object_id,
-        "representation_id": chunk.representation_id,
-        "chunk_index": chunk.chunk_index,
-        "chunk_size": len(chunk.payload),
-        "byte_range": [chunk.byte_range[0], chunk.byte_range[1]],
-        "hash": chunk.sha256,
-        "signature": None,  # M0: unsigned
-    }
+    def snapshot_fragments(self) -> dict[tuple[str, str, int], Chunk]:
+        """Return a defensive copy of the verified fragment map.
+
+        Used by :mod:`app.simulator.persistence` to serialize progress
+        without leaking internal mutability.
+        """
+        return dict(self._fragments)
+
+    def restore_fragment(self, chunk: Chunk) -> bool:
+        """Insert a single fragment, bypassing validation but verifying SHA-256.
+
+        Returns ``True`` when a new fragment was stored, ``False`` when
+        the key was already present (dedup). Raises
+        :class:`validation.ProtocolError` with
+        ``code == "SNAPSHOT_CORRUPTED"`` when the supplied chunk's
+        declared SHA-256 does not match its payload.
+        """
+        if chunk.sha256 != hashutil.sha256_hex(chunk.payload):
+            raise validation.ProtocolError(
+                "SNAPSHOT_CORRUPTED",
+                f"chunk at index {chunk.chunk_index} is corrupted on restore",
+                object_id=chunk.object_id,
+            )
+        key = (chunk.object_id, chunk.representation_id, chunk.chunk_index)
+        if key in self._fragments:
+            return False
+        self._fragments[key] = chunk
+        self.stats.stored += 1
+        return True

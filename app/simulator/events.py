@@ -19,6 +19,7 @@ class EventType(str, Enum):
     OBJECT_FINALIZED = "object_finalized"
     CAPSULE_QUEUED = "capsule_queued"
     CAPSULE_DELIVERED = "capsule_delivered"
+    CAPSULE_REJECTED = "capsule_rejected"
     MANIFEST_DELIVERED = "manifest_delivered"
     CHUNK_QUEUED = "chunk_queued"
     CHUNK_DELIVERED = "chunk_delivered"
@@ -26,6 +27,10 @@ class EventType(str, Enum):
     CHUNK_REJECTED = "chunk_rejected"
     ENCOUNTER_OPENED = "encounter_opened"
     ENCOUNTER_CLOSED = "encounter_closed"
+    PREEMPTION_LOGGED = "preemption_logged"
+    TRANSFER_INTERRUPTED = "transfer_interrupted"
+    TRANSFER_RESUMED = "transfer_resumed"
+    RESTART_COMPLETED = "restart_completed"
 
 
 @dataclass
