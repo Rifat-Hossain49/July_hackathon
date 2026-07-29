@@ -221,46 +221,91 @@ Severity scale:
 - Evidence required: screen recording; reliability N runs.
 - Severity: S1 (release readiness).
 
+## AT-20 Malformed schema payload rejected
+
+- Preconditions: payload is within the size limit but violates the declared
+  protocol schema.
+- Input: a payload with a missing required field, unsupported schema
+  version, invalid enum value or invalid field type.
+- Steps: submit the payload to protocol ingestion.
+- Expected:
+  - payload rejected;
+  - nothing persisted;
+  - nothing scheduled;
+  - `ProtocolError` code is `SCHEMA_INVALID`;
+  - rejection logged.
+- Automation: harness.
+- Milestone: M0.
+- Evidence: schema-validation rejection log.
+- Severity: S1.
+
+## AT-21 Original source media remains preserved
+
+- Preconditions: known original media bytes and a semantic capsule derived
+  from them.
+- Input: finalize and publish the Shongket object.
+- Steps:
+  1. record original source-media hash;
+  2. attach semantic capsule;
+  3. finalize manifest;
+  4. retrieve stored source representation.
+- Expected:
+  - original source bytes unchanged;
+  - source representation hash equals original hash;
+  - semantic capsule references the source object;
+  - generated summary or preview does not overwrite the original.
+- Automation: harness.
+- Milestone: M0.
+- Evidence: before-and-after source hash and manifest-link log.
+- Severity: S1.
+
 ---
 
 ## Test-count inventory
 
-- **Total acceptance tests:** 19 (AT-01 … AT-19)
-- **S1 tests across all milestone scopes:** 18
-- **S1 tests within Milestone 0 scope:** 16
-- **Milestone 0 blocking tests:** 16
+- **Total acceptance tests:** 21 (AT-01 … AT-21)
+- **S1 tests across all milestone scopes:** 20
+- **S1 tests within Milestone 0 scope:** 17
+- **Milestone 0 blocking tests:** 18
 
-> The count of 18 includes later-milestone tests AT-13 and AT-19. Only 16
-> S1 tests are in the Milestone 0 scope and therefore block M0 completion.
+> The 18 Milestone 0 blocking tests comprise the 17 S1 tests in the M0
+> scope (AT-01 … AT-11, AT-15, AT-16, AT-17, AT-18, AT-20, AT-21) plus
+> AT-12 as the M0-blocking S2 unit-level storage-budget test. AT-12 is
+> included as blocking because its rule must be enforced even though its
+> on-device effect is later (M5+).
+>
+> The 20 S1 tests across all milestone scopes add AT-13 (permissions,
+> M5+) and AT-19 (demo readiness, M9), both of which are release-blocking
+> but outside M0.
 
-## Cross-document traceability table
+## Canonical traceability table
 
-> **Status:** All legacy `AC-*` references across the repository have been
-> mapped to canonical `AT-NN` identifiers. The user must verify each row
-> against the actual AT-01 … AT-19 definitions; no new canonical test has
-> been added. If a legacy `AC-*` has no semantically equivalent `AT-NN`,
-> the row is left empty and reported in the completion report as missing
-> coverage.
+Every row uses a real `AT-NN` identifier. Legacy `AC-*` rows have been
+removed; legacy identifiers cited elsewhere in the repository now map to
+the canonical rows below per the cross-reference mappings recorded in
+`SYSTEM_ARCHITECTURE.md`, `PROTOCOL_SPEC.md`, `MEDIA_PIPELINE.md` and
+`MODEL_EVALUATION_PLAN.md`.
 
-| Requirement or milestone behavior | Legacy ID | Canonical test ID | Evidence |
-|---|---|---|---|
-| Basic transfer of a single fragment | AC-PROG-1 | AT-NN *(verify)* | PROTOCOL_SPEC.md §… |
-| Partial reconstruction under loss | AC-PROG-2 | AT-NN *(verify)* | PROTOCOL_SPEC.md §… |
-| Schema validation on receive | AC-PROG-3 | AT-NN *(verify)* | PROTOCOL_SPEC.md §… |
-| Interrupted transfer recovery | AC-INT-1 | AT-NN *(verify)* | MILESTONES.md §… |
-| Duplicate fragment handling | AC-INT-2 | AT-NN *(verify)* | PROTOCOL_SPEC.md §… |
-| Corrupted fragment rejection | (see AC-INT-3) | AT-NN *(verify)* | PROTOCOL_SPEC.md §… |
-| Restart recovery | AC-INT-3 / AC-PROG-* | AT-NN *(verify)* | SYSTEM_ARCHITECTURE.md §… |
-| Low-storage behavior | AC-INV-1 | AT-NN *(verify)* | SYSTEM_ARCHITECTURE.md §… |
-| Expired content handling | AC-INV-2 | AT-NN *(verify)* | PROTOCOL_SPEC.md §… |
-| Critical-message preemption | AC-PREEMPTION-1 | AT-NN *(verify)* | MILESTONES.md §… |
-| Scheduler behavior | AC-SCHED-1 | AT-NN *(verify)* | SYSTEM_ARCHITECTURE.md §… |
-| Media pipeline — fragment 1 | AC-MP-1 | AT-NN *(verify)* | MEDIA_PIPELINE.md §… |
-| Media pipeline — fragment 2 | AC-MP-2 | AT-NN *(verify)* | MEDIA_PIPELINE.md §… |
-| Media pipeline — fragment 3 | AC-MP-3 | AT-NN *(verify)* | MEDIA_PIPELINE.md §… |
-| Media pipeline — fragment 4 | AC-MP-4 | AT-NN *(verify)* | MEDIA_PIPELINE.md §… |
-| Media pipeline — fragment 5 | AC-MP-5 | AT-NN *(verify)* | MEDIA_PIPELINE.md §… |
-| AI-assistance behavior | AC-AI-1 | AT-NN *(verify)* | MODEL_EVALUATION_PLAN.md §… |
+| Requirement | Canonical test | Evidence |
+|---|---|---|
+| Capsule before bulk media | AT-01 | priority-order event log (signal-plane ahead of media-plane for same object) |
+| Human confirmation required | AT-02 | rejection log showing `human_confirmed = false` blocks publish |
+| Stable object identity | AT-03 | CID equality log (same bytes → same CID across two senders) |
+| Progressive layer ordering | AT-04 | planner log (capsule → preview → full media by priority) |
+| Critical preemption | AT-05 | preemption event log with bulk-pause and critical-schedule timestamps |
+| Interrupted transfer recovery | AT-06 | reconnect log (chunks 6+ sent; previous chunks not duplicated) |
+| Restart recovery | AT-07 | persistence snapshot (verified chunks intact across restart) |
+| Multi-peer missing-chunk completion | AT-08 | fragment-source report with ≥ 2 peer IDs and successful reconstruction |
+| Duplicate-fragment rejection | AT-09 | dedup counter (second store is a no-op) |
+| Corrupted-fragment rejection | AT-10 | hash-failure log; later valid chunks still accepted |
+| Expired content rejection | AT-11 | refusal log showing object not scheduled past `expires_at` |
+| Storage-budget rule | AT-12 | quota values and eviction-policy engagement log |
+| Manual AI fallback | AT-15 | fallback log showing structured manual form when model is disabled or low-confidence |
+| Private-content consent | AT-16 | refusal log showing private object not forwarded without explicit consent |
+| Oversized-payload rejection | AT-17 | rejection log with `ProtocolError` for oversized payload |
+| Metrics recorded | AT-18 | `EXPERIMENT_PLAN.md` result-table entries per scenario |
+| Malformed-schema rejection | AT-20 | schema-validation rejection log with `ProtocolError` code `SCHEMA_INVALID` |
+| Source-media preservation | AT-21 | before-and-after source hash and manifest-link log (hash unchanged, capsule linked) |
 
 ---
 
@@ -268,14 +313,14 @@ Severity scale:
 
 > Counts are taken from the table below.
 
-- Total acceptance tests: 19
-- Severity S1 tests: 18 (S1 in any milestone scope)
-- Severity S1 tests, **M0 scope only**: 16
+- Total acceptance tests: 21
+- Severity S1 tests: 20 (S1 in any milestone scope)
+- Severity S1 tests, **M0 scope only**: 17
 - Severity S2 tests: AT-12 (M0 unit), AT-14
-- Milestone 0 blocking tests:
+- Milestone 0 blocking tests (18):
   AT-01, AT-02, AT-03, AT-04, AT-05, AT-06, AT-07, AT-08, AT-09,
   AT-10, AT-11, AT-12 (unit-level), AT-15, AT-16, AT-17, AT-18
-  (logging)
+  (logging), AT-20, AT-21
 
 ### M0 success-criterion → acceptance-test mapping
 
@@ -320,6 +365,8 @@ Each row must produce its declared evidence before M0 sign-off.
 | AT-17 | Security | harness | M0 | S1 |
 | AT-18 | Benchmarking | harness | M0/M5+ | S1 |
 | AT-19 | Demo readiness | manual | M9 | S1 |
+| AT-20 | Schema rejection | harness | M0 | S1 |
+| AT-21 | Source preservation | harness | M0 | S1 |
 
 ---
 
