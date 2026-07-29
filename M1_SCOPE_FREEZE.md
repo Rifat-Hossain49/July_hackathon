@@ -1,16 +1,18 @@
 # Shongket — Milestone 1 Scope Freeze
 
-**Status:** Design decisions ACCEPTED. Milestone status remains
-**PROPOSED**. Implementation is **not** authorised.
+**Status:** Design decisions ACCEPTED and Milestone 1 approved for
+implementation. `PRODUCT_DECISIONS.md` is the canonical status source
+and now reads `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_1`.
 
 All thirteen decisions in §5 are accepted and encoded into the canonical
-documents. Acceptance settles *what M1 will be*; it does not authorise
-writing it. `PRODUCT_DECISIONS.md` remains the canonical status source
-and still reads `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_0`.
+documents. The scope was frozen and merged **before** approval, so this
+document describes the scope that was approved rather than one written
+afterwards.
 
-No implementation code may be written for Milestone 1 until that value
-changes through a separate, explicit approval. Nothing in this document
-records an M1 result, because no M1 code exists.
+Authorised work is limited to the scope in §1 and the slices in §8.
+Android, radios, offline AI inference, production security, eviction and
+all Milestone 2+ work remain unauthorised. Nothing in this document
+records an M1 result: **no M1 code has been written yet.**
 
 Baseline this freeze was written against:
 
@@ -896,12 +898,14 @@ Milestone 1 implementation may begin only when **all** of these are true:
 - [x] C-8 `MEDIA_PIPELINE.md` M1 wording confirmed as interface-only
 - [x] AT-22 … AT-37 approved and added to `ACCEPTANCE_TESTS.md`
 - [x] `PROTOCOL_SPEC.md` size limits frozen (§9.3)
-- [ ] **`MILESTONES.md` M1 status changed by the user** — still PROPOSED
-- [ ] **`PRODUCT_DECISIONS.md` `IMPLEMENTATION_STATUS` changed by the**
-      **user to `APPROVED_FOR_MILESTONE_1`** — still
-      `APPROVED_FOR_MILESTONE_0`
+- [x] **`MILESTONES.md` M1 status changed by the user** —
+      `APPROVED_FOR_MILESTONE_1`
+- [x] **`PRODUCT_DECISIONS.md` `IMPLEMENTATION_STATUS` changed by the**
+      **user to `APPROVED_FOR_MILESTONE_1`**
 
-Thirteen of fifteen items are complete. The two outstanding items are
-deliberately **not** actions this document or any agent may take: they
-are the user's approval acts. Until both are done, Milestone 1 remains
-unimplementable, and no M1 code may be written.
+All fifteen items are complete. The final two were the user's approval
+acts, taken only after the frozen scope had been reviewed and merged.
+
+Milestone 1 implementation is now authorised **within this scope only**.
+It has not begun: no M1 code exists and no M1 acceptance result is
+recorded. The first authorised unit of work is Slice 1 (§8).
