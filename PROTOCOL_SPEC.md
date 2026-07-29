@@ -195,9 +195,18 @@ requests a specific representation without the full object listing.
   "schema": "shongket.inventory.v1",
   "peer_id": "<derived>",
   "object_cids": ["<CID>", "..."],
-  "bloom_filter": { "m_bits": 8192, "k_hashes": 7, "bytes_b64": "..." }
+  "owned_fragments": {
+    "<object_cid>": [0, 1, 4, 7]
+  }
 }
 ```
+
+> **M0 policy (per DR-SPEC-03):** inventory is a deterministic
+> explicit per-object fragment-ID list (or a bitmap where the
+> fragment index space is dense). No Bloom filter is emitted by M0
+> peers. The field name `object_cids` is retained for compatibility
+> with the wire schema; the `bloom_filter` field is reserved and
+> left unset in M0.
 
 - Comparison of inventory encodings is in §6.
 
@@ -205,7 +214,7 @@ requests a specific representation without the full object listing.
 
 ```json
 {
-  "schema": "shongkit.fragreq.v1",
+  "schema": "shongket.fragreq.v1",
   "peer_id": "<derived>",
   "requests": [
     { "object_id": "<CID>", "representation_id": "original", "chunk_indexes": [12, 13, 14] }
@@ -296,7 +305,9 @@ Ten-step flow (no implementation proposed here):
 3. **Compact inventory exchange** — exchange `InventorySummary`.
 4. **Content-interest calculation** — local computation of which
    objects the peer seems to need (intersection / difference of
-   inventories;Bloom-membership check first, then full-ID list).
+   inventories over the explicit per-object fragment-ID lists
+   defined in `InventorySummary`; no Bloom test is performed in
+   M0, per DR-SPEC-03).
 5. **Missing-fragment negotiation** — exchange `FragmentRequest`s.
 6. **Transfer** — `TransferOffer` → ordered fragments per scheduler.
 7. **Verification** — per-fragment SHA-256 + per-representation final
@@ -311,15 +322,18 @@ Ten-step flow (no implementation proposed here):
 
 | Encoding | Pros | Cons | M0 plan |
 |---|---|---|---|
-| Explicit ID list | simple, exact | grows with owned objects; bad for short encounters | fallback when small |
-| Bloom filter | compact, fast test | false positives, no negatives | **default in M0** (m=8192, k=7 as placeholder) |
-| Compact range / bitmap | predictable size | assumes monotonic IDs | not assumed in M0 |
+| Explicit ID list | simple, exact, deterministic | grows with owned objects; bad for short encounters | **default in M0** (per DR-SPEC-03) |
+| Compact range / bitmap | predictable size | assumes monotonic IDs | allowed where index space is dense |
+| Bloom filter | compact, fast test | false positives, no negatives | **deferred** — later experiment only, no M0 test |
 | Topic-based summary | cheap filtering | coarse; can leak categories | later research |
 | Hybrid: Bloom + tail list | fast test, exact ID reveal on demand | two-stage complexity | later research |
 
-M0 uses Bloom-only with an explicit fallback to small-list exchange
-when both sides have ≤ N objects. Both options are behind an
-`InventoryIndex` interface so other encodings can replace it.
+M0 uses a **deterministic explicit per-object fragment-ID list**
+(or a dense bitmap when applicable) as its sole inventory encoding.
+Both options sit behind an `InventoryIndex` interface so other
+encodings (including Bloom, when promoted by an approved experiment
+plan) can replace it without changing the wire schema. See DR-SPEC-03
+for the policy on why Bloom is not an M0 acceptance-tested default.
 
 ---
 
@@ -503,7 +517,7 @@ stateDiagram-v2
 
 | ID | Question | Options | Recommendation | Evidence needed | Risk |
 |---|---|---|---|---|---|
-| QP-01 | Inventory encoding default | Bloom / explicit list / hybrid | Bloom (m=8192, k=7) | M0 hash-set sizes on synthetic corpora | tuning conflict on real objects |
+| QP-01 | Inventory encoding default | Bloom / explicit list / hybrid | **explicit list (per-object fragment IDs or dense bitmap)** — Bloom deferred | later experiment plan with Bloom-specific acceptance test | tuning conflict if Bloom is later promoted without re-test |
 | QP-02 | Chunk size | 16 KB / 64 KB / 256 KB / 1 MB | 64 KB default, configurable per modality | M0 throughput + memory tests on synthetic media | wrong default degrades phone perf |
 | QP-03 | Hop limit default | 3 / 6 / 10 | 6 | M0 + later real-device tests | too low = poor reach; too high = flooding |
 | QP-04 | Copy budget default | 2 / 4 / 8 | 8 | M0 + tuning | too high = storage exhaustion |
@@ -511,7 +525,7 @@ stateDiagram-v2
 | QP-06 | Encryption scope | none / per-object / per-fragment | none in M0; per-object later | threat model doc | privacy gap if shipped without |
 | QP-07 | Critical preemption granularity | chunk-level / byte-level | chunk-level in M0 | M0 latency | overshoot / undershoot |
 | QP-08 | Manifest versioning on metadata edits | same / new manifest | new manifest | review of edits | churn in inventories |
-| QP-09 | Inventory Bloom parameters | m, k | placeholders above | M0 profiling | false-positive rate on real corpora |
+| QP-09 | Inventory Bloom parameters | m, k | **deferred** — no Bloom filter is used in M0 (DR-SPEC-03) | later experiment profiling on real corpora | none in M0; future false-positive risk if Bloom is adopted without re-test |
 | QP-10 | Conflict policy on duplicate IDs from different signers | last-writer-wins / reject / require dual-confirm | reject with `ProtocolError` | M0 test | confusion if violated |
 
 ---
@@ -530,7 +544,7 @@ stateDiagram-v2
 - Trade-offs: less dedup across content edits than CDC.
 - Risks: re-chunking on small edits → later mitigated by CDC behind
   the same `FragmentationStrategy`.
-- Validation: AC-INT-1..AC-INT-3 in `ACCEPTANCE_TESTS.md`.
+- Validation: `AT-06`, `AT-09`, `AT-10` in `ACCEPTANCE_TESTS.md`.
 - Revisit condition: M5+ dedup measurements motivate CDC.
 
 ### DR-SPEC-02 — Deterministic scheduler in M0
@@ -545,20 +559,39 @@ stateDiagram-v2
 - Validation: H-SCHED-1..H-SCHED-4 in `EXPERIMENT_PLAN.md`.
 - Revisit condition: M5+ empirical comparison vs utility.
 
-### DR-SPEC-03 — Bloom-filter inventory default
+### DR-SPEC-03 — Inventory encoding (revisited)
 
-- Decision: inventory is Bloom-filter encoded by default; small
-  explicit-list exchange is a fallback.
-- Alternatives: full ID list always; range/bitmap; topic summaries.
-- Recommended: Bloom default.
-- Reason: scales better for short encounters without sacrificing
-  safety (false positives → redundant transfer, not missing
-  opportunity).
-- Evidence: AC-INV-1, AC-INV-2.
-- Trade-offs: false-positive extra transfers.
-- Risks: tuned parameters must be revisited on real data.
-- Validation: `EXPERIMENT_PLAN.md` H-INV-1.
-- Revisit condition: M5+ real-corpus parameter profiling.
+- Decision: M0 uses a simple deterministic explicit inventory
+  representation (explicit per-object fragment IDs or a bitmap where
+  appropriate). Bloom-filter inventory encoding is a **later research
+  candidate**, not an M0 acceptance-tested default.
+- Alternatives: full ID list always; compact range / bitmap; topic
+  summaries; Bloom filter; hybrid Bloom + tail list.
+- Recommended: explicit per-object fragment representation in M0;
+  Bloom filter and any other probabilistic encoding deferred to a
+  later experiment plan that defines its own acceptance criteria.
+- Reason: M0 must produce reproducible, deterministic outcomes; no
+  Bloom-filter performance claim is made here. Benchmarking Bloom
+  parameters requires a real-corpus profile that does not exist in
+  M0.
+- Evidence: no M0 acceptance test references Bloom-filter inventory
+  encoding. The historical placeholder identifiers previously cited
+  here (`AC-INV-1`, `AC-INV-2`) referred to **low-storage** and
+  **expiry** behaviors, not to Bloom-filter validation, and have been
+  removed because they were misattributed.
+- Trade-offs: explicit lists grow with the number of owned objects and
+  are less compact for short encounters; this is acceptable for M0
+  scope and is the price of keeping the M0 claim deterministically
+  truthful.
+- Risks: later research may revisit Bloom encoding as an opt-in
+  optimization; until then no claim of compact-membership performance
+  is made.
+- Validation: any future Bloom experiment must define its own
+  acceptance test before being promoted; no Bloom acceptance test is
+  added in this pass.
+- Revisit condition: when an experiment plan is approved that scopes
+  Bloom-filter inventory to a specific milestone and defines its
+  acceptance criteria.
 
 ### DR-SPEC-04 — Multi-peer completion in M0 ≠ coded reconstruction
 
