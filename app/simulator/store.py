@@ -25,6 +25,7 @@ class StoreStats:
     rejected_corruption: int = 0
     rejected_schema: int = 0
     rejected_budget: int = 0
+    rejected_oversize: int = 0
 
     def as_dict(self) -> dict:
         return {
@@ -33,6 +34,7 @@ class StoreStats:
             "rejected_corruption": self.rejected_corruption,
             "rejected_schema": self.rejected_schema,
             "rejected_budget": self.rejected_budget,
+            "rejected_oversize": self.rejected_oversize,
         }
 
 
@@ -137,11 +139,17 @@ class ContentAddressedStore:
             (AT-10). Nothing is persisted in either case.
         """
         descriptor = self._descriptor(chunk)
-        # Schema-validation boundary first (AT-20).
+        # Size boundary (AT-17) then schema boundary (AT-20). The 512 B
+        # limit bounds this descriptor, never the chunk payload it
+        # describes; payload bytes are bounded by the transport frame
+        # limit and by the storage budget instead.
         try:
             validation.validate_payload("shongket.fragment.v1", descriptor)
-        except validation.ProtocolError:
-            self.stats.rejected_schema += 1
+        except validation.ProtocolError as exc:
+            if exc.code == "PAYLOAD_TOO_LARGE":
+                self.stats.rejected_oversize += 1
+            else:
+                self.stats.rejected_schema += 1
             raise
 
         # Corruption check (AT-10): hash must equal sha256(payload).

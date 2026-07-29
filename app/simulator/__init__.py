@@ -24,5 +24,6 @@ __all__ = [
     "scenario",
     "gate",
     "persistence",
+    "metrics",
     "main",
 ]

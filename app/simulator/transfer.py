@@ -340,6 +340,33 @@ def _send_chunk(
     result: "EncounterResult",
 ) -> bool:
     """Send one media chunk. Returns True when stored, False when rejected."""
+    # AT-17 framing-layer guard: refuse a frame above the peer's
+    # max_payload before it is transmitted or parsed. Ordinary M0 chunks
+    # (64 KB default) are far below the 1 MB limit, so this never fires
+    # on the normal path.
+    from . import validation as _validation
+
+    try:
+        _validation.check_frame_size(chunk.payload, object_id=chunk.object_id)
+    except _validation.ProtocolError as exc:
+        logger.emit(
+            events.EventType.PAYLOAD_REJECTED,
+            sender_id=sender.peer_id,
+            receiver_id=receiver.peer_id,
+            object_id=chunk.object_id,
+            representation_id=chunk.representation_id,
+            chunk_index=chunk.chunk_index,
+            detail={
+                "reason": "payload_too_large",
+                "code": exc.code,
+                "kind": "frame",
+                "encoded_bytes": len(chunk.payload),
+                "limit_bytes": _validation.MAX_FRAME_BYTES,
+            },
+        )
+        result.rejected_indexes.append(chunk.chunk_index)
+        return False
+
     sender.send(chunk.payload)
     sender.deliver_to(receiver)
     message = receiver.receive()
@@ -939,8 +966,21 @@ def run_forwarding_encounter(
     admission, before an encounter is opened, so expired content is
     never transmitted and can never reach the receiver's store.
     """
+    from . import gate as _gate
+
     expires_at_unix = manifest_payload.get("expires_at_unix")
     object_id = manifest_payload.get("object_id")
+
+    # AT-16 consent gate runs before queue admission, so a private
+    # object without consent never reaches the scheduler at all. It
+    # raises ProtocolError("CONSENT_REQUIRED") after emitting evidence.
+    _gate.private_content_consent(
+        manifest_payload,
+        logger=logger,
+        sender_id=sender.peer_id,
+        receiver_id=receiver.peer_id,
+    )
+
     queue = priority.admit_for_forwarding(
         items, expires_at_unix=expires_at_unix, now_unix=now_unix
     )

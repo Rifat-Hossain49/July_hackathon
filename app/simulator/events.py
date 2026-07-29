@@ -37,6 +37,10 @@ class EventType(str, Enum):
     FORWARD_QUEUED = "forward_queued"
     FORWARD_REFUSED = "forward_refused"
     STORAGE_BUDGET_REJECTED = "storage_budget_rejected"
+    # Slice 4 (AT-15 manual fallback, AT-16 consent, AT-17 oversize).
+    MODEL_FALLBACK = "model_fallback"
+    CONSENT_REJECTED = "consent_rejected"
+    PAYLOAD_REJECTED = "payload_rejected"
 
 
 @dataclass

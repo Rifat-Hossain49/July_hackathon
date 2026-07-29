@@ -41,6 +41,17 @@ class ProtocolError(Exception):
     AT-11 expiry does not raise: expired content is refused at queue
     admission (``priority.admit_for_forwarding``) and never reaches a
     store boundary at all.
+
+    The slice-4 boundaries add two more:
+
+    * ``"PAYLOAD_TOO_LARGE"`` (AT-17): a payload exceeds its canonical
+      serialized size limit, or a transport frame exceeds the peer's
+      ``max_payload``. This is a canonical code from the
+      ``shongket.error.v1`` enum (PROTOCOL_SPEC.md §3.8) and is checked
+      *before* the payload is parsed, per §8 "size limits enforced
+      before parse".
+    * ``"CONSENT_REQUIRED"`` (AT-16): a private object was offered for
+      forwarding without explicit consent.
     """
 
     def __init__(self, code: str, detail: str, *, object_id: str | None = None) -> None:
@@ -102,6 +113,69 @@ _SUPPORTED_SCHEMAS: dict[str, dict] = {
 }
 
 
+# --- canonical size limits (AT-17) -------------------------------------------
+#
+# Every value below is quoted directly from PROTOCOL_SPEC.md. They are
+# limits on the *serialized* form, not on Python object size.
+#
+# * SemanticCapsule   -- §3.1 "Size limit: capsule <= 4 KB serialized."
+# * ContentManifest   -- §3.2 "Size limit: manifest <= 32 KB serialized."
+# * FragmentDescriptor-- §3.4 "Size limit: <= 512 B serialized."
+# * Transport frame   -- §3.5 PeerCapabilities ``max_payload`` = 1048576,
+#   enforced by §6.0 factor 10 "Payload size: respect peer max_payload".
+#
+# §8 additionally requires that oversized payloads are "rejected at
+# framing layer" with "size limits enforced before parse", so the size
+# check runs ahead of the schema checks in ``validate_payload``.
+#
+# The distinction that matters: the 512 B fragment limit bounds the
+# *descriptor*, never the chunk payload it describes. A 64 KB chunk has
+# a ~250 B descriptor. Chunk payload bytes are bounded by the transport
+# frame limit instead.
+
+MAX_FRAME_BYTES = 1_048_576
+
+
+def size_limit_for(kind: str) -> int:
+    """Return the canonical serialized size limit for ``kind`` in bytes."""
+    if kind not in _SUPPORTED_SCHEMAS:
+        raise ProtocolError("SCHEMA_INVALID", f"unsupported schema kind: {kind!r}")
+    return _SUPPORTED_SCHEMAS[kind]["size_limit_bytes"]
+
+
+def canonical_bytes(payload: dict) -> bytes:
+    """Canonical JSON encoding used for every size measurement."""
+    import json
+
+    return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+def check_frame_size(
+    frame: bytes,
+    *,
+    max_payload_bytes: int = MAX_FRAME_BYTES,
+    object_id: str | None = None,
+) -> None:
+    """Framing-layer size guard for raw transport bytes (AT-17).
+
+    Enforces PROTOCOL_SPEC.md §6.0 factor 10 ("respect peer
+    ``max_payload``") before the frame is parsed or stored.
+
+    Raises
+    ------
+    ProtocolError
+        With ``code == "PAYLOAD_TOO_LARGE"`` when the frame exceeds the
+        limit. A frame of exactly ``max_payload_bytes`` is accepted.
+    """
+    if len(frame) > max_payload_bytes:
+        raise ProtocolError(
+            "PAYLOAD_TOO_LARGE",
+            f"frame of {len(frame)} bytes exceeds max_payload "
+            f"{max_payload_bytes}",
+            object_id=object_id,
+        )
+
+
 # --- entry points ------------------------------------------------------------
 
 
@@ -125,9 +199,12 @@ def validate_payload(kind: str, payload: dict) -> None:
         * missing required field;
         * unspecified schema string;
         * wrong field type;
-        * unsupported enum value;
-        * payload exceeds the schema's size limit (estimated from a
-          canonical JSON encoding).
+        * unsupported enum value.
+
+        With ``code == "PAYLOAD_TOO_LARGE"`` when the canonical JSON
+        encoding exceeds the schema's canonical size limit (AT-17).
+        This check runs before any of the above, per PROTOCOL_SPEC.md §8
+        ("size limits enforced before parse").
     """
     if kind not in _SUPPORTED_SCHEMAS:
         raise ProtocolError(
@@ -139,6 +216,22 @@ def validate_payload(kind: str, payload: dict) -> None:
         raise ProtocolError("SCHEMA_INVALID", "payload is not an object")
 
     schema = _SUPPORTED_SCHEMAS[kind]
+
+    # Framing-layer size check first (AT-17). PROTOCOL_SPEC.md §8
+    # requires "size limits enforced before parse", so an oversized
+    # payload is refused with the canonical PAYLOAD_TOO_LARGE code
+    # before any field, enum or type is inspected. AT-20 is explicitly
+    # scoped to payloads "within the size limit", so the two boundaries
+    # do not overlap.
+    encoded = canonical_bytes(payload)
+    if len(encoded) > schema["size_limit_bytes"]:
+        raise ProtocolError(
+            "PAYLOAD_TOO_LARGE",
+            f"payload of {len(encoded)} bytes exceeds "
+            f"{schema['size_limit_bytes']} bytes for {kind}",
+            object_id=payload.get("object_id"),
+        )
+
     declared_schema = payload.get("schema")
     if declared_schema != kind:
         raise ProtocolError(
@@ -167,17 +260,6 @@ def validate_payload(kind: str, payload: dict) -> None:
 
     # Type check: int / list / dict per schema.
     _check_types(kind, payload)
-
-    # Size-limit check via canonical JSON.
-    import json
-
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    if len(encoded) > schema["size_limit_bytes"]:
-        raise ProtocolError(
-            "SCHEMA_INVALID",
-            f"payload exceeds {schema['size_limit_bytes']} bytes for {kind}",
-            object_id=payload.get("object_id"),
-        )
 
 
 def _check_types(kind: str, payload: dict) -> None:
