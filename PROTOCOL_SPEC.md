@@ -1,0 +1,608 @@
+Draft
+  → AI-assisted extraction (uncertainty flagged)
+  → Human review & correction
+  → Confirmed object (capsule linked to source media)
+  → Fragmentation (FixedSize SHA-256 in M0)
+  → Local storage
+  → Peer advertisement (signal plane, per priority)
+  → Partial transfer (multiple encounters, multiple peers)
+  → Forwarding (per deterministic M0 policy)
+  → Reconstruction (multi-peer missing-chunk completion, M0)
+  → Verification (hash + signature)
+  → Expiry or deletion
+| Semantic Capsule | The compact, human-confirmed structured meaning extracted from a media item. |
+| Representation | A specific encoding of the source media (thumbnail, preview, standard, original). |
+| Manifest | Content-addressed, signed description of an object and its representations. |
+| Fragment | A byte-range piece of a representation with its own content ID and hash. |
+| Source fragment | Original data chunk from a representation. |
+| Recovery fragment | (Later) erasure-coded chunk, behind `FragmentationStrategy`. Not in M0. |
+| Peer | Another device running Shongket. |
+| Encounter | A bounded window during which two peers can exchange data. |
+| Inventory | Per-peer summary of which objects / fragments are held. |
+| Capability | Declared peer properties (transports, max payload, willingness to relay). |
+| Priority | Class tag attached to an object (life-safety / high / routine). |
+| Replication budget | Max copies of an object allowed across known peers. |
+| Expiry | Absolute timestamp after which the object is no longer forwarded. |
+| Content ID (CID) | Cryptographic identifier (SHA-256 over canonical form) of a content-addressed unit. |
+
+### Multi-peer completion
+
+Completion of a representation by collecting its ordinary missing
+chunks from two or more peers.
+
+All required source chunks must eventually be obtained.
+
+This is the Milestone 0 strategy.
+
+### Reassembly
+
+Ordering and combining verified ordinary chunks into their original
+representation.
+
+### Coded reconstruction
+
+Recovery of an object using parity, erasure-coded or rateless symbols,
+where the receiver may not need every original source chunk.
+
+Examples include Reed-Solomon, fountain codes and RaptorQ.
+
+Coded reconstruction is not implemented in Milestone 0.
+
+---
+
+## 2. Object lifecycle
+
+```
+Draft
+  → AI-assisted extraction (uncertainty flagged)
+  → Human review & correction
+  → Confirmed object (capsule linked to source media)
+  → Fragmentation (FixedSize SHA-256 in M0)
+  → Local storage
+  → Peer advertisement (signal plane, per priority)
+  → Partial transfer (multiple encounters, multiple peers)
+  → Forwarding (per deterministic M0 policy)
+  → Reconstruction (multi-peer missing-chunk completion, M0)
+  → Verification (hash + signature)
+  → Expiry or deletion
+```
+
+A peer may enter this lifecycle at any point after the object has been
+finalized, depending on what it first learns about the object.
+
+---
+
+## 3. Schemas (illustrative JSON)
+
+For every field: **purpose / type / required / size limit / privacy /
+validation.** Limits are targets; final values are decided at M1.
+
+### 3.1 SemanticCapsule
+
+```json
+{
+  "schema": "shongket.capsule.v1",
+  "capsule_id": "<CID>",
+  "object_ref": "<object CID>",
+  "source_media_ref": "<CID of original media>",
+  "extracted_fields": {
+    "event_type": "flood | fire | medical | infra | safety | other",
+    "location_text": "string up to 200 chars",
+    "urgency": "low | medium | high | life_safety",
+    "affected_people": "integer or 'unknown'",
+    "required_action": "short string",
+    "required_resource": "short string",
+    "summary_bn": "Bangla string up to 280 chars",
+    "summary_bn_en_mix": "code-switched string up to 320 chars",
+    "media_timestamps": ["HH:MM:SS", "..."],
+    "keyframe_cids": ["<CID>", "..."]
+  },
+  "uncertainty": ["location_text", "affected_people"],
+  "reviewer_did_correction": true,
+  "confirmation_method": "human_confirm | manual_form_only | ai_only_disabled",
+  "creator_pub_key_id": "<key id>",
+  "signatures": [{ "key_id": "ed25519:<id>", "sig": "<base64>" }]
+}
+```
+
+- Purpose: short, structured human-meaningful description.
+- All fields optional except `schema`, `capsule_id`, `object_ref`,
+  `creator_pub_key_id`.
+- Size limit: capsule ≤ 4 KB serialized.
+- Privacy: must not include raw PII beyond what the user typed and
+  confirmed; location_text is free text, not a coordinate.
+- Validation: `schema` must match supported version; size bounded;
+  signatures verified on receipt.
+
+### 3.2 ContentManifest
+
+```json
+{
+  "schema": "shongket.content.v1",
+  "object_id": "<CID of canonical manifest bytes>",
+  "capsule_ref": "<CID>",
+  "representations": [
+    { "id": "thumb", "kind": "image/jpeg|video/poster|text", "byte_len": 12345,
+      "chunk_size": 65536, "hashes": ["<sha256>", "..."] },
+    { "id": "preview", "kind": "video/mp4|image/jpeg|text", ... },
+    { "id": "standard", "kind": "...", ... },
+    { "id": "original", "kind": "...", ... }
+  ],
+  "priority": "life_safety | high | routine",
+  "created_at": "RFC3339 timestamp",
+  "expires_at": "RFC3339 timestamp or null",
+  "hop_limit": 6,
+  "copy_budget": 8,
+  "signatures": [{ "key_id": "ed25519:<id>", "sig": "<base64>" }]
+}
+```
+
+- Purpose: authoritative description of what an object contains.
+- Each representation's `hashes` is the list of SHA-256 hashes of its
+  fixed-size chunks, in order.
+- Size limit: manifest ≤ 32 KB serialized.
+- Validation: `object_id` must equal SHA-256 of canonical
+  serialization; signatures valid; `expires_at` parseable; per-field
+  limits respected.
+
+### 3.3 RepresentationManifest
+
+Subset of `ContentManifest` for one representation, used when a peer
+requests a specific representation without the full object listing.
+
+### 3.4 FragmentDescriptor
+
+```json
+{
+  "schema": "shongket.fragment.v1",
+  "object_id": "<CID>",
+  "representation_id": "thumb|preview|standard|original",
+  "chunk_index": 0,
+  "chunk_size": 65536,
+  "byte_range": [0, 65535],
+  "hash": "<sha256>",
+  "signature": { "key_id": "ed25519:<id>", "sig": "<base64>" }
+}
+```
+
+- Size limit: ≤ 512 B serialized.
+- Validation: hash must equal SHA-256 of the actual bytes; signature
+  must verify against `representation_id` signed manifest.
+
+### 3.5 PeerCapabilities
+
+```json
+{
+  "schema": "shongket.peer.v1",
+  "peer_id": "<derived from pub key>",
+  "transports": ["nearby", "wifi_direct", "lan"],
+  "max_payload": 1048576,
+  "will_relay": true,
+  "public_only": false,
+  "battery_low_threshold_pct": 20,
+  "storage_low_threshold_bytes": 524288000
+}
+```
+
+- Privacy: `peer_id` is a stable per-device pseudonymous key, not a
+  phone number.
+- Validation: enum values within allowed sets.
+
+### 3.6 InventorySummary
+
+```json
+{
+  "schema": "shongket.inventory.v1",
+  "peer_id": "<derived>",
+  "object_cids": ["<CID>", "..."],
+  "owned_fragments": {
+    "<object_cid>": [0, 1, 4, 7]
+  }
+}
+```
+
+> **M0 policy (per DR-SPEC-03):** inventory is a deterministic
+> explicit per-object fragment-ID list (or a bitmap where the
+> fragment index space is dense). No Bloom filter is emitted by M0
+> peers. The field name `object_cids` is retained for compatibility
+> with the wire schema; the `bloom_filter` field is reserved and
+> left unset in M0.
+
+- Comparison of inventory encodings is in §6.
+
+### 3.7 FragmentRequest
+
+```json
+{
+  "schema": "shongket.fragreq.v1",
+  "peer_id": "<derived>",
+  "requests": [
+    { "object_id": "<CID>", "representation_id": "original", "chunk_indexes": [12, 13, 14] }
+  ]
+}
+```
+
+### 3.8 TransferOffer
+
+```json
+{
+  "schema": "shongket.offer.v1",
+  "peer_id": "<derived>",
+  "offers": [
+    { "object_id": "<CID>", "representation_id": "original",
+      "chunk_indexes": [10, 11], "priority": "high" }
+  ]
+}
+```
+
+### 3.9 TransferReceipt
+
+```json
+{
+  "schema": "shongket.receipt.v1",
+  "object_id": "<CID>",
+  "representation_id": "original",
+  "chunk_index": 11,
+  "status": "ok | hash_mismatch | out_of_budget | expired | duplicate"
+}
+```
+
+### 3.10 ProtocolError
+
+```json
+{
+  "schema": "shongket.error.v1",
+  "code": "VERSION_UNSUPPORTED | PAYLOAD_TOO_LARGE | SCHEMA_INVALID | SIGNATURE_INVALID | EXPIRED | HOP_LIMIT | COPY_BUDGET | UNKNOWN_OBJECT | INTERNAL",
+  "object_id": "<CID or null>",
+  "detail": "short string"
+}
+```
+
+---
+
+## 4. Content identity and integrity
+
+| Mechanism | Use | Trade-off |
+|---|---|---|
+| Whole-object hash | Final object integrity | recompute cost; good last-mile check |
+| Per-representation hash | Faster reconstruction check | extra metadata |
+| Per-fragment hash (SHA-256) | Stream verification during transfer | small overhead |
+| Merkle tree | Optional: prove inclusion in a set | higher complexity; only if useful in M5+ |
+| Signed manifests | Trust anchor for fragments | key management |
+| Versioned content IDs | Stable across renames | small size overhead |
+
+Recommendation for M0: **per-fragment SHA-256 + signed
+`ContentManifest`** as the trust anchor; the canonical object ID is
+SHA-256 of the canonicalized manifest bytes.
+
+When metadata changes but original media does not, the original media
+content IDs and fragment hashes remain stable. Only the
+`ContentManifest` version increments (binding to a new manifest schema
+version). Verified fragments stay valid; receivers reconcile by
+`object_id` (new) and `representation_id` + chunk hash (unchanged).
+
+### Milestone 0 fragmentation
+
+Milestone 0 uses:
+
+- configurable fixed-size chunks;
+- a final shorter chunk when necessary;
+- SHA-256 per chunk;
+- SHA-256 per representation;
+- deterministic chunk indexing.
+
+All fragmentation is accessed through `FragmentationStrategy`.
+
+---
+
+## 5. Synchronization protocol
+
+Ten-step flow (no implementation proposed here):
+
+1. **Discovery** — peers announce presence over the active
+   `TransportAdapter(s)`.
+2. **Capability exchange** — exchange `PeerCapabilities`.
+3. **Compact inventory exchange** — exchange `InventorySummary`.
+4. **Content-interest calculation** — local computation of which
+   objects the peer seems to need (intersection / difference of
+   inventories over the explicit per-object fragment-ID lists
+   defined in `InventorySummary`; no Bloom test is performed in
+   M0, per DR-SPEC-03).
+5. **Missing-fragment negotiation** — exchange `FragmentRequest`s.
+6. **Transfer** — `TransferOffer` → ordered fragments per scheduler.
+7. **Verification** — per-fragment SHA-256 + per-representation final
+   hash check at reconstruction.
+8. **Acknowledgement** — `TransferReceipt` per fragment; reducer-level
+   acks for whole representations.
+9. **Persistence** — verified objects stored locally.
+10. **Disconnection recovery** — partial state preserved; resumed on
+    next encounter.
+
+### 5.1 Inventory encoding — comparison
+
+| Encoding | Pros | Cons | M0 plan |
+|---|---|---|---|
+| Explicit ID list | simple, exact, deterministic | grows with owned objects; bad for short encounters | **default in M0** (per DR-SPEC-03) |
+| Compact range / bitmap | predictable size | assumes monotonic IDs | allowed where index space is dense |
+| Bloom filter | compact, fast test | false positives, no negatives | **deferred** — later experiment only, no M0 test |
+| Topic-based summary | cheap filtering | coarse; can leak categories | later research |
+| Hybrid: Bloom + tail list | fast test, exact ID reveal on demand | two-stage complexity | later research |
+
+M0 uses a **deterministic explicit per-object fragment-ID list**
+(or a dense bitmap when applicable) as its sole inventory encoding.
+Both options sit behind an `InventoryIndex` interface so other
+encodings (including Bloom, when promoted by an approved experiment
+plan) can replace it without changing the wire schema. See DR-SPEC-03
+for the policy on why Bloom is not an M0 acceptance-tested default.
+
+---
+
+## 6. Scheduling
+
+### 6.0 Priority order
+
+The deterministic scheduler always considers items in this order:
+
+1. Critical semantic capsules
+2. Required manifests and control data
+3. Non-critical semantic capsules
+4. Thumbnails and keyframes
+5. Playable previews
+6. Standard representations
+7. Original-quality fragments
+
+Candidate rules, all input to a deterministic policy:
+
+1. **Life-safety priority** overrides everything else.
+2. **Semantic-layer ordering**: capsule → manifest → thumbnail →
+   preview → standard → original for the same object.
+3. **Usefulness** of the marginal chunk (e.g. the next chunk that
+   completes a representation).
+4. **Time-to-contact**: prefer fragments that can complete during the
+   current encounter window.
+5. **Peer demand**: chunk requested by the peer ranks higher.
+6. **Expiry**: refuse to forward past `expires_at`.
+7. **Replication count**: refuse if `copy_budget` would be exceeded.
+8. **Battery**: under threshold, prefer smaller, signal-plane transfers.
+9. **Storage**: under threshold, defer non-critical media.
+10. **Payload size**: respect peer `max_payload`.
+
+### 6.1 Critical preemption + later resumption
+
+When a critical capsule or manifest arrives while a lower-priority
+bulk transfer is in flight, the scheduler:
+
+- pauses the in-flight bulk transfer after its current chunk;
+- drains the signal-plane queue (capsule + manifest + thumbnail);
+- resumes the bulk transfer from the next verified chunk index for
+  the original object.
+
+The pause-and-resume is observable in logs (`metrics.preemption_count`,
+`metrics.preemption_resume_latency`).
+
+---
+
+## 7. Replication and forwarding
+
+M0 policy (deterministic and auditable):
+
+- Accept to forward iff: not expired, hop_count + 1 ≤ hop_limit,
+  local copy count + 1 ≤ copy_budget.
+- Order by the seven factors in DR-ARCH-02 above.
+- No utility-based scoring in M0.
+
+Later experiments (M5+):
+
+- Utility-based forwarding (utility score = life-safety ×
+  marginal-usefulness × novelty × time-decay).
+- Popularity-aware caching.
+- User-selected forwarding policies.
+
+### 7.1 Transport adapters
+
+Nearby Connections, Wi-Fi Direct and local hotspot networking are
+transport adapters. None is part of the protocol itself, and none is
+locked before the Milestone 3 smoke-test gate.
+
+---
+
+## 8. Privacy and security
+
+| Concern | M0 behavior |
+|---|---|
+| Signatures | Ed25519 manifest + fragment signatures (test keys) |
+| Encryption | none in M0; documented as future work |
+| Replay protection | expiry + content ID uniqueness |
+| Duplicate content | deduped by content ID + chunk hash |
+| Content poisoning | rejected when signatures don't verify |
+| Manifest tampering | rejected when signatures don't verify |
+| Fragment corruption | rejected when SHA-256 doesn't match |
+| Resource exhaustion | per-peer payload size limits + rate caps |
+| Oversized payloads | rejected at framing layer |
+| Malicious decompression | not compressed arbitrarily; size limits enforced before parse |
+| Metadata leakage | capsules contain user-confirmed fields only; no automatic location / device IDs |
+| Private content forwarding | explicit consent required |
+| Public content authenticity | signer identity verified; factual accuracy **not implied** |
+
+---
+
+## 9. Protocol versioning
+
+- Each schema carries an explicit version field.
+- Backwards-compatible additions: bump minor, old receivers ignore
+  unknown fields.
+- Breaking changes: bump major, old receivers reject with
+  `VERSION_UNSUPPORTED`.
+- Version mismatch always produces a clear `ProtocolError` and never
+  causes a partial decode.
+
+---
+
+## 10. State machines
+
+### 10.1 Content object
+
+```mermaid
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> Extracting: AI assisted
+  Extracting --> AwaitingReview: DraftCapsule
+  AwaitingReview --> Confirmed: human_confirm
+  AwaitingReview --> ManualOnly: form (AI unavailable)
+  Confirmed --> Fragmenting
+  ManualOnly --> Fragmenting
+  Fragmenting --> Stored
+  Stored --> Advertised
+  Advertised --> PartialTransfer
+  PartialTransfer --> PartialTransfer: chunk acked
+  PartialTransfer --> Reconstructing
+  Reconstructing --> Verified
+  Verified --> Persisted
+  Persisted --> Expiring: expires_at reached
+  Persisted --> ForwardingPeer
+  Expiring --> [*]
+```
+
+### 10.2 Peer connection
+
+```mermaid
+stateDiagram-v2
+  [*] --> Discovered
+  Discovered --> CapabilitiesExchanged
+  CapabilitiesExchanged --> InventoryExchanged
+  InventoryExchanged --> Negotiating
+  Negotiating --> Transferring
+  Transferring --> Transferring: chunk ok
+  Transferring --> Disconnected: peer left
+  Disconnected --> CapabilitiesExchanged: reconnect
+  Transferring --> Idle: queue empty
+  Idle --> Discovered: peer left
+```
+
+### 10.3 Transfer session
+
+```mermaid
+stateDiagram-v2
+  [*] --> Requested
+  Requested --> Offered
+  Offered --> InFlight
+  InFlight --> InFlight: chunk ok
+  InFlight --> Paused: critical preemption
+  Paused --> InFlight: signal drained, resume
+  InFlight --> Verified: last chunk + hash check
+  InFlight --> Failed: corruption / expiry
+  Verified --> [*]
+  Failed --> [*]
+```
+
+### 10.4 Reconstruction
+
+```mermaid
+stateDiagram-v2
+  [*] --> DiscoveringSources
+  DiscoveringSources --> Partial
+  Partial --> RequestingMissing
+  RequestingMissing --> Partial: chunk ok
+  Partial --> Complete: all hashes present
+  Complete --> HashVerifying
+  HashVerifying --> Accepted: matches manifest
+  HashVerifying --> Rejected: mismatch
+  Accepted --> [*]
+  Rejected --> DiscoveringSources
+```
+
+---
+
+## 11. Unresolved protocol questions
+
+| ID | Question | Options | Recommendation | Evidence needed | Risk |
+|---|---|---|---|---|---|
+| QP-01 | Inventory encoding default | Bloom / explicit list / hybrid | **explicit list (per-object fragment IDs or dense bitmap)** — Bloom deferred | later experiment plan with Bloom-specific acceptance test | tuning conflict if Bloom is later promoted without re-test |
+| QP-02 | Chunk size | 16 KB / 64 KB / 256 KB / 1 MB | 64 KB default, configurable per modality | M0 throughput + memory tests on synthetic media | wrong default degrades phone perf |
+| QP-03 | Hop limit default | 3 / 6 / 10 | 6 | M0 + later real-device tests | too low = poor reach; too high = flooding |
+| QP-04 | Copy budget default | 2 / 4 / 8 | 8 | M0 + tuning | too high = storage exhaustion |
+| QP-05 | Signature algorithm | Ed25519 / ECDSA-P256 / RSA-PSS | Ed25519 | standard | key-management complexity |
+| QP-06 | Encryption scope | none / per-object / per-fragment | none in M0; per-object later | threat model doc | privacy gap if shipped without |
+| QP-07 | Critical preemption granularity | chunk-level / byte-level | chunk-level in M0 | M0 latency | overshoot / undershoot |
+| QP-08 | Manifest versioning on metadata edits | same / new manifest | new manifest | review of edits | churn in inventories |
+| QP-09 | Inventory Bloom parameters | m, k | **deferred** — no Bloom filter is used in M0 (DR-SPEC-03) | later experiment profiling on real corpora | none in M0; future false-positive risk if Bloom is adopted without re-test |
+| QP-10 | Conflict policy on duplicate IDs from different signers | last-writer-wins / reject / require dual-confirm | reject with `ProtocolError` | M0 test | confusion if violated |
+
+---
+
+## 12. Decision records
+
+### DR-SPEC-01 — Fixed-size chunks + SHA-256 in M0
+
+- Decision: M0 uses fixed-size chunks with SHA-256 verification.
+- Alternatives: content-defined chunking; reed-solomon; fountain;
+  RaptorQ.
+- Recommended: fixed-size SHA-256 in M0.
+- Reason: simplest deterministic verifiable boundary; no reinvented
+  capability claim.
+- Evidence required: M0 success criteria 6–8.
+- Trade-offs: less dedup across content edits than CDC.
+- Risks: re-chunking on small edits → later mitigated by CDC behind
+  the same `FragmentationStrategy`.
+- Validation: `AT-06`, `AT-09`, `AT-10` in `ACCEPTANCE_TESTS.md`.
+- Revisit condition: M5+ dedup measurements motivate CDC.
+
+### DR-SPEC-02 — Deterministic scheduler in M0
+
+- Decision: scheduler is deterministic, rule-based, auditable.
+- Alternatives: utility-based; ML-based; random with constraints.
+- Recommended: deterministic; utility-based is later experiment.
+- Reason: M0 must produce reproducible metrics.
+- Evidence: M0 success criteria 1–3, 9.
+- Trade-offs: lower adaptivity.
+- Risks: under-tuning hides a real bug behind "policy parameters."
+- Validation: H-SCHED-1..H-SCHED-4 in `EXPERIMENT_PLAN.md`.
+- Revisit condition: M5+ empirical comparison vs utility.
+
+### DR-SPEC-03 — Inventory encoding (revisited)
+
+- Decision: M0 uses a simple deterministic explicit inventory
+  representation (explicit per-object fragment IDs or a bitmap where
+  appropriate). Bloom-filter inventory encoding is a **later research
+  candidate**, not an M0 acceptance-tested default.
+- Alternatives: full ID list always; compact range / bitmap; topic
+  summaries; Bloom filter; hybrid Bloom + tail list.
+- Recommended: explicit per-object fragment representation in M0;
+  Bloom filter and any other probabilistic encoding deferred to a
+  later experiment plan that defines its own acceptance criteria.
+- Reason: M0 must produce reproducible, deterministic outcomes; no
+  Bloom-filter performance claim is made here. Benchmarking Bloom
+  parameters requires a real-corpus profile that does not exist in
+  M0.
+- Evidence: no M0 acceptance test references Bloom-filter inventory
+  encoding. The historical placeholder identifiers previously cited
+  here (`AC-INV-1`, `AC-INV-2`) referred to **low-storage** and
+  **expiry** behaviors, not to Bloom-filter validation, and have been
+  removed because they were misattributed.
+- Trade-offs: explicit lists grow with the number of owned objects and
+  are less compact for short encounters; this is acceptable for M0
+  scope and is the price of keeping the M0 claim deterministically
+  truthful.
+- Risks: later research may revisit Bloom encoding as an opt-in
+  optimization; until then no claim of compact-membership performance
+  is made.
+- Validation: any future Bloom experiment must define its own
+  acceptance test before being promoted; no Bloom acceptance test is
+  added in this pass.
+- Revisit condition: when an experiment plan is approved that scopes
+  Bloom-filter inventory to a specific milestone and defines its
+  acceptance criteria.
+
+### DR-SPEC-04 — Multi-peer completion in M0 ≠ coded reconstruction
+
+- Decision: M0 multi-peer reconstruction is missing-chunk completion;
+  no erasure / rateless coding.
+- Alternatives: include Reed-Solomon or RaptorQ in M0.
+- Recommended: ordinary chunks in M0.
+- Reason: keep M0 scope honest; do not describe unimplemented
+  behavior as implemented.
+- Evidence: M0 success criterion 5.
+- Trade-offs: lower robustness to peer disappearance than coded.
+- Risks: docs/UI may imply coding in M0.
+- Validation: README status table explicitly tags M0 as "no coding."
+- Revisit condition: post-M5 review.
