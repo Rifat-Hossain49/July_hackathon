@@ -145,6 +145,98 @@ observable, not silent.
 | Malformed payload | reject, log, surface a generic protocol error to UI |
 | Protocol-version mismatch | reject, do not partially process; surface clear error |
 
+Note on "Insufficient storage": the eviction row above describes the
+**device-side effect**, which remains later-milestone work (AT-12 is
+scoped "M0 rule, M5+ effect"). Through M1 the behaviour is
+**rejection-only** — see §3.2.
+
+### 3.1 Durable persistence [PROPOSED — M1, D-M1-06]
+
+M0 used an in-memory store with a JSON snapshot. §2 records the
+Persistence Layer as "durable (**or in-memory for M0**)"; M1 owes the
+durable half.
+
+**Format.** Canonical JSON, sorted keys, `(",", ":")` separators —
+unchanged from M0, so existing snapshots stay readable. Schema-versioned
+per `PROTOCOL_SPEC.md` §9.1.
+
+**Integrity, two levels.** Each fragment keeps its SHA-256, and the
+document gains a checksum over its canonical bytes excluding the
+checksum field itself. Fragment-level integrity localises damage; the
+document checksum detects truncation and tampering that per-fragment
+hashes alone would miss.
+
+**Atomic write, in order:**
+
+1. write to a temporary file in the destination directory;
+2. `fsync` the temporary file;
+3. `os.replace` onto the target path;
+4. **`fsync` the parent directory.**
+
+Step 4 is what M0 omitted. Without it the rename may not survive a
+crash on POSIX even though the file contents were synced.
+
+**Prior snapshot retained.** The previous document is kept until the new
+one is durably written, which is what makes rollback possible.
+
+**Locking.** M1 assumes **single-writer, multi-reader** per store path,
+enforced by an advisory lock file. Multi-process writing is out of scope
+until M2 defines it.
+
+**Recovery matrix:**
+
+| Condition | Behaviour |
+|---|---|
+| Truncated temporary file | Ignored and removed; last durable snapshot loads |
+| Document checksum mismatch | File **quarantined** — renamed aside, never deleted — and the last good snapshot loads |
+| Single fragment fails SHA-256 | That fragment is dropped; every intact fragment is preserved; the loss is logged |
+| Snapshot version older than current | Migrated forward on read (§3.3) |
+| Snapshot version newer than current | Refused with `VERSION_UNSUPPORTED`; nothing is modified |
+
+A verified fragment is never lost by any recovery path except when its
+own bytes are corrupt.
+
+### 3.2 Storage pressure [PROPOSED — M1, D-M1-04]
+
+M1 is **rejection-only**. A write that does not fit the byte budget is
+refused with `OUT_OF_BUDGET` (retryable) before any mutation; existing
+fragments, byte accounting and persisted state are unchanged. **No
+eviction is implemented in M1.**
+
+Recorded for the M5+ eviction design, not implemented now: human-confirmed
+capsules, manifests for objects holding any verified fragment, and the
+original source representation must never be evicted.
+
+### 3.3 Schema migration [PROPOSED — M1, D-M1-06]
+
+Migrations are pure functions `vN -> vN+1`, applied in order, each
+independently testable. Migration is deterministic: identical input
+bytes produce identical migrated bytes.
+
+The pre-migration document is retained until the migrated document is
+durably written. If any step or the final write fails, the original
+remains readable and byte-identical — no partially migrated state is
+ever visible. Re-opening an already-current store performs no migration.
+
+### 3.4 Core and adapter boundary [PROPOSED — M1, D-M1-08]
+
+The deterministic core stays **Python and standard-library only** for
+M1. A language-neutral protocol specification, canonical serialization
+rules, golden vectors and conformance tests accompany it so a later port
+can be validated against the same evidence. **No Kotlin port in M1.**
+
+```
+shongket_core/     platform-neutral: errors, schema, codec, validate,
+                   policy, media, store, persist, migrate, evidence
+adapters/
+  simulator/       M0-compatible peers, encounters, scenarios, CLI
+  platform/        RESERVED for M3+; no M1 content
+```
+
+`shongket_core` must never import from `adapters/`, and must not depend
+on Android or any non-standard-library package. The rule is enforced by
+a conformance test rather than convention.
+
 ---
 
 ## 4. Architecture diagrams

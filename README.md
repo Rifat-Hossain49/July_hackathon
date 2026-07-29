@@ -252,8 +252,11 @@ preemption, manual-form fallback for AI), and what remains an
 
 See [MILESTONES.md](./MILESTONES.md). Milestones:
 
-- M0: executable protocol simulator.
-- M1: production-quality deterministic core.
+- M0: executable protocol simulator. **Implemented.**
+- M1: production-quality deterministic core. **Scope frozen and design
+  decisions accepted** — see
+  [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md). Still `PROPOSED`; no M1
+  code exists and implementation is not authorised.
 - M2: local two-process transfer.
 - M3: Android direct peer transport (gated by the transport smoke-test gate).
 - M4: progressive media transfer on real devices.

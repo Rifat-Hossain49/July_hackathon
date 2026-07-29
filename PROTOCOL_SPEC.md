@@ -137,10 +137,51 @@ validation.** Limits are targets; final values are decided at M1.
 }
 ```
 
+#### Privacy and consent fields [PROPOSED — M1, D-M1-01 / D-M1-02]
+
+M0 used provisional simulator-local names. M1 freezes them into this
+schema:
+
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `visibility` | `"public" \| "private"` | `"public"` when absent | Object privacy class |
+| `forwarding_consent` | boolean, strict | absent = no consent | Explicit permission to forward a private object |
+
+- **`visibility`** is a string enum. From v1.0 onward a payload carrying
+  any other value is rejected with `SCHEMA_INVALID`; an unknown value is
+  never silently treated as public. Legacy boolean `private` migrates as
+  `true → "private"`, `false` or absent `→ "public"`.
+- **`forwarding_consent`** is consulted only when
+  `visibility == "private"`. Only the literal boolean `true` grants
+  consent. Absent or `false` means no consent; a truthy string or
+  integer is **malformed**, not consent, and is rejected with
+  `CONSENT_REQUIRED`. A consent decision recorded in an ambiguous type
+  is not evidence that a human consented.
+- Neither field affects `object_id`, which remains SHA-256 of the
+  original source bytes.
+
+#### Forwarding state [PROPOSED — M1, D-M1-additional-3]
+
+`hop_limit` and `copy_budget` were carried and type-validated in M0 but
+never enforced, and no field supplied the hop count the §6.0 policy
+requires. M1 adds two **forwarding-state** fields:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `hop_count` | integer ≥ 0 | Hops this copy has already travelled |
+| `remaining_copy_budget` | integer ≥ 0 | Copies this holder may still make |
+
+These are **mutable transport state, not content identity**. They are
+excluded from the canonical bytes over which `object_id` and
+`manifest_id` are computed, so forwarding an object never changes its
+identity, never invalidates a verified fragment, and never causes
+re-fragmentation. Two copies of the same object with different
+`hop_count` values remain the same object.
+
 - Purpose: authoritative description of what an object contains.
 - Each representation's `hashes` is the list of SHA-256 hashes of its
   fixed-size chunks, in order.
-- Size limit: manifest ≤ 32 KB serialized.
+- Size limit: manifest ≤ 32 KB serialized (frozen, §9.3).
 - Validation: `object_id` must equal SHA-256 of canonical
   serialization; signatures valid; `expires_at` parseable; per-field
   limits respected.
@@ -257,6 +298,40 @@ requests a specific representation without the full object listing.
   "detail": "short string"
 }
 ```
+
+#### Canonical error taxonomy [PROPOSED — M1, D-M1-07]
+
+M0 raised five codes absent from the enum above, while seven enum
+members were never reachable. M1 adopts a **single canonical enum**
+shared by `ProtocolError`, `FragmentAck`, evidence events and recovery
+records, with every code classified **terminal** or **retryable**.
+
+*Terminal* — re-offering byte-identical input must fail identically.
+*Retryable* — the same input may succeed once external state changes.
+No error may carry both classifications.
+
+| Code | Class | Raised when |
+|---|---|---|
+| `SCHEMA_INVALID` | terminal | Structure, type or enum violation |
+| `PAYLOAD_TOO_LARGE` | terminal | Exceeds a frozen §9.3 limit |
+| `VERSION_UNSUPPORTED` | terminal | Unknown major, or unregistered minor |
+| `SIGNATURE_INVALID` | terminal | Signature verification failed |
+| `EXPIRED` | terminal | `now_unix >= expires_at_unix` |
+| `HOP_LIMIT` | terminal | `hop_count + 1 > hop_limit` |
+| `COPY_BUDGET` | terminal | `remaining_copy_budget` exhausted |
+| `CONSENT_REQUIRED` | terminal | Private object without explicit consent |
+| `HUMAN_CONFIRMATION_MISSING` | terminal | Capsule not human-confirmed |
+| `PEER_REFUSES_PRIVATE` | terminal | Target peer declares `public_only` |
+| `UNKNOWN_OBJECT` | retryable | Referent not held yet; may arrive later |
+| `OUT_OF_BUDGET` | retryable | No storage capacity now; may free later |
+| `SNAPSHOT_INVALID` | retryable | Malformed persisted document; last good recoverable |
+| `SNAPSHOT_CORRUPTED` | retryable | Integrity failure; recoverable per `SYSTEM_ARCHITECTURE.md` §3.1 |
+| `INTERNAL` | terminal | Defect; must never result from valid input |
+
+`EXPIRED`, `HOP_LIMIT`, `COPY_BUDGET` and `PEER_REFUSES_PRIVATE` are
+forwarding-admission refusals: they are decided before an object enters
+the queue, so the code is recorded as evidence rather than returned to a
+peer that was never contacted.
 
 ---
 
@@ -391,6 +466,38 @@ M0 policy (deterministic and auditable):
 - Order by the seven factors in DR-ARCH-02 above.
 - No utility-based scoring in M0.
 
+#### M1 admission rule [PROPOSED — M1]
+
+M0 implemented only the expiry clause. M1 completes the rule. An object
+is admitted to the forwarding queue **iff all** of the following hold,
+evaluated before queueing and before any transmission:
+
+1. `expires_at_unix` is null or `now_unix < expires_at_unix`
+   — else `EXPIRED`;
+2. `hop_count + 1 <= hop_limit` — else `HOP_LIMIT`;
+3. `remaining_copy_budget >= 1` — else `COPY_BUDGET`;
+4. the capsule is human-confirmed — else `HUMAN_CONFIRMATION_MISSING`;
+5. `visibility == "public"`, or `forwarding_consent is true`
+   — else `CONSENT_REQUIRED`;
+6. the target peer does not declare `public_only`, or
+   `visibility == "public"` — else `PEER_REFUSES_PRIVATE`.
+
+Each refusal is deterministic, emits evidence naming the failing clause,
+and leaves the scheduler queue, sender transmission state and receiver
+storage unchanged.
+
+#### `PeerCapabilities.public_only` [PROPOSED — M1, D-M1-03]
+
+`public_only: true` declares that the peer deals in **public content
+only**: it may receive, request, advertise and forward public objects,
+and none of those operations for private ones.
+
+**Consent does not override `public_only`.** `forwarding_consent`
+authorises forwarding in general; it does not overrule a peer's declared
+refusal to handle private content. The refusal is evaluated at clause 6
+above — before queueing and before transmission — and produces
+`PEER_REFUSES_PRIVATE`.
+
 Later experiments (M5+):
 
 - Utility-based forwarding (utility score = life-safety ×
@@ -435,6 +542,71 @@ locked before the Milestone 3 smoke-test gate.
   `VERSION_UNSUPPORTED`.
 - Version mismatch always produces a clear `ProtocolError` and never
   causes a partial decode.
+
+### 9.1 Version string format [PROPOSED — M1, D-M1-05]
+
+M0 emitted flat identifiers (`shongket.capsule.v1`) which cannot express
+the minor bump the rules above require. M1 adopts:
+
+```
+shongket.<object>.v<MAJOR>.<MINOR>
+```
+
+- **Legacy alias.** A bare `...v1` is read as `...v1.0`. M0-produced
+  payloads and snapshots therefore remain valid without rewriting.
+- **Unknown major** → reject with `VERSION_UNSUPPORTED`. The version is
+  resolved *before* structural parsing, so a payload that is both an
+  unknown major and structurally malformed reports
+  `VERSION_UNSUPPORTED`, never `SCHEMA_INVALID`, and no partial decode
+  occurs.
+- **Unknown minor** → accepted only when the receiver holds an
+  explicitly registered compatibility entry for that
+  `(object, major, minor)`. Compatibility is declared, never inferred.
+  An unregistered minor is refused rather than optimistically parsed.
+- **Additive minor changes** may only add optional fields. Unknown
+  fields on a registered-compatible minor are ignored, not persisted and
+  not echoed back.
+- **Deprecation.** A major remains supported for at least one subsequent
+  major release, and its removal is announced in this document before it
+  takes effect.
+- **Migration direction.** Persisted data migrates forward on read. Wire
+  payloads are never migrated: they are accepted or rejected.
+
+A schema registry maps `(object, major)` to its validator and is the
+single source of truth for supported versions.
+
+### 9.2 Canonical timestamps [PROPOSED — M1, D-M1-additional-1]
+
+For v1.0 the canonical time fields are `created_at_unix` and
+`expires_at_unix`, both **integer seconds** since the Unix epoch, with
+`expires_at_unix` nullable.
+
+This supersedes the earlier RFC3339 string form shown in §3.2. Integer
+seconds are canonical because they admit exactly one serialization,
+which RFC3339 does not: timezone offsets, fractional-second precision
+and letter casing all produce competing encodings of the same instant
+and would break byte-stable serialization (AT-22).
+
+Expiry comparison is inclusive: an object is expired when
+`now_unix >= expires_at_unix`, matching the `Persisted --> Expiring:
+expires_at reached` transition in §10.
+
+### 9.3 Frozen serialized-byte limits [PROPOSED — M1]
+
+§3 previously recorded that "limits are targets; final values are
+decided at M1". They are now frozen at their M0-verified values:
+
+| Object | Limit (bytes) | Applies to |
+|---|---|---|
+| SemanticCapsule | 4096 | canonical serialized payload |
+| ContentManifest | 32768 | canonical serialized payload |
+| FragmentDescriptor | 512 | canonical serialized **descriptor** |
+| Transport frame | 1048576 | raw frame bytes (`max_payload`) |
+
+The fragment limit bounds the descriptor, never the chunk payload it
+describes; payload bytes are bounded by the transport frame limit and by
+the storage budget. Exceeding any limit raises `PAYLOAD_TOO_LARGE`
+before parsing, per §8.
 
 ---
 

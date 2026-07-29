@@ -110,12 +110,27 @@ interfaces, but does not add Android transport or coded delivery.
 - **Estimated complexity:** M.
 - **Primary risks:** scope creep; premature optimization.
 - **Implementation approval status:** PROPOSED.
-- **Scope freeze:** a proposed scope, architecture, acceptance
-  catalogue (AT-22 … AT-37) and implementation slices are drafted in
-  [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md), status
-  READY_FOR_MILESTONE_1_APPROVAL pending eight REQUIRES_USER_DECISION
-  items. Those tests are **not** yet part of `ACCEPTANCE_TESTS.md` and
-  no implementation is authorised.
+- **Scope freeze:** scope, architecture, acceptance catalogue and
+  implementation slices are recorded in
+  [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md). All thirteen design
+  decisions (D-M1-01 … D-M1-08 and D-M1-A1 … D-M1-A5) are **ACCEPTED**
+  and encoded in `PROTOCOL_SPEC.md`, `SYSTEM_ARCHITECTURE.md` and
+  `ACCEPTANCE_TESTS.md`. AT-22 … AT-37 are the M1-blocking catalogue.
+- **Accepted M1 design basis:** `visibility` enum and strict-boolean
+  `forwarding_consent`; `public_only` peers handle public content only
+  and consent does not override it; rejection-only under storage
+  pressure with no eviction; `shongket.<object>.v<major>.<minor>`
+  versioning with `…v1` as a legacy alias; durable checksummed
+  persistence with atomic replace, parent-directory fsync and
+  deterministic migration/rollback; one canonical terminal/retryable
+  error enum; core stays Python with golden vectors and conformance
+  tests; integer-second timestamps; frozen serialized-byte limits;
+  `hop_limit` / `copy_budget` enforcement via forwarding-state
+  `hop_count` and `remaining_copy_budget` that never alter `object_id`.
+- **Approval gate:** the design is settled, but implementation is **not
+  authorised**. This milestone stays PROPOSED and
+  `IMPLEMENTATION_STATUS` stays `APPROVED_FOR_MILESTONE_0` until the
+  user changes both. No M1 code exists and no M1 result is recorded.
 
 ---
 

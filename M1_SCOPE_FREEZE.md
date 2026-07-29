@@ -1,13 +1,16 @@
-# Shongket — Milestone 1 Scope Freeze (PROPOSED)
+# Shongket — Milestone 1 Scope Freeze
 
-**Status:** PROPOSED — REQUIRES_USER_DECISION.
+**Status:** Design decisions ACCEPTED. Milestone status remains
+**PROPOSED**. Implementation is **not** authorised.
 
-This document prepares Milestone 1 for an approval decision. It does not
-approve anything. `PRODUCT_DECISIONS.md` remains the canonical status
-source and still reads `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_0`.
+All thirteen decisions in §5 are accepted and encoded into the canonical
+documents. Acceptance settles *what M1 will be*; it does not authorise
+writing it. `PRODUCT_DECISIONS.md` remains the canonical status source
+and still reads `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_0`.
 
 No implementation code may be written for Milestone 1 until that value
-changes through a separate, explicit approval.
+changes through a separate, explicit approval. Nothing in this document
+records an M1 result, because no M1 code exists.
 
 Baseline this freeze was written against:
 
@@ -72,7 +75,27 @@ migration, or test coverage.
 
 ## 4. Contradictions and missing definitions
 
-These are **reported, not resolved**. Each needs a decision in §5.
+All nine are now **RECONCILED** by the accepted decisions. The findings
+are retained below unchanged, as the record of what M0 actually left
+open. Resolutions:
+
+| ID | Finding | Resolution | Encoded in |
+|---|---|---|---|
+| C-1 | Flat `…v1` cannot express the minor-bump rule | D-M1-05: `v<major>.<minor>`, `…v1` aliases `…v1.0` | `PROTOCOL_SPEC.md` §9.1 |
+| C-2 | Spec says RFC3339 strings; code uses `*_unix` integers | D-M1-A1: integer seconds are canonical for v1.0 | `PROTOCOL_SPEC.md` §9.2 |
+| C-3 | `hop_limit` / `copy_budget` declared, never enforced; no `hop_count` | D-M1-A3: enforce both; add forwarding-state `hop_count` and `remaining_copy_budget`, excluded from identity | `PROTOCOL_SPEC.md` §3.2, §6 |
+| C-4 | 7 canonical codes unreachable; 5 raised codes not canonical | D-M1-07: single canonical enum, all codes classified | `PROTOCOL_SPEC.md` §3.8 |
+| C-5 | No directory fsync, no document checksum, no lock, no migration | D-M1-06: full durable model | `SYSTEM_ARCHITECTURE.md` §3.1, §3.3 |
+| C-6 | AT-12 eviction split unresolved | D-M1-04: rejection-only at M1; eviction stays M5+ | `SYSTEM_ARCHITECTURE.md` §3.2 |
+| C-7 | Privacy field names provisional | D-M1-01 / D-M1-02: `visibility` enum + strict boolean consent | `PROTOCOL_SPEC.md` §3.2 |
+| C-8 | `MEDIA_PIPELINE.md` §6 M1 wording references `android.media` | Read as interface shaping only; D-M1-08 forbids any Android dependency in M1 | `SYSTEM_ARCHITECTURE.md` §3.4 |
+| C-9 | No coverage for versioning, migration, rollback, retryability | AT-22 … AT-37 adopted | `ACCEPTANCE_TESTS.md` |
+
+C-8 note: `MEDIA_PIPELINE.md` §6 is left as written. Its M1 sentence
+describes *neutrally referenced* APIs and makes no APK-level commitment,
+which is consistent with D-M1-08 forbidding any Android dependency in
+the M1 core. Should that sentence later be read as authorising an
+Android dependency, D-M1-08 governs.
 
 ### C-1 — Schema version format cannot express the versioning rule
 
@@ -150,14 +173,17 @@ terminal error classification, or concurrency. All are new at M1.
 
 ---
 
-## 5. Decisions requiring user approval
+## 5. Accepted decisions
 
-Each is **REQUIRES_USER_DECISION**. Recommendations are given with
-trade-offs; none is adopted by this document.
+All decisions below are **ACCEPTED**. Each recommendation was adopted as
+proposed; the rationale and rejected alternatives are retained so the
+reasoning stays auditable. Where a decision is now encoded in a
+canonical document, the location is named.
 
 ### D-M1-01 — Privacy classification field
 
-**Proposed:** freeze `visibility` as a required manifest enum with
+**ACCEPTED** — encoded in `PROTOCOL_SPEC.md` §3.2. Freeze `visibility`
+as a required manifest enum with
 values `"public" | "private"`, defaulting to `"public"` when absent, and
 retire the provisional boolean `private`.
 
@@ -174,7 +200,8 @@ retire the provisional boolean `private`.
 
 ### D-M1-02 — Forwarding consent field
 
-**Proposed:** freeze `forwarding_consent` as a **strictly boolean**
+**ACCEPTED** — encoded in `PROTOCOL_SPEC.md` §3.2. Freeze
+`forwarding_consent` as a **strictly boolean**
 manifest field, absent-or-`false` meaning "no consent", with only
 literal `true` granting it.
 
@@ -189,24 +216,30 @@ literal `true` granting it.
 
 ### D-M1-03 — `PeerCapabilities.public_only`
 
-**Proposed:** `public_only: true` means **this peer declines to receive
-or relay private content**. It therefore blocks *sending to* and
-*forwarding through* that peer; it does not restrict what the peer may
-request, advertise, or store locally.
+**ACCEPTED:** `public_only: true` means the peer deals in **public
+content only**. It may receive, request, advertise and forward public
+content, and none of those operations for private content.
 
-- Enforcement point: sender-side, at queue admission, before
-  transmission — the same boundary as expiry and consent.
+- Accepted scope is **broader than originally proposed**. The draft
+  restricted only *sending to* and *forwarding through* such a peer,
+  leaving request, advertise and receive unconstrained; the accepted
+  reading covers all four operations. A peer that declares it handles
+  only public content should not be asked to request or advertise
+  private content either.
+- Enforcement point: before queueing and before transmission — the same
+  boundary as expiry and consent, so nothing is scheduled or sent.
 - Interaction: a private object with valid consent is still **not** sent
   to a `public_only` peer. Consent authorises forwarding in general; it
   does not override a peer's declared refusal.
-- Evidence: `FORWARD_REFUSED` with `reason: "peer_public_only"`.
-- Trade-off: a stricter reading (also refusing *receipt*) would need a
-  receiver-side gate and a new ack status; deferred as it adds wire
-  behaviour M1 should not introduce.
+- Evidence: deterministic refusal naming the failing clause, error code
+  `PEER_REFUSES_PRIVATE`.
+- Encoded in: `PROTOCOL_SPEC.md` §6 (admission clause 6 and the
+  `public_only` subsection).
 
 ### D-M1-04 — Storage pressure and eviction
 
-**Proposed:** M1 **continues rejection-only** behaviour. No eviction.
+**ACCEPTED** — encoded in `SYSTEM_ARCHITECTURE.md` §3.2. M1 **continues
+rejection-only** behaviour. No eviction.
 
 - Rationale: AT-12 itself scopes the effect to M5+;
   `SYSTEM_ARCHITECTURE.md` assigns eviction to the device path; and
@@ -225,29 +258,41 @@ request, advertise, or store locally.
 
 ### D-M1-05 — Protocol versioning
 
-**Proposed:** move to `shongket.<object>.v<MAJOR>.<MINOR>` and freeze
-these rules:
+**ACCEPTED:** move to `shongket.<object>.v<MAJOR>.<MINOR>` with these
+rules:
 
 - **Major** = breaking. A receiver seeing an unknown major rejects with
   `VERSION_UNSUPPORTED` and performs **no partial decode**.
-- **Minor** = additive only. A receiver seeing a known major with a
-  *higher* minor accepts and **ignores unknown fields**. A lower minor
-  is always accepted.
-- A schema registry maps `(object, major)` to a validator; the registry
-  is the single source of supported versions.
+- **Minor** = additive only, and **compatibility must be explicitly
+  registered**. A higher minor is accepted only when the receiver holds
+  a registered compatibility entry for that `(object, major, minor)`;
+  an unregistered minor is refused with `VERSION_UNSUPPORTED`. A lower
+  minor is always accepted.
+- Accepted rule is **stricter than originally proposed**. The draft
+  accepted any higher minor optimistically and ignored unknown fields.
+  The accepted rule requires compatibility to be *declared, never
+  inferred*, so a receiver cannot silently accept a payload shaped by a
+  future release it knows nothing about.
+- On an accepted minor, unknown fields are ignored, not persisted and
+  not echoed back.
+- A schema registry maps `(object, major)` to a validator and holds the
+  registered minor-compatibility entries; it is the single source of
+  supported versions.
 - Deprecation: a major stays supported for at least one subsequent major
   release and is announced in `PROTOCOL_SPEC.md` before removal.
 - Migration: persisted data migrates forward on read; wire payloads are
   never migrated, only accepted or rejected.
-- Compatibility: existing `…v1` strings are accepted as an alias for
-  `…v1.0` so no M0 fixture breaks.
-- Trade-off: string parsing cost and a longer field. The alternative —
-  keeping flat `v1` and treating every change as breaking — is simpler
-  but makes §9's additive path impossible, contradicting the spec.
+- Compatibility: existing `…v1` strings are read as `…v1.0` so no M0
+  fixture breaks.
+- Trade-off accepted: stricter minor handling means a registry entry
+  must be added before a new minor can be received, which is deliberate
+  — it makes compatibility an explicit act rather than an accident.
+- Encoded in: `PROTOCOL_SPEC.md` §9.1.
 
 ### D-M1-06 — Persistence
 
-**Proposed** durable model:
+**ACCEPTED** — encoded in `SYSTEM_ARCHITECTURE.md` §3.1 and §3.3.
+Durable model:
 
 - **Format:** canonical JSON document, sorted keys, `(",", ":")`
   separators — unchanged from M0 so existing snapshots stay readable.
@@ -276,8 +321,10 @@ these rules:
 
 ### D-M1-07 — Error taxonomy
 
-**Proposed:** one canonical enum, every code classified as **terminal**
-or **retryable**, with the M0 codes folded in.
+**ACCEPTED** — encoded in `PROTOCOL_SPEC.md` §3.8. One canonical enum
+shared by `ProtocolError`, acknowledgements, events and recovery
+evidence, every code classified as **terminal** or **retryable**, with
+the M0 codes folded in.
 
 | Code | Class | Meaning |
 |---|---|---|
@@ -307,8 +354,10 @@ or **retryable**, with the M0 codes folded in.
 
 ### D-M1-08 — Core language and package boundary
 
-**Proposed:** M1 **stays Python**, adds a language-neutral conformance
-specification plus golden test vectors, and defers any port to M3.
+**ACCEPTED** — encoded in `SYSTEM_ARCHITECTURE.md` §3.4. M1 **stays
+Python**, adds a language-neutral protocol specification, canonical
+serialization rules, golden vectors and conformance tests, and does not
+port the core to Kotlin in M1.
 
 - No canonical document requires a language at M1. M2 (two OS processes
   on a developer machine) is satisfied by Python. Only M3 introduces
@@ -834,22 +883,25 @@ branch; `main` retains the complete, merged M0 evidence throughout.
 
 Milestone 1 implementation may begin only when **all** of these are true:
 
-- [ ] D-M1-01 privacy classification field decided
-- [ ] D-M1-02 forwarding consent field decided
-- [ ] D-M1-03 `public_only` semantics decided
-- [ ] D-M1-04 storage pressure / eviction decided
-- [ ] D-M1-05 protocol versioning decided
-- [ ] D-M1-06 persistence model decided
-- [ ] D-M1-07 error taxonomy decided
-- [ ] D-M1-08 core language and package boundary decided
-- [ ] C-2 timestamp naming reconciled in `PROTOCOL_SPEC.md`
-- [ ] C-3 hop/copy enforcement confirmed as in-scope for M1
-- [ ] C-8 `MEDIA_PIPELINE.md` M1 wording confirmed as interface-only
-- [ ] AT-22 … AT-37 approved and added to `ACCEPTANCE_TESTS.md`
-- [ ] `PROTOCOL_SPEC.md` §3 size limits frozen (spec says "decided at M1")
-- [ ] `MILESTONES.md` M1 status changed by the user
-- [ ] `PRODUCT_DECISIONS.md` `IMPLEMENTATION_STATUS` changed by the user
-      to `APPROVED_FOR_MILESTONE_1`
+- [x] D-M1-01 privacy classification field decided
+- [x] D-M1-02 forwarding consent field decided
+- [x] D-M1-03 `public_only` semantics decided
+- [x] D-M1-04 storage pressure / eviction decided
+- [x] D-M1-05 protocol versioning decided
+- [x] D-M1-06 persistence model decided
+- [x] D-M1-07 error taxonomy decided
+- [x] D-M1-08 core language and package boundary decided
+- [x] C-2 timestamp naming reconciled in `PROTOCOL_SPEC.md` §9.2
+- [x] C-3 hop/copy enforcement confirmed as in-scope for M1
+- [x] C-8 `MEDIA_PIPELINE.md` M1 wording confirmed as interface-only
+- [x] AT-22 … AT-37 approved and added to `ACCEPTANCE_TESTS.md`
+- [x] `PROTOCOL_SPEC.md` size limits frozen (§9.3)
+- [ ] **`MILESTONES.md` M1 status changed by the user** — still PROPOSED
+- [ ] **`PRODUCT_DECISIONS.md` `IMPLEMENTATION_STATUS` changed by the**
+      **user to `APPROVED_FOR_MILESTONE_1`** — still
+      `APPROVED_FOR_MILESTONE_0`
 
-Until the last two are done by the user, M1 remains unimplementable and
-this document remains PROPOSED.
+Thirteen of fifteen items are complete. The two outstanding items are
+deliberately **not** actions this document or any agent may take: they
+are the user's approval acts. Until both are done, Milestone 1 remains
+unimplementable, and no M1 code may be written.
