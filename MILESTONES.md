@@ -1,16 +1,19 @@
 # Shongket — Milestones (Draft 1)
 
-Planning-only. Implementation approval status is **tracked per
-milestone**. Only M0 may later be approved first, and M0 is **not**
-approved in this pass.
+Implementation approval status is **tracked per milestone**. M0 was
+approved first, as this plan requires; every later milestone remains
+unapproved.
 
-Per `PRODUCT_DECISIONS.md`: `IMPLEMENTATION_STATUS: NOT_APPROVED`.
+Per `PRODUCT_DECISIONS.md`: `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_0`.
+
+Approval for Milestone 0 does not authorise Milestone 1 or later work.
 
 ---
 
 ## Milestone 0 — Executable protocol simulator
 
-**Status:** PROPOSED.
+**Status:** APPROVED_FOR_MILESTONE_0. Simulator implementation and
+automated acceptance evidence are COMPLETE.
 
 Scope:
 
@@ -63,7 +66,15 @@ This milestone does not implement coded reconstruction.
   Draft 1 without breaking planning artifacts.
 - **Estimated complexity:** S (small).
 - **Primary risks:** overconfidence in simulation; missing edge cases.
-- **Implementation approval status:** PROPOSED.
+- **Implementation approval status:** `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_0`.
+- **M0 simulator implementation:** COMPLETE (`app/simulator/`).
+- **M0 automated acceptance evidence:** COMPLETE — 18 of 18 M0-blocking
+  acceptance IDs mapped to test modules; 125 automated tests pass, 0
+  failed, 0 skipped. See the evidence table in `ACCEPTANCE_TESTS.md` and
+  the measured results in `EXPERIMENT_PLAN.md`.
+- **Real-device implementation:** NOT STARTED — a later milestone. M0
+  demonstrates simulated protocol behaviour between in-process peers
+  only, and asserts nothing about radios, Android or field performance.
 
 ---
 

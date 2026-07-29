@@ -132,42 +132,106 @@ guaranteed multimedia rates.
 
 ---
 
-## 5. Result-table templates (empty, to be filled by M0)
+## 5. Result tables (filled by the M0 harness)
 
-### 5.1 End-to-end timing
+`[SIMULATION]` — every value below is produced by the M0 simulator in
+`app/simulator/`, per DR-EXP-01 (tables are filled by harness logs
+only). Each scenario was run twice and its serialized metrics compared
+byte-for-byte; only reproducible values are recorded.
+
+**Time unit.** M0 timing is measured in **deterministic simulator
+ticks**, not milliseconds or seconds. The simulator has no wall-clock
+time base, so no seconds-denominated figure can be produced here. The
+§3.6 measurement caveat applies to every row: these are simulator
+outputs, not real wireless, battery or device measurements.
+
+Cells reading `UNMEASURED — requires later device/runtime milestone`
+have no M0 value and are deliberately not filled with zero.
+
+### 5.1 End-to-end timing (ticks)
 
 | Scenario | TTFA | TTFT | TTP | TTS | TTO |
 |---|---|---|---|---|---|
-| 1 sender, 1 receiver, no contention |  |  |  |  |  |
-| 1 sender, 2 receivers |  |  |  |  |  |
-| Critical preempts bulk |  |  |  |  |  |
-| Multi-peer reconstruction |  |  |  |  |  |
-| Restart-survives |  |  |  |  |  |
+| 1 sender, 1 receiver, no contention | 4 | 8 | 10 | 14 | 22 |
+| 1 sender, 2 receivers | UNMEASURED — scenario not implemented in the M0 harness | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED |
+| Critical preempts bulk | 8 | 4 | 10 | 20 | 46 |
+| Multi-peer reconstruction | n/a — scenario carries no capsule | n/a | n/a | n/a | 21 |
+| Restart-survives | 4 | 8 | 12 | 27 | 53 |
+
+Notes. Row 1 is the CLI scenario (`--seed 42 --chunk-size 65536`, 8
+chunks). Rows 3–5 use `--chunk-size 16384` (21 chunks), so their tick
+values are not comparable with row 1. In "Critical preempts bulk" the
+capsule is injected after two bulk chunks by design, which is why TTFA
+(8) follows TTFT (4) in that row only. "Multi-peer reconstruction"
+transfers one representation between peers and schedules no capsule, so
+the capsule- and layer-timing columns do not apply.
 
 ### 5.2 Robustness
 
 | Scenario | Reconstruction success rate | Duplicate avoided (bytes) | Corrupted rejected (count) |
 |---|---|---|---|
-| Duplicate injection |  |  |  |
-| Corruption injection |  |  |  |
-| Peer departure |  |  |  |
-| Short encounters |  |  |  |
+| Duplicate injection | 1/1 representations | 200000 | 0 |
+| Corruption injection | 1/1 representations (13/13 chunks stored after rejections) | 0 | 3 |
+| Peer departure | 4/4 representations | 0 | 0 |
+| Short encounters | UNMEASURED — scenario not implemented in the M0 harness | UNMEASURED | UNMEASURED |
+
+Notes. "Duplicate injection" offers all 13 chunks twice: the second pass
+stores nothing and avoids 200000 bytes. "Corruption injection" rejects 3
+tampered chunks on hash mismatch and then accepts all 13 valid chunks,
+confirming corruption does not halt the transfer (AT-10); its
+completion is verified from store counters. "Peer departure" interrupts
+after 7 of 21 chunks and completes from a second peer.
 
 ### 5.3 Scheduler
 
-| Scenario | Preemption latency (ms) | Useful bytes per encounter | Overhead % |
+| Scenario | Preemption latency | Useful bytes per encounter | Overhead % |
 |---|---|---|---|
-| Mixed priorities |  |  |  |
-| Critical + bulk |  |  |  |
-| Expired content present |  |  |  |
+| Mixed priorities | n/a — no preemption in this scenario | 322880 | 0.7988 |
+| Critical + bulk | 1 tick (ms: UNMEASURED — requires later device/runtime milestone) | 322880 | 0.2758 |
+| Expired content present | n/a — nothing scheduled | 0 (1 expiry refusal, 0 bytes forwarded) | n/a |
+
+Notes. Overhead % is signal-plane bytes over total bytes transferred,
+computed from the serialized metrics. The canonical column header asks
+for milliseconds; M0 can only produce ticks, so the millisecond value is
+marked unmeasured rather than converted.
 
 ### 5.4 Inventory
 
 | Scenario | Bloom FPR | False negatives |
 |---|---|---|
-| 100 objects / peer |  |  |
-| 1000 objects / peer |  |  |
-| 10000 objects / peer |  |  |
+| 100 objects / peer | UNMEASURED — Bloom-filter inventory is not implemented in M0 (QP-01: explicit list; DR-SPEC-03) | UNMEASURED |
+| 1000 objects / peer | UNMEASURED — as above | UNMEASURED |
+| 10000 objects / peer | UNMEASURED — as above | UNMEASURED |
+
+### 5.5 Harness run evidence
+
+| Item | Value |
+|---|---|
+| Tests collected | 125 |
+| Tests passed | 125 |
+| Tests failed | 0 |
+| Tests skipped | 0 |
+| M0-blocking acceptance IDs covered | 18 of 18 |
+| CLI event-log SHA-256 | `D5AC79B18B6B3329A2788CDCCF45A92D10534639B20079039D1902D7F82CB4DF` |
+| CLI event-log size | 3114 bytes |
+| Serialized metrics SHA-256 | `E10E11D4AEF1788E92CC907060C48CA06A3E76913C2BDD58ABF43858B8891B28` |
+| Serialized metrics size | 1580 bytes |
+| Multi-peer contributing peer IDs | `peer-A`, `peer-B` |
+| Runtime dependencies | Python standard library only |
+
+Both hashes were produced by running the same command twice and
+comparing the output byte-for-byte.
+
+### 5.6 Metrics not produced by M0
+
+Four metrics from §4 are deliberately absent rather than estimated:
+
+| Metric | Reason |
+|---|---|
+| Throughput (local bytes/second) | No wall-clock time base in the simulator. Raw inputs (bytes transferred, tick counts) are reported instead. |
+| Peak memory (MB) | Requires process instrumentation; measured from M3+. |
+| Energy use (Joules) | Requires device measurement; measured from M3+. |
+| AI inference latency (ms) | M0 uses the manual form and runs no model (AT-15); measured only when M6 is enabled, as §4 already states. |
 
 ---
 

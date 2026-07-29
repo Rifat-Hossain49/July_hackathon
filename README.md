@@ -8,18 +8,27 @@ followed by progressive previews and, eventually, original-quality
 media completed from verified chunks collected across multiple peer
 encounters.
 
-**Status:** Planning-only. No implementation code is in this
-repository. Pre-implementation decisions live in `PRODUCT_DECISIONS.md`
-(currently `IMPLEMENTATION_STATUS: NOT_APPROVED`); implementation work
-will not begin until that status changes.
+**Status:** The Milestone 0 deterministic protocol simulator is
+implemented in `app/simulator/`. Decisions live in
+`PRODUCT_DECISIONS.md`, which is the canonical status source and
+currently reads `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_0`.
+Milestone 1 and later work remains unapproved and unimplemented.
+
+**This repository contains a protocol simulator, not a deployable
+mobile application.** There is no Android app, no radio transport and
+no offline AI inference. See section 9 for the full boundary between
+what is done and what is not.
 
 > **Public tag discipline:** throughout this document, every
 > capability is labelled as
 
-> [IMPLEMENTED] / [PLANNED].
-> **M0 is PLANNED, not SIMULATED, until the harness has actually run.**
-> **Nothing in this README is a claim about measurements;**
-> **measurements come from real-device runs in later milestones.**
+> [IMPLEMENTED] / [SIMULATED] / [PLANNED].
+> **The M0 harness has now run: 125 automated tests pass (0 failed,**
+> **0 skipped) covering the 18 M0-blocking acceptance IDs, with**
+> **byte-identical output across repeated runs.**
+> **Every M0 number in this repository is a simulator measurement in**
+> **deterministic ticks, never a wall-clock or real-device figure;**
+> **real-device measurements come from later milestones.**
 
 ---
 
@@ -85,7 +94,9 @@ Shongket designs for that in-between state.
 
 ## 5. Architecture (high level)
 
-[PLANNED — full implementation begins after M0 approval]
+[SIMULATED — the M0 slice of this architecture is implemented in
+`app/simulator/`; the capture, semantic-engine and transport-adapter
+boxes remain PLANNED]
 
 ```
 Capture ── Semantic engine (offline) ── Human review ── Confirmed capsule
@@ -143,12 +154,17 @@ left to M3+.
 | Architecture documents | IMPLEMENTED |
 | Protocol specification | IMPLEMENTED |
 | Acceptance-test specification | IMPLEMENTED |
-| Milestone 0 simulator | PLANNED |
-| Multi-peer simulator run | PLANNED |
+| Milestone 0 simulator | IMPLEMENTED |
+| Multi-peer simulator run | SIMULATED (deterministic simulated multi-peer completion) |
 | Android peer transfer | PLANNED |
 | Progressive real-media transfer | PLANNED |
 | Offline AI extraction | PLANNED |
 | Reed-Solomon / RaptorQ | RESEARCH ONLY |
+
+Labels follow D-012 in `PRODUCT_DECISIONS.md`. **IMPLEMENTED** means the
+code exists and is covered by passing automated tests; **SIMULATED**
+means the behaviour is demonstrated between in-process simulated peers
+only. No row above asserts real-device or real-radio behaviour.
 
 ---
 
@@ -168,7 +184,51 @@ Shongket does not currently claim:
 
 ## 9. Limitations
 
+### 9.1 What is completed (Milestone 0 simulator)
+
+All of the following are implemented in `app/simulator/` and covered by
+passing automated tests. Every one is **simulated protocol behaviour**
+between in-process peers:
+
+- deterministic Python M0 simulator with a reproducible CLI;
+- fixed-size chunking;
+- SHA-256 verification per chunk and per representation;
+- deterministic simulated multi-peer completion;
+- interruption and resume;
+- restart persistence;
+- priority scheduling and critical preemption;
+- expiry enforcement;
+- storage-budget rule;
+- manual model-fallback path;
+- private-content consent gate;
+- oversized-payload rejection;
+- deterministic metrics generation;
+- all 18 M0-blocking acceptance IDs.
+
+### 9.2 What is NOT completed
+
+None of the following exists in this repository:
+
+- Android application;
+- user-facing mobile UI;
+- Bluetooth;
+- Wi-Fi Direct;
+- Nearby Connections;
+- any real radio transport;
+- real camera or audio capture pipeline;
+- production encryption and cryptographic identity;
+- real offline model inference;
+- Bloom-filter inventory;
+- coded reconstruction (Reed-Solomon / fountain / RaptorQ);
+- field testing;
+- Milestone 1 or later implementation.
+
+### 9.3 Standing caveats
+
 - M0 is a protocol simulator; it does not demonstrate real-world throughput.
+- M0 timing is expressed in deterministic simulator ticks, not seconds.
+  No bytes-per-second figure exists, because the simulator has no
+  wall-clock time base.
 - No transport is locked.
 - No model is locked.
 - No claim is made about Android vendor compatibility until M3.
@@ -239,9 +299,18 @@ per [MODEL_EVALUATION_PLAN.md](./MODEL_EVALUATION_PLAN.md).
 
 ## 14. Contribution
 
-This repository is planning-only. Implementation is gated on
-`PRODUCT_DECISIONS.md` approval. Until then, contributions are
-review-only against the planning documents.
+Implementation is gated per milestone on `PRODUCT_DECISIONS.md`
+approval. Milestone 0 is approved and implemented, so contributions to
+`app/simulator/` are accepted against the M0 acceptance tests. Milestone
+1 and later work remains unapproved: contributions beyond the M0
+boundary are review-only against the planning documents until the
+status changes.
+
+Run the M0 test suite with:
+
+```
+python -m pytest app/simulator/tests -q
+```
 
 ---
 

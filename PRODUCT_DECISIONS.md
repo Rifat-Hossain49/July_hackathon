@@ -7,6 +7,16 @@ IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_0
 Implementation must not begin until this value is changed to
 APPROVED_FOR_MILESTONE_0 (or later milestone-scoped approval).
 
+### Milestone 0 implementation evidence
+
+Milestone 0 work authorised by the boundary below is implemented in
+`app/simulator/` and covered by 125 passing automated tests (0 failed, 0
+skipped) across the 18 M0-blocking acceptance IDs. Evidence is recorded
+in `ACCEPTANCE_TESTS.md` and `EXPERIMENT_PLAN.md`.
+
+This status value is unchanged by that work. Milestone 1 and later work
+remains unauthorised, and no later-milestone status has been granted.
+
 ## Implementation approval policy
 
 Implementation approval is milestone-specific.
@@ -182,3 +192,23 @@ Simulated behavior must never be presented as real networking behavior.
 - Private versus public content encryption
 - Device compatibility target
 - Measurable throughput target
+
+The following surfaced during Milestone 0 implementation and are
+recorded here as open, not resolved:
+
+- **Canonical private/consent field names.** `PROTOCOL_SPEC.md` §8
+  requires explicit consent before forwarding private content, and
+  AT-16 assumes a "private marker", but no §3 schema names the fields
+  that carry either. The M0 simulator uses provisional manifest fields
+  `private` and `forwarding_consent`; the names need freezing in the
+  schema before M1.
+- **`PeerCapabilities.public_only` interaction.** §3.5 declares this
+  peer property, but no document defines how it composes with an
+  object's private marker and consent. M0 implements the object-side
+  gate only and leaves the interaction unspecified.
+- **Device-side storage eviction.** AT-12 splits into an M0 rule and an
+  M5+ effect. M0 implements refusal with the canonical `out_of_budget`
+  status; which content is evicted under real device pressure, and in
+  what order, is undecided.
+- **Later Android transport choices.** Unchanged and still open; M0
+  asserts nothing about any radio transport.

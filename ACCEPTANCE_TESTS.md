@@ -278,6 +278,64 @@ Severity scale:
 > M5+) and AT-19 (demo readiness, M9), both of which are release-blocking
 > but outside M0.
 
+---
+
+## Milestone 0 harness evidence
+
+Recorded from an actual run of the M0 harness. The test definitions
+above are unchanged; this section only records results.
+
+**Run summary:** 125 tests collected, **125 passed, 0 failed, 0
+skipped**. Modules live in `app/simulator/tests/`. Each module was also
+run in isolation and passed independently.
+
+Deterministic outputs, verified by re-running and comparing SHA-256:
+
+- CLI event log: `D5AC79B18B6B3329A2788CDCCF45A92D10534639B20079039D1902D7F82CB4DF` (3114 bytes)
+- serialized metrics: `E10E11D4AEF1788E92CC907060C48CA06A3E76913C2BDD58ABF43858B8891B28` (1580 bytes)
+
+All results are **simulated** protocol behaviour between in-process
+peers (D-012). Nothing here is a real-device, radio or wall-clock
+measurement.
+
+| AT ID | Test module | Result | Evidence summary |
+|---|---|---|---|
+| AT-01 | `test_at01_capsule_before_media.py` | PASS (2) | Priority-order event log: signal plane precedes media plane for the same object |
+| AT-02 | `test_at02_human_confirmation.py` | PASS (4) | `CAPSULE_REJECTED` on `human_confirmed=false`; nothing scheduled, sent or stored |
+| AT-03 | `test_at03_object_identity.py` | PASS (4) | Same bytes yield the same CID across two senders; `object_id = SHA-256(source bytes)` |
+| AT-04 | `test_at04_progressive_layers.py` | PASS (4) | Planner log orders capsule → thumb → preview → standard → original; no fragment-key collision |
+| AT-05 | `test_at05_critical_preemption.py` | PASS (2) | `PREEMPTION_LOGGED`; bulk pauses and resumes; measured preemption latency 1 tick |
+| AT-06 | `test_at06_interrupted_transfer.py` | PASS (2) | `TRANSFER_INTERRUPTED` then `TRANSFER_RESUMED`; only missing chunks re-requested |
+| AT-07 | `test_at07_restart_recovery.py` | PASS (6) | Snapshot round-trip; 7 of 21 verified chunks survive restart and transfer completes |
+| AT-08 | `test_at08_multi_peer_completion.py` | PASS (6) | Completion from 2 distinct peer IDs (`peer-A`, `peer-B`); overlap not re-requested; reconstructed SHA-256 equals the manifest representation hash |
+| AT-09 | `test_at09_dedup.py` | PASS (3) | Second store is a no-op; duplicate counter increments, byte usage does not |
+| AT-10 | `test_at10_corruption.py` | PASS (3) | 3 tampered chunks rejected on hash mismatch; all 13 valid chunks still accepted afterwards |
+| AT-11 | `test_at11_expiry.py` | PASS (8) | Boundary covered at tick < = > expiry; at and past expiry the queue admits 0 items and `FORWARD_REFUSED` is logged with no storage mutation |
+| AT-12 | `test_at12_storage_budget.py` | PASS (14) | Exact-fit accepted, +1 byte refused with `out_of_budget` and quota values logged; duplicate, corrupted and schema-invalid chunks consume no capacity; accounting survives restart |
+| AT-15 | `test_at15_manual_fallback.py` | PASS (12) | Structured manual form returned for every canonical model condition; `MODEL_FALLBACK` logged with `ai_output_present=false`; no model loaded, downloaded or called |
+| AT-16 | `test_at16_private_consent.py` | PASS (13) | Private object without explicit consent refused before scheduling; `CONSENT_REJECTED` is the only event emitted; public content unaffected |
+| AT-17 | `test_at17_oversized_payload.py` | PASS (17) | Exact-limit accepted and +1 byte rejected with `ProtocolError` code `PAYLOAD_TOO_LARGE` at all four canonical limits (capsule 4096 B, manifest 32768 B, fragment descriptor 512 B, transport frame 1048576 B); checked before parse, scheduling, transmission and persistence |
+| AT-18 | `test_at18_metrics.py` | PASS (12) | Metrics computed from event log, store counters and chunk plans; repeated runs byte-identical; unmeasurable metrics declared, not fabricated |
+| AT-20 | `test_at20_schema_rejection.py` | PASS (8) | `SCHEMA_INVALID` raised; scheduler queue, fragment map, store counters and event log all verified unchanged |
+| AT-21 | `test_at21_source_preservation.py` | PASS (5) | Source-media hash identical before and after; capsule references the source rather than replacing it |
+
+### Caveats carried forward
+
+These qualify the rows above and are not resolved by this run:
+
+- **AT-12** implements the **M0 rule** — deterministic byte accounting
+  and refusal with the canonical `out_of_budget` status. The device-side
+  **eviction effect** remains later-milestone work, consistent with this
+  test's own milestone split ("M0 (rule), M5+ (effect)").
+- **AT-16** uses the provisional manifest fields `private` and
+  `forwarding_consent`. `PROTOCOL_SPEC.md` §3 does not yet name the
+  fields that carry the private marker and the consent decision, so
+  these names are provisional pending schema freeze. The behaviour
+  asserted is canonical; the field names are not yet.
+- **AT-18** reports timing in deterministic simulator ticks and marks
+  throughput in bytes/second, peak memory, energy use and AI inference
+  latency as unmeasured rather than fabricating them.
+
 ## Canonical traceability table
 
 Every row uses a real `AT-NN` identifier. Legacy `AC-*` rows have been
