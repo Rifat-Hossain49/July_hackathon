@@ -2,7 +2,7 @@
 
 ## Current status
 
-IMPLEMENTATION_STATUS: NOT_APPROVED
+IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_0
 
 Implementation must not begin until this value is changed to
 APPROVED_FOR_MILESTONE_0 (or later milestone-scoped approval).
