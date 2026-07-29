@@ -261,12 +261,295 @@ Severity scale:
 
 ---
 
+# Milestone 1 acceptance tests (AT-22 … AT-37)
+
+**Status: PROPOSED.** These define the M1-blocking catalogue approved in
+`M1_SCOPE_FREEZE.md`. They are specifications only — no M1
+implementation exists and no M1 result is recorded. `IMPLEMENTATION_STATUS`
+remains `APPROVED_FOR_MILESTONE_0`, so none of these may be implemented
+yet.
+
+Severity follows the existing scale: **S2 blocks M1 approval**; the two
+S1 rows (AT-30, AT-37) additionally protect M0 evidence already earned.
+
+## AT-22 Canonical serialization is byte-stable
+
+- Preconditions: a populated object of each canonical schema.
+- Input: each object encoded, decoded and re-encoded.
+- Steps: encode → decode → encode; compare bytes; repeat in a fresh
+  process.
+- Expected: both encodings byte-identical; key order and separators
+  stable; no float-formatting divergence; identical across processes.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: SHA-256 of each encoding, per schema.
+- Severity: S2.
+- Runtime boundary: `core/codec`.
+
+## AT-23 Compatible minor-version payload accepted
+
+- Preconditions: registry supports major `1`; a registered compatibility
+  entry exists for the higher minor.
+- Input: a payload declaring a higher registered minor and carrying one
+  unknown additional field.
+- Steps: submit to the validation boundary.
+- Expected: accepted; the unknown field is ignored, not persisted and
+  not echoed; no error raised; known fields validated normally.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: acceptance log naming the ignored field.
+- Severity: S2.
+- Runtime boundary: `core/schema` + `core/validate`.
+
+## AT-24 Unsupported version rejected
+
+- Preconditions: registry supports major `1` only, with a known set of
+  registered minors.
+- Input: (a) a payload declaring major `2`; (b) a payload that is both
+  major `2` and structurally malformed; (c) a payload declaring major
+  `1` with an **unregistered** minor.
+- Steps: submit each.
+- Expected: all three rejected with `VERSION_UNSUPPORTED` — case (b)
+  proves the version is resolved before structural parsing, so
+  `SCHEMA_INVALID` is never returned instead; no partial decode; nothing
+  scheduled or persisted.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: rejection log with code and declared version.
+- Severity: S2.
+- Runtime boundary: `core/schema`.
+
+## AT-25 Deterministic persistence migration
+
+- Preconditions: a snapshot at version N; current version N+1.
+- Input: the vN snapshot.
+- Steps: open, migrate, write; repeat the whole sequence from identical
+  starting bytes.
+- Expected: migrated document byte-identical across both runs; every
+  verified fragment preserved with matching SHA-256; migration steps
+  applied in order.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: SHA-256 before and after; migration step log.
+- Severity: S2.
+- Runtime boundary: `core/migrate`.
+
+## AT-26 Crash-safe atomic snapshot write
+
+- Preconditions: an existing durable snapshot.
+- Input: a save interrupted at each stage — after temp write, after temp
+  fsync, after replace, before parent-directory fsync.
+- Steps: inject the interruption at each point; reopen the store.
+- Expected: the reader always sees either the complete previous document
+  or the complete new one, never a blend; no partial document is loaded;
+  temp artefacts are ignored and cleaned.
+- Automation: harness (fault injection; no real power loss).
+- Milestone: M1.
+- Evidence required: per-stage recovery log and resulting checksum.
+- Severity: S2.
+- Runtime boundary: `core/persist`.
+
+## AT-27 Partial-write recovery
+
+- Preconditions: a durable snapshot plus a truncated temporary file.
+- Input: a temporary file containing a prefix of a valid document.
+- Steps: open the store.
+- Expected: the truncated temp is ignored and removed; the previous
+  durable snapshot loads intact; no exception escapes; recovery logged.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: recovery log naming the discarded artefact.
+- Severity: S2.
+- Runtime boundary: `core/persist`.
+
+## AT-28 Corrupted-snapshot recovery
+
+- Preconditions: a durable snapshot with a valid last-good copy.
+- Input: (a) corrupted document checksum; (b) one fragment's bytes
+  corrupted while the document checksum remains valid.
+- Steps: open the store for each case.
+- Expected: (a) the file is quarantined — renamed aside, **never
+  deleted** — and the last good snapshot loads; (b) only the corrupt
+  fragment is dropped, every intact fragment is preserved, and the loss
+  is logged.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: quarantine path and per-fragment integrity report.
+- Severity: S2.
+- Runtime boundary: `core/persist`.
+
+## AT-29 Rollback after failed migration
+
+- Preconditions: a vN snapshot; a migration that fails mid-chain.
+- Input: an injected failure during the durable write of the migrated
+  document.
+- Steps: attempt migration; fail; reopen.
+- Expected: the original vN document remains readable and byte-identical
+  to before the attempt; no partially migrated state is visible; the
+  failure is classified retryable.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: pre/post SHA-256 of the original document.
+- Severity: S2.
+- Runtime boundary: `core/migrate` + `core/persist`.
+
+## AT-30 Verified fragments preserved across all recovery paths
+
+- Preconditions: a store holding N verified fragments.
+- Input: every recovery path — restart, partial write, corrupted
+  document, failed migration, refused over-budget write.
+- Steps: run each path; enumerate surviving fragments.
+- Expected: every fragment verified before the event is present
+  afterwards with its original SHA-256, except one whose own bytes were
+  deliberately corrupted; byte accounting matches a recomputed sum in
+  every case.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: fragment inventory and byte accounting, before and
+  after.
+- Severity: S1.
+- Runtime boundary: `core/store` + `core/persist`.
+
+## AT-31 Deterministic restart behaviour
+
+- Preconditions: an interrupted transfer with partial progress.
+- Input: identical starting state, restarted twice.
+- Steps: interrupt, restart, resume; capture the event log each time.
+- Expected: both runs produce byte-identical event logs and identical
+  resulting stores; only missing chunks are requested after restart.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: SHA-256 of both event logs.
+- Severity: S2.
+- Runtime boundary: `core/persist` + `adapters/simulator`.
+
+## AT-32 Error classification is complete and canonical
+
+- Preconditions: the canonical taxonomy in `PROTOCOL_SPEC.md` §3.8.
+- Input: one triggering condition per code.
+- Steps: trigger each; capture code and classification.
+- Expected: every raised code exists in the canonical enum; every enum
+  member is either reached by a test or explicitly recorded as
+  unreachable-by-design with a reason; each code carries exactly one
+  terminal/retryable classification.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: coverage matrix over the enum.
+- Severity: S2.
+- Runtime boundary: `core/errors`.
+
+## AT-33 Retryable versus terminal failure behaviour
+
+- Preconditions: the classification verified by AT-32.
+- Input: a terminal failure re-offered with byte-identical input; a
+  retryable failure re-offered after the blocking condition clears.
+- Steps: offer, re-offer, compare.
+- Expected: the terminal case fails identically every time with no state
+  change; the retryable case succeeds once external state permits;
+  neither mutates state on a failing attempt.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: paired attempt logs with state snapshots.
+- Severity: S2.
+- Runtime boundary: `core/errors` + `core/store`.
+
+## AT-34 Privacy and consent field compatibility
+
+- Preconditions: `visibility` and `forwarding_consent` frozen per
+  `PROTOCOL_SPEC.md` §3.2.
+- Input: a legacy manifest using boolean `private`; a v1.0 manifest
+  using `visibility`; malformed values of each.
+- Steps: migrate the legacy shape; validate all; attempt forwarding.
+- Expected: `private: true → visibility "private"`; `false` or absent
+  `→ "public"`; malformed `visibility` → `SCHEMA_INVALID`; non-boolean
+  `forwarding_consent` → `CONSENT_REQUIRED`; every AT-16 assertion still
+  holds after migration.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: migration log plus the AT-16 refusal matrix re-run.
+- Severity: S2.
+- Runtime boundary: `core/migrate` + `core/policy`.
+
+## AT-35 `public_only` peer refusal
+
+- Preconditions: `public_only` semantics frozen per `PROTOCOL_SPEC.md`
+  §6.
+- Input: a private object **with valid consent** targeted at a peer
+  declaring `public_only: true`; the same object to an ordinary peer; a
+  public object to the `public_only` peer.
+- Steps: attempt forwarding in each case.
+- Expected: the first is refused with `PEER_REFUSES_PRIVATE` before
+  queueing and before transmission, with receiver storage unchanged; the
+  second and third are permitted. Consent does not override
+  `public_only`.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: refusal evidence naming the failing clause.
+- Severity: S2.
+- Runtime boundary: `core/policy`.
+
+## AT-36 Persistence schema upgrade end-to-end
+
+- Preconditions: a populated vN store from a prior release.
+- Input: the vN store opened by the current build.
+- Steps: open, migrate, resume an in-progress transfer, restart, reopen.
+- Expected: the upgrade is transparent to the caller; the in-progress
+  transfer resumes without re-requesting verified chunks; the store is
+  at the current version afterwards; a second open performs no further
+  migration.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: version before and after; resumed-chunk list.
+- Severity: S2.
+- Runtime boundary: `core/migrate` + `adapters/simulator`.
+
+## AT-37 M0 regression and core/adapter isolation
+
+- Preconditions: the M1 refactor complete.
+- Input: the full M0 acceptance suite; a static import scan.
+- Steps: run all M0 tests unmodified; scan `shongket_core` imports;
+  re-run the deterministic CLI and metrics.
+- Expected: all 125 M0 tests pass **unchanged**; `shongket_core` imports
+  nothing from `adapters/` and nothing outside the standard library; CLI
+  and metrics hashes match the values recorded in the M0 harness
+  evidence, or any change is separately justified and re-approved.
+- Automation: harness.
+- Milestone: M1.
+- Evidence required: test counts, import-scan output, both hashes.
+- Severity: S1.
+- Runtime boundary: whole package.
+
+## Milestone 1 forwarding-admission coverage
+
+The six clauses of the M1 admission rule (`PROTOCOL_SPEC.md` §6) map to
+tests as follows. No clause is left untested:
+
+| Clause | Refusal code | Covered by |
+|---|---|---|
+| Expiry | `EXPIRED` | AT-11 (M0), AT-32 |
+| Hop limit | `HOP_LIMIT` | AT-32, AT-33 |
+| Copy budget | `COPY_BUDGET` | AT-32, AT-33 |
+| Human confirmation | `HUMAN_CONFIRMATION_MISSING` | AT-02 (M0), AT-32 |
+| Consent | `CONSENT_REQUIRED` | AT-16 (M0), AT-34 |
+| Peer `public_only` | `PEER_REFUSES_PRIVATE` | AT-35 |
+
+---
+
 ## Test-count inventory
 
-- **Total acceptance tests:** 21 (AT-01 … AT-21)
-- **S1 tests across all milestone scopes:** 20
+Milestone 0 figures below are unchanged; the Milestone 1 catalogue is
+counted separately so no M0 classification is disturbed.
+
+- **Total acceptance tests:** 37 (AT-01 … AT-37)
+  - Milestone 0 catalogue: 21 (AT-01 … AT-21)
+  - Milestone 1 catalogue: 16 (AT-22 … AT-37), PROPOSED
+- **S1 tests across all milestone scopes:** 20 within AT-01 … AT-21,
+  plus AT-30 and AT-37 in the M1 catalogue
 - **S1 tests within Milestone 0 scope:** 17
 - **Milestone 0 blocking tests:** 18
+- **Milestone 1 blocking tests:** 16 (all of AT-22 … AT-37; 14 at S2,
+  and AT-30 and AT-37 at S1 because they protect M0 evidence already
+  earned)
 
 > The 18 Milestone 0 blocking tests comprise the 17 S1 tests in the M0
 > scope (AT-01 … AT-11, AT-15, AT-16, AT-17, AT-18, AT-20, AT-21) plus
@@ -327,11 +610,12 @@ These qualify the rows above and are not resolved by this run:
   and refusal with the canonical `out_of_budget` status. The device-side
   **eviction effect** remains later-milestone work, consistent with this
   test's own milestone split ("M0 (rule), M5+ (effect)").
-- **AT-16** uses the provisional manifest fields `private` and
-  `forwarding_consent`. `PROTOCOL_SPEC.md` §3 does not yet name the
-  fields that carry the private marker and the consent decision, so
-  these names are provisional pending schema freeze. The behaviour
-  asserted is canonical; the field names are not yet.
+- **AT-16** was run against the provisional manifest fields `private`
+  and `forwarding_consent`. Those names have since been frozen for M1 as
+  `visibility` (a `"public" | "private"` enum) and a strictly-boolean
+  `forwarding_consent` — see `PROTOCOL_SPEC.md` §3.2. The M0 result
+  above stands as recorded; AT-34 is the M1 test that the migration
+  preserves every AT-16 assertion.
 - **AT-18** reports timing in deterministic simulator ticks and marks
   throughput in bytes/second, peak memory, energy use and AI inference
   latency as unmeasured rather than fabricating them.

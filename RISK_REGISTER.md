@@ -37,6 +37,11 @@ Probabilities and impacts are coarse (L/M/H).
 | R-28 | Ethical risk: misuse for disinformation | L | H | low | signer identity ≠ fact distinction; expiry | revocation + log | Responsible-AI lead | M7, M9 | no |
 | R-29 | Storage of private media on shared infrastructure | L | H | low | no cloud by default; local-only | explicit deletion | Product lead | M1+ | no |
 | R-30 | Compromised test keys used outside M0 | L | M | low | clear test/prod separation | rotate keys before release | Security lead | M0, M1 | no |
+| R-31 | M1 refactor silently breaks M0 evidence | M | H | high | AT-37 gates on all 125 M0 tests unchanged plus recorded CLI/metrics hashes | revert slice; `main` retains merged M0 | Protocol lead | M1 | yes |
+| R-32 | Migration corrupts in-progress transfer state | L | H | medium | retain pre-migration document until migrated one is durable; AT-25, AT-29 | original document still loads unchanged | Protocol lead | M1 | yes |
+| R-33 | Version-format change alters serialized bytes | M | M | high | `…v1` read as `…v1.0`; compare CLI hash each slice (AT-22) | revert versioning slice | Protocol lead | M1 | yes |
+| R-34 | Platform-divergent fsync / rename semantics | M | M | medium | test on target platform; document POSIX vs Windows differences; AT-26 | retain M0 write path | Protocol lead | M1, M2 | no |
+| R-35 | M1 scope creep into M2+ behaviour | M | H | high | every slice maps to a canonical requirement; hop/copy enforcement explicitly confirmed as completing PROTOCOL_SPEC §6.0 | revert slice; re-scope | Product lead | M1 | yes |
 | R-APPROVAL-01 | Misreading a global "APPROVED" or out-of-scope milestone approval as permission for code work | M | H | medium | `IMPLEMENTATION_STATUS` only accepts `NOT_APPROVED`, `APPROVED_FOR_MILESTONE_0`, `APPROVED_FOR_MILESTONE_1`, etc.; AGENTS.md "Workflow verification" requires per-milestone approval match | revert any unauthorized code; re-confirm milestone boundary; notify product owner | Product owner / Principal architect | All | yes |
 
 ---

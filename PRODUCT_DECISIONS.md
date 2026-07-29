@@ -193,6 +193,43 @@ Simulated behavior must never be presented as real networking behavior.
 - Device compatibility target
 - Measurable throughput target
 
+### Milestone 1 design decisions — ACCEPTED
+
+These eight decisions are **ACCEPTED** as the design basis for Milestone
+1. Acceptance settles the design; it does **not** authorise
+implementation. `IMPLEMENTATION_STATUS` above remains
+`APPROVED_FOR_MILESTONE_0`, and M1 stays PROPOSED in `MILESTONES.md`.
+Full rationale and trade-offs are in
+[M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md) §5.
+
+| ID | Decision | Status |
+|---|---|---|
+| D-M1-01 | `visibility` enum `"public" \| "private"`; legacy `private: true → "private"`, `false`/absent `→ "public"`; v1.0 payloads require a valid enum | ACCEPTED |
+| D-M1-02 | Strictly-boolean `forwarding_consent`; private content requires literal `true`; absent/`false` = no consent; truthy strings or integers are malformed | ACCEPTED |
+| D-M1-03 | `PeerCapabilities.public_only` = public content only for receive, request, advertise and forward; consent does **not** override it; reject before queueing and transmission with deterministic evidence | ACCEPTED |
+| D-M1-04 | Rejection-only under storage pressure; **no eviction in M1**; preserve verified fragments; device eviction effects deferred | ACCEPTED |
+| D-M1-05 | `shongket.<object>.v<major>.<minor>`; bare `...v1` is a legacy alias for `...v1.0`; unknown major → `VERSION_UNSUPPORTED`; unknown minor requires explicit registered compatibility | ACCEPTED |
+| D-M1-06 | Schema-versioned canonical JSON persistence with payload **and** document checksums, advisory single-writer locking, temp fsync → atomic replace → parent-directory fsync, retained prior snapshot, deterministic migration and rollback | ACCEPTED |
+| D-M1-07 | One canonical error enum shared by `ProtocolError`, acknowledgements, events and recovery evidence; every code classified terminal or retryable | ACCEPTED |
+| D-M1-08 | M1 core stays **Python**; add a language-neutral protocol specification, canonical serialization rules, golden vectors and conformance tests; **no Kotlin port in M1** | ACCEPTED |
+
+Additional accepted decisions:
+
+| ID | Decision | Status |
+|---|---|---|
+| D-M1-A1 | `created_at_unix` and `expires_at_unix` as **integer seconds** are canonical for v1.0, superseding the RFC3339 string form | ACCEPTED |
+| D-M1-A2 | Serialized-byte limits frozen: capsule 4096, manifest 32768, fragment descriptor 512, transport frame 1048576 | ACCEPTED |
+| D-M1-A3 | Complete `hop_limit` and `copy_budget` enforcement in M1; add forwarding-state `hop_count` and `remaining_copy_budget` **without** changing `object_id` or immutable content identity | ACCEPTED |
+| D-M1-A4 | AT-22 … AT-37 adopted as the M1-blocking acceptance catalogue | ACCEPTED |
+| D-M1-A5 | All 125 M0 tests preserved as the AT-37 regression gate | ACCEPTED |
+
+All three contradictions previously blocking M1 are now reconciled:
+the version format (D-M1-05, `PROTOCOL_SPEC.md` §9.1), the timestamp
+divergence (D-M1-A1, §9.2) and unenforced `hop_limit` / `copy_budget`
+(D-M1-A3, §6). See `M1_SCOPE_FREEZE.md` §4 for the record of each.
+
+### Open decisions carried from Milestone 0
+
 The following surfaced during Milestone 0 implementation and are
 recorded here as open, not resolved:
 

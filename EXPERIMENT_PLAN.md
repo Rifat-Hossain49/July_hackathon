@@ -222,6 +222,36 @@ marked unmeasured rather than converted.
 Both hashes were produced by running the same command twice and
 comparing the output byte-for-byte.
 
+### 5.5a Milestone 1 conformance evidence [PROPOSED — not yet run]
+
+M1 adds a conformance suite (AT-22 … AT-37). The table below names the
+evidence each M1 test must produce. **Every cell is empty because no M1
+code exists**; filling any of them before the harness runs would violate
+DR-EXP-01. M1 is not approved for implementation.
+
+| Evidence | Source test | Value |
+|---|---|---|
+| Canonical serialization SHA-256 per schema | AT-22 | *not yet run* |
+| Registered-minor acceptance log | AT-23 | *not yet run* |
+| `VERSION_UNSUPPORTED` rejection log | AT-24 | *not yet run* |
+| Migration input/output SHA-256 | AT-25 | *not yet run* |
+| Per-stage crash-recovery log | AT-26 | *not yet run* |
+| Partial-write recovery log | AT-27 | *not yet run* |
+| Quarantine path + integrity report | AT-28 | *not yet run* |
+| Pre/post rollback SHA-256 | AT-29 | *not yet run* |
+| Fragment inventory + byte accounting | AT-30 | *not yet run* |
+| Restart event-log SHA-256 (×2) | AT-31 | *not yet run* |
+| Error-code coverage matrix | AT-32 | *not yet run* |
+| Paired retryable/terminal attempt logs | AT-33 | *not yet run* |
+| Privacy migration log + AT-16 re-run | AT-34 | *not yet run* |
+| `PEER_REFUSES_PRIVATE` refusal evidence | AT-35 | *not yet run* |
+| Store version before/after + resumed chunks | AT-36 | *not yet run* |
+| M0 regression counts, import scan, both hashes | AT-37 | *not yet run* |
+
+AT-37 additionally re-verifies the M0 values already recorded in §5.5:
+125 passing tests and the two determinism hashes. Those are the M0
+results; they are not restated here as M1 evidence.
+
 ### 5.6 Metrics not produced by M0
 
 Four metrics from §4 are deliberately absent rather than estimated:
