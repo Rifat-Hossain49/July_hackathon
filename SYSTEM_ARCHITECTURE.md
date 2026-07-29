@@ -1,0 +1,411 @@
+flowchart LR
+  subgraph Capture
+    CI[Capture Interface]
+  end
+  subgraph Intelligence
+    SE[Semantic Engine\n(offline, suggestion-only)]
+    HR[Human Review Interface]
+  end
+  subgraph Content
+    MP[Media Pipeline]
+    CAS[Content-Addressed Object Store]
+    IV[Integrity Verifier]
+    FI[Fragment Inventory]
+    RE[Reconstruction Engine]
+    PL[Persistence Layer]
+  end
+  subgraph Protocol
+    SP[Signal Plane]
+    ME[Media Plane]
+    SC[Priority Scheduler]
+    SY[Synchronization Engine]
+    PC[Peer Capability Manager]
+  end
+  subgraph Radio
+    TA[Transport Adapter]
+    R1[Radio (M0: simulated; later: real radio)]  
+  end
+  CI --> MP
+  CI --> SE
+  SE --> HR
+  HR --> MP
+  MP --> CAS
+  MP --> IV
+  CAS --> FI
+  IV --> RE
+  FI --> RE
+  CAS --> PL
+  FI --> PL
+  HR --> SP
+  CAS --> SP
+  SC --> SY
+  SP --> SY
+  ME --> SY
+  PC --> SY
+  TA --> R1
+  SY --> TA
+  OBS[Observability / Logger] -.-> CI
+  OBS -.-> SE
+  OBS -.-> HR
+  OBS -.-> MP
+  OBS -.-> SY
+  OBS -.-> SC
+  OBS -.-> TA
+  OBS -.-> RE
+
+### 1.6 Explicit non-goals
+
+Per `PRODUCT_DECISIONS.md` D-006 and `HACKATHON_BRIEF.md`:
+
+- Guaranteed broadband or HD delivery between distant users.
+- Claiming internet replacement when no high-bandwidth path exists.
+- Becoming a generic Bluetooth / Wi-Fi Direct chat application.
+- Replacing original media with AI-generated content.
+- Treating AI output as factual truth.
+- Cloud-dependent core.
+
+---
+
+## 2. High-level architecture
+
+### 2.1 Component map
+
+| Component | Responsibility | Inputs | Outputs |
+|---|---|---|---|
+| Capture Interface | Acquire text/voice/photo/video/document; collect raw metadata | Device sensors, user gesture | `RawMediaItem` + raw metadata |
+| Semantic Engine (offline) | Propose structured fields; mark uncertainty | `RawMediaItem`, runtime | `DraftCapsule` with uncertainty flags |
+| Human Review Interface | Let user correct, confirm, augment | `DraftCapsule`, original media | `ConfirmedCapsule` + linkage to media |
+| Media Pipeline | Build progressive representations, chunk, hash | `RawMediaItem` | `Representation` set + `FragmentDescriptor[]` |
+| Content-Addressed Object Store | Store capsules, manifests, fragments by content ID | anything with a content ID | stored / retrieved objects |
+| Signal Plane | Exchange capsules, manifests, inventories, acks | peer messages | peer messages |
+| Media Plane | Exchange thumbnails, previews, fragments | peer messages | peer messages |
+| Priority Scheduler | Decide what to send next based on policy | local inventory, peer demand, priorities, budgets, expiry | `TransferPlan` |
+| Synchronization Engine | Run discovery → inventory → negotiation → transfer | signal plane messages | state transitions |
+| Transport Abstraction | Hide radio behind a single interface | `TransportAdapter` API | bytes in/out, peer events |
+| Peer Capability Manager | Track what each peer can / will do | peer announcements | capability map |
+| Fragment Inventory | Track which fragments we hold per object | local store | per-object fragment sets |
+| Reconstruction Engine | Reassemble representations from fragments + recovery data | fragments + manifest | reconstructed bytes / files |
+| Integrity Verifier | Hash and signature checks | bytes, manifests | accept / reject |
+| Persistence Layer | Durable (or in-memory for M0) storage behind interface | all components | durable state |
+| Optional Gateway | Future: bridge to a wider network if reachable | outbound interface | relayed bundles |
+| Observability / Experiment Logger | Record metrics, accept/reject events, timings | all components | structured logs / metrics |
+
+### 2.2 Plane separation (D-002)
+
+**Signal plane** carries:
+- semantic capsules;
+- manifests and content IDs;
+- priorities and capabilities;
+- inventories and missing-fragment requests;
+- acknowledgements, transfer-control, expiry.
+
+**Media plane** carries:
+- thumbnails, keyframes, short preview clips;
+- standard-quality representations;
+- original-quality representations;
+- source and (later) recovery / parity fragments.
+
+The two planes share identities but not transport framing. The
+priority scheduler always prefers signal-plane traffic over
+lower-priority media-plane traffic of equal or lower criticality
+(D-009).
+
+### 2.3 Trust boundaries
+
+| Boundary | Trust level | Notes |
+|---|---|---|
+| Local user input | Trusted | source of truth for actions |
+| Local AI output | Untrusted suggestion | never published without human confirmation (D-003) |
+| Nearby peers | Untrusted | every payload validated, hashed, size-limited |
+| Signed publishers | Identity trusted; facts still need confirmation | signer ≠ truth (per `AGENTS.md`) |
+| Public content | Signer trust only; freshness / accuracy not implied | expiry enforced |
+| Private content | Forwarding requires explicit user consent | never auto-forwarded |
+| Optional gateway | Untrusted transport bridge | must not bypass integrity checks |
+| External storage (SD card, etc.) | Untrusted host | fragments must be re-verified after read |
+
+---
+
+## 3. State and failure recovery
+
+The system must survive each of the following without crashing or
+silently corrupting state. Recovery behavior is logged so failures are
+observable, not silent.
+
+| Failure | Recovery |
+|---|---|
+| Application restart | durable persistence resumes; partial progress retained |
+| Interrupted transfer | verified fragments retained; receiver can resume from another peer |
+| Peer disappearance | in-flight requests time out; inventory is reconciled on next encounter |
+| Duplicate reception | dedup by `(content_id, chunk_index, hash)` |
+| Corrupted fragment | rejected, counted, transfer continues with other chunks |
+| Insufficient storage | transfer paused, oldest / lowest-priority content evicted (policy explicit) |
+| Low battery | lower transfer rate, defer bulk, keep signal plane hot |
+| Transport failure | fallback to alternate `TransportAdapter` if available |
+| Model failure | automatic fallback to manual form (D-011) |
+| Malformed payload | reject, log, surface a generic protocol error to UI |
+| Protocol-version mismatch | reject, do not partially process; surface clear error |
+
+---
+
+## 4. Architecture diagrams
+
+### 4.1 Component architecture
+
+```mermaid
+flowchart LR
+  subgraph Capture
+    CI[Capture Interface]
+  end
+  subgraph Intelligence
+    SE[Semantic Engine\n(offline, suggestion-only)]
+    HR[Human Review Interface]
+  end
+  subgraph Content
+    MP[Media Pipeline]
+    CAS[Content-Addressed Object Store]
+    IV[Integrity Verifier]
+    FI[Fragment Inventory]
+    RE[Reconstruction Engine]
+    PL[Persistence Layer]
+  end
+  subgraph Protocol
+    SP[Signal Plane]
+    ME[Media Plane]
+    SC[Priority Scheduler]
+    SY[Synchronization Engine]
+    PC[Peer Capability Manager]
+  end
+  subgraph Radio
+    TA[Transport Adapter]
+    R1[Radio (M0: simulated; later: real radio)]  
+  end
+  CI --> MP
+  CI --> SE
+  SE --> HR
+  HR --> MP
+  MP --> CAS
+  MP --> IV
+  CAS --> FI
+  IV --> RE
+  FI --> RE
+  CAS --> PL
+  FI --> PL
+  HR --> SP
+  CAS --> SP
+  SC --> SY
+  SP --> SY
+  ME --> SY
+  PC --> SY
+  TA --> R1
+  SY --> TA
+  OBS[Observability / Logger] -.-> CI
+  OBS -.-> SE
+  OBS -.-> HR
+  OBS -.-> MP
+  OBS -.-> SY
+  OBS -.-> SC
+  OBS -.-> TA
+  OBS -.-> RE
+```
+
+### 4.2 Object creation flow
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant CI as Capture
+  participant SE as Semantic Engine
+  participant HR as Human Review
+  participant MP as Media Pipeline
+  participant CAS as Object Store
+
+  U->>CI: capture (text/voice/photo/video/doc)
+  CI->>SE: RawMediaItem + metadata
+  SE-->>HR: DraftCapsule + uncertainty flags
+  U->>HR: review, correct, confirm
+  HR-->>MP: ConfirmedCapsule linked to RawMediaItem
+  MP->>MP: build representations + chunks + SHA-256
+  MP->>CAS: store content (capsule, manifest, fragments)
+  CAS-->>U: object ready for advertisement
+```
+
+### 4.3 Peer synchronization flow
+
+```mermaid
+sequenceDiagram
+  participant A as Peer A
+  participant B as Peer B
+  A->>B: discovery (broadcast)
+  B-->>A: presence + PeerCapabilities
+  A->>B: compact InventorySummary
+  B->>B: compute missing-fragment interest
+  B-->>A: FragmentRequest (set of (content_id, chunk_index))
+  A->>B: TransferOffer (ordered by scheduler policy)
+  B-->>A: per-fragment TransferReceipt (ack)
+  A->>B: fragments (signal + media plane, per priority)
+```
+
+### 4.4 Interruption and multi-peer reconstruction
+
+```mermaid
+flowchart TD
+  S[Sender holds object X] -->|partial| P1[Peer P1]
+  S -->|partial| P2[Peer P2]
+  P1 -->|partial| R[Receiver]
+  P2 -->|partial| R
+  R --> R1{complete?}
+  R1 -- no --> R2[request missing chunks from any peer]
+  R2 --> R1
+  R1 -- yes --> R3[verify SHA-256 of reconstructed representation]
+  R3 --> R4[accept and persist]
+```
+
+### 4.5 Critical-content preemption
+
+```mermaid
+stateDiagram-v2
+  [*] --> BulkInProgress
+  BulkInProgress --> BulkInProgress: normal chunk
+  BulkInProgress --> BulkPaused: critical capsule arrives
+  BulkPaused --> SignalOnly: drain signal plane (capsule + manifest)
+  SignalOnly --> BulkResumed: critical payload acked
+  BulkResumed --> BulkInProgress: resume from last verified chunk
+  BulkInProgress --> [*]: object complete
+```
+
+---
+
+## 5. MVP exclusions (M0 and M1)
+
+The following are **not** part of M0 or M1 and are tracked under later
+milestones:
+
+- Android-specific transport APIs (M3+).
+- Real radio usage (M3+).
+- Offline AI model runtime on device (M6+).
+- Production end-to-end encryption with key management (later).
+- Advanced routing / utility-based forwarding (later experiment, not M0).
+- Full erasure / fountain coding (later research, behind
+  `FragmentationStrategy`; not part of M0–M5).
+- Standards-based mesh claims without implemented standards.
+- Cloud-dependent features.
+
+---
+
+## 6. Boundary interfaces (declared, not implemented)
+
+These interfaces exist in **planning form** so downstream docs can
+reference them. They are not code.
+
+| Interface | Purpose | M0 binding |
+|---|---|---|
+| `TransportAdapter` | Send/receive bytes, surface peer events | simulated adapter |
+| `FragmentationStrategy` | Split / recombine a representation | fixed-size chunker |
+| `Persistence` | Store and retrieve keyed objects | in-memory or lightweight local |
+| `SemanticExtractor` | Produce `DraftCapsule` | deterministic mock |
+
+### 6.1 Transport adapter tree
+
+The `TransportAdapter` interface is the boundary between protocol
+logic and physical media. No specific radio is locked. Concrete
+adapters planned per milestone:
+
+- `SimulatedTransportAdapter` — **Milestone 0**. In-process bytes
+  pipe with deterministic loss / reorder / drop profiles. Used by
+  the M0 simulator and by the M1 conformance suite.
+- `LocalProcessTransportAdapter` — **Milestone 2**. Two processes on
+  the same host exchanging bytes over a local socket. Verifies that
+  the protocol survives real OS process boundaries and real socket
+  failure modes without committing to any radio.
+- `AndroidTransportAdapter` — **Milestone 3, provisional**. Wraps
+  Android radios. The specific radio (Nearby Connections,
+  Wi-Fi Direct, hotspot + LAN, Wi-Fi Aware, BLE for control) is
+  **not** selected in this plan; selection is gated by the M3
+  transport smoke-test gate.
+
+A labeled diagram in §4.1 must show `TransportAdapter` as a single
+node, not split by radio. The radio lives behind the adapter.
+
+### 6.2 ReconstructionEngine semantics
+
+In M0, `ReconstructionEngine` performs **ordinary verified-chunk
+reassembly**. It accepts a content object only when every chunk
+indexed by the manifest is present and SHA-256-verified.
+
+Coded reconstruction (Reed-Solomon, fountain, RaptorQ) is **not** an
+M0 capability. It is a later research extension behind
+`FragmentationStrategy` and is tracked in
+[MILESTONES.md](./MILESTONES.md) §"Later research extension — Coded
+delivery".
+| `MediaPipeline` | Build representations from `RawMediaItem` | synthetic pipeline |
+| `IntegrityVerifier` | Hash / signature verification | SHA-256 |
+| `IdentityProvider` | Sign / verify signed manifests | key pair per device (test keys for M0) |
+| `Scheduler` | Decide next transfer | deterministic policy |
+| `InventoryIndex` | Per-object fragment tracking | in-memory map |
+| `Observability` | Emit metrics and logs | harness collector |
+
+---
+
+## 7. Decision records
+
+### DR-ARCH-01 — Plane separation
+
+- Decision: signal plane and media plane are logical layers; same
+  transport adapter may carry both, framed distinctly.
+- Alternatives: single-plane unified protocol; out-of-band signaling only.
+- Recommended: signal/media split.
+- Reason: enables D-002 + D-009 priority preemption and D-007 progressive
+  delivery without coupling semantics to bulk transfer mechanics.
+- Evidence required: M0 success criteria 1–3.
+- Trade-offs: two framing stacks to maintain.
+- Risks: framing bugs causing media-plane delivery to starve signal plane
+  — mitigated by scheduler priority and explicit queue inspection in tests.
+- Validation: AC-PREEMPTION-1, AC-SCHED-1 in `ACCEPTANCE_TESTS.md`.
+- Revisit condition: if M0 cannot demonstrate measurable preemption
+  latency improvement over single-plane baseline.
+
+### DR-ARCH-02 — Deterministic forwarding policy in M0
+
+- Decision: M0 uses deterministic, auditable forwarding policy
+  (criticality, layer order, peer demand, expiry, hop limit, copy
+  budget, completion %).
+- Alternatives: utility-based forwarding; unrestricted epidemic;
+  user-selected forwarding.
+- Recommended: deterministic policy in M0; utility-based as later
+  experiment in `EXPERIMENT_PLAN.md`.
+- Reason: reproducibility, testability, auditability — required to
+  validate the central protocol claim without confounding variables.
+- Evidence required: M0 success criteria 1, 3, 9.
+- Trade-offs: lower adaptivity in M0.
+- Risks: may underperform a learned policy in real traffic.
+- Validation: `EXPERIMENT_PLAN.md` falsifiable hypotheses H-FWD-1..H-FWD-3.
+- Revisit condition: M5+ evaluation of utility-based vs deterministic.
+
+### DR-ARCH-03 — Multi-peer reconstruction ≠ coded reconstruction
+
+- Decision: M0 multi-peer reconstruction is ordinary missing-chunk
+  completion only.
+- Alternatives: include erasure / rateless coding in M0.
+- Recommended: ordinary chunks in M0; coded path is later research.
+- Reason: keep M0 scope honest; do not describe behavior that isn't
+  implemented.
+- Evidence required: M0 success criterion 5.
+- Trade-offs: lower robustness to peer disappearance in M0.
+- Risks: evaluators may misread M0 as demonstrating coding.
+- Validation: `EXPERIMENT_PLAN.md` distinguishes the two paths.
+- Revisit condition: post-M5 decision on coding extension.
+
+### DR-ARCH-04 — Provisional transport; smoke-test gate
+
+- Decision: Nearby Connections is provisional first adapter. No
+  transport is locked until a real-device smoke-test gate passes.
+- Alternatives: Wi-Fi Direct; local hotspot + LAN; BLE control only.
+- Recommended: provisional Nearby Connections, alternatives kept in
+  research.
+- Reason: avoid pre-locking a transport that may fail the gate on
+  intended demo devices.
+- Evidence required: gate criteria in `RESEARCH_LOG.md` §Transport.
+- Trade-offs: slower M3 plan until gate passes.
+- Risks: gate failure leaves M3 without a transport.
+- Validation: `ACCEPTANCE_TESTS.md` transport smoke tests.
+- Revisit condition: gate result.
