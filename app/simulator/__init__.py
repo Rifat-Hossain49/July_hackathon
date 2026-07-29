@@ -22,5 +22,7 @@ __all__ = [
     "transfer",
     "ingress",
     "scenario",
+    "gate",
+    "persistence",
     "main",
 ]
