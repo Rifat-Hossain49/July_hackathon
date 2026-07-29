@@ -1,0 +1,308 @@
+{
+  "_comment": [
+    "Golden vectors for Shongket M1 Slice 1 (AT-22, AT-23, AT-24).",
+    "Canonical rules: sort_keys=True, separators=(',',':'),",
+    "ensure_ascii=True, UTF-8, no floats, string keys only.",
+    "These values were computed independently of shongket_core and are",
+    "committed as the expected output. Tests must compare against them,",
+    "never regenerate them."
+  ],
+  "canonical_rules": {
+    "sort_keys": true,
+    "separators": [
+      ",",
+      ":"
+    ],
+    "ensure_ascii": true,
+    "encoding": "utf-8",
+    "floats_allowed": false,
+    "non_string_keys_allowed": false
+  },
+  "serialization": [
+    {
+      "name": "capsule_v1_0",
+      "note": "populated capsule",
+      "value": {
+        "schema": "shongket.capsule.v1.0",
+        "capsule_id": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "object_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "source_media_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "human_confirmed": true,
+        "confirmation_method": "manual_form_only",
+        "creator_pub_key_id": "test-key-0",
+        "created_at_unix": 1700000000,
+        "signatures": [],
+        "extracted_fields": {
+          "event_type": "flood",
+          "urgency": "life_safety",
+          "location_text": "Biporjo, Khulna",
+          "summary_bn": "Jol bere jacche."
+        }
+      },
+      "canonical_text": "{\"capsule_id\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"confirmation_method\":\"manual_form_only\",\"created_at_unix\":1700000000,\"creator_pub_key_id\":\"test-key-0\",\"extracted_fields\":{\"event_type\":\"flood\",\"location_text\":\"Biporjo, Khulna\",\"summary_bn\":\"Jol bere jacche.\",\"urgency\":\"life_safety\"},\"human_confirmed\":true,\"object_ref\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"schema\":\"shongket.capsule.v1.0\",\"signatures\":[],\"source_media_ref\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+      "byte_length": 555,
+      "sha256": "8b0a32314f8eb03dfd902f9357dba6b3ef92f6c5e401470675143f15f0e8646f"
+    },
+    {
+      "name": "content_v1_0",
+      "note": "populated content manifest",
+      "value": {
+        "schema": "shongket.content.v1.0",
+        "object_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "capsule_ref": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "representations": [
+          {
+            "id": "thumb",
+            "byte_len": 8192,
+            "chunk_size": 65536
+          },
+          {
+            "id": "original",
+            "byte_len": 200000,
+            "chunk_size": 65536
+          }
+        ],
+        "priority": "life_safety",
+        "created_at_unix": 1700000000,
+        "expires_at_unix": null,
+        "hop_limit": 6,
+        "copy_budget": 8,
+        "visibility": "public",
+        "signatures": []
+      },
+      "canonical_text": "{\"capsule_ref\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"copy_budget\":8,\"created_at_unix\":1700000000,\"expires_at_unix\":null,\"hop_limit\":6,\"object_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"priority\":\"life_safety\",\"representations\":[{\"byte_len\":8192,\"chunk_size\":65536,\"id\":\"thumb\"},{\"byte_len\":200000,\"chunk_size\":65536,\"id\":\"original\"}],\"schema\":\"shongket.content.v1.0\",\"signatures\":[],\"visibility\":\"public\"}",
+      "byte_length": 464,
+      "sha256": "d61e057baa266985ef23614d8ca69e1102417637e01b53fd0fb96ea8f850d524"
+    },
+    {
+      "name": "fragment_v1_0",
+      "note": "fragment descriptor",
+      "value": {
+        "schema": "shongket.fragment.v1.0",
+        "object_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "representation_id": "original",
+        "chunk_index": 3,
+        "chunk_size": 65536,
+        "byte_range": [
+          196608,
+          262143
+        ],
+        "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "canonical_text": "{\"byte_range\":[196608,262143],\"chunk_index\":3,\"chunk_size\":65536,\"hash\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"object_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"representation_id\":\"original\",\"schema\":\"shongket.fragment.v1.0\"}",
+      "byte_length": 283,
+      "sha256": "8eea53cc8f13bb7c026a682c52a15e1563b42130b1a69f22e818c04364f1e605"
+    },
+    {
+      "name": "content_v1_0_scrambled_insertion_order",
+      "note": "same logical manifest, reversed insertion order; must match content_v1_0 exactly",
+      "value": {
+        "signatures": [],
+        "visibility": "public",
+        "copy_budget": 8,
+        "hop_limit": 6,
+        "expires_at_unix": null,
+        "created_at_unix": 1700000000,
+        "priority": "life_safety",
+        "representations": [
+          {
+            "id": "thumb",
+            "byte_len": 8192,
+            "chunk_size": 65536
+          },
+          {
+            "id": "original",
+            "byte_len": 200000,
+            "chunk_size": 65536
+          }
+        ],
+        "capsule_ref": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "object_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "schema": "shongket.content.v1.0"
+      },
+      "canonical_text": "{\"capsule_ref\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"copy_budget\":8,\"created_at_unix\":1700000000,\"expires_at_unix\":null,\"hop_limit\":6,\"object_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"priority\":\"life_safety\",\"representations\":[{\"byte_len\":8192,\"chunk_size\":65536,\"id\":\"thumb\"},{\"byte_len\":200000,\"chunk_size\":65536,\"id\":\"original\"}],\"schema\":\"shongket.content.v1.0\",\"signatures\":[],\"visibility\":\"public\"}",
+      "byte_length": 464,
+      "sha256": "d61e057baa266985ef23614d8ca69e1102417637e01b53fd0fb96ea8f850d524"
+    },
+    {
+      "name": "capsule_non_ascii",
+      "note": "Bangla text; ensure_ascii=True escapes as \\uXXXX to preserve byte-compatibility with M0 content identifiers",
+      "value": {
+        "schema": "shongket.capsule.v1.0",
+        "capsule_id": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "object_ref": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "human_confirmed": true,
+        "extracted_fields": {
+          "summary_bn": "\u099c\u09b2 \u09ac\u09be\u09dc\u099b\u09c7"
+        }
+      },
+      "canonical_text": "{\"capsule_id\":\"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\",\"extracted_fields\":{\"summary_bn\":\"\\u099c\\u09b2 \\u09ac\\u09be\\u09dc\\u099b\\u09c7\"},\"human_confirmed\":true,\"object_ref\":\"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\",\"schema\":\"shongket.capsule.v1.0\"}",
+      "byte_length": 297,
+      "sha256": "028d7ab7f1dab6a69dda8ae325f80fdf111e1bebefcb6d4187b92a6d76621bc7"
+    }
+  ],
+  "identity": [
+    {
+      "name": "content_identity_excludes_forwarding_state",
+      "note": "hop_count and remaining_copy_budget are transport state; identity bytes must equal those of the manifest without them",
+      "payload": {
+        "schema": "shongket.content.v1.0",
+        "object_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "capsule_ref": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "representations": [
+          {
+            "id": "thumb",
+            "byte_len": 8192,
+            "chunk_size": 65536
+          },
+          {
+            "id": "original",
+            "byte_len": 200000,
+            "chunk_size": 65536
+          }
+        ],
+        "priority": "life_safety",
+        "created_at_unix": 1700000000,
+        "expires_at_unix": null,
+        "hop_limit": 6,
+        "copy_budget": 8,
+        "visibility": "public",
+        "signatures": [],
+        "hop_count": 3,
+        "remaining_copy_budget": 5
+      },
+      "excluded_fields": [
+        "hop_count",
+        "remaining_copy_budget"
+      ],
+      "canonical_text": "{\"capsule_ref\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"copy_budget\":8,\"created_at_unix\":1700000000,\"expires_at_unix\":null,\"hop_limit\":6,\"object_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"priority\":\"life_safety\",\"representations\":[{\"byte_len\":8192,\"chunk_size\":65536,\"id\":\"thumb\"},{\"byte_len\":200000,\"chunk_size\":65536,\"id\":\"original\"}],\"schema\":\"shongket.content.v1.0\",\"signatures\":[],\"visibility\":\"public\"}",
+      "sha256": "d61e057baa266985ef23614d8ca69e1102417637e01b53fd0fb96ea8f850d524",
+      "equals_vector": "content_v1_0"
+    }
+  ],
+  "versions": [
+    {
+      "identifier": "shongket.content.v1.0",
+      "valid": true,
+      "family": "content",
+      "major": 1,
+      "minor": 0,
+      "legacy_alias": false
+    },
+    {
+      "identifier": "shongket.capsule.v1.0",
+      "valid": true,
+      "family": "capsule",
+      "major": 1,
+      "minor": 0,
+      "legacy_alias": false
+    },
+    {
+      "identifier": "shongket.content.v1",
+      "valid": true,
+      "family": "content",
+      "major": 1,
+      "minor": 0,
+      "legacy_alias": true,
+      "note": "legacy alias resolves to 1.0 and only 1.0"
+    },
+    {
+      "identifier": "shongket.content.v2.0",
+      "valid": true,
+      "family": "content",
+      "major": 2,
+      "minor": 0,
+      "legacy_alias": false,
+      "note": "syntactically valid; registry rejects it as unknown major"
+    },
+    {
+      "identifier": "shongket.content.v1.7",
+      "valid": true,
+      "family": "content",
+      "major": 1,
+      "minor": 7,
+      "legacy_alias": false,
+      "note": "syntactically valid; registry rejects unless registered"
+    },
+    {
+      "identifier": "shongket.content.v01.0",
+      "valid": false,
+      "error_code": "VERSION_UNSUPPORTED",
+      "note": "leading zero"
+    },
+    {
+      "identifier": "shongket.content.vX",
+      "valid": false,
+      "error_code": "VERSION_UNSUPPORTED",
+      "note": "non-numeric major"
+    },
+    {
+      "identifier": "shongket.content.v1.0.1",
+      "valid": false,
+      "error_code": "VERSION_UNSUPPORTED",
+      "note": "three components"
+    },
+    {
+      "identifier": "shongket.content",
+      "valid": false,
+      "error_code": "VERSION_UNSUPPORTED",
+      "note": "no version"
+    },
+    {
+      "identifier": "content.v1.0",
+      "valid": false,
+      "error_code": "VERSION_UNSUPPORTED",
+      "note": "missing prefix"
+    },
+    {
+      "identifier": " shongket.content.v1.0",
+      "valid": false,
+      "error_code": "VERSION_UNSUPPORTED",
+      "note": "leading whitespace, not stripped"
+    },
+    {
+      "identifier": "shongket.Content.v1.0",
+      "valid": false,
+      "error_code": "VERSION_UNSUPPORTED",
+      "note": "uppercase family"
+    },
+    {
+      "identifier": "shongket.content.v1.",
+      "valid": false,
+      "error_code": "VERSION_UNSUPPORTED",
+      "note": "trailing separator"
+    }
+  ],
+  "registry_resolution": [
+    {
+      "identifier": "shongket.content.v1.0",
+      "outcome": "accepted",
+      "via_registered_compatibility": false,
+      "legacy_alias": false
+    },
+    {
+      "identifier": "shongket.content.v1",
+      "outcome": "accepted",
+      "via_registered_compatibility": false,
+      "legacy_alias": true
+    },
+    {
+      "identifier": "shongket.content.v2.0",
+      "outcome": "rejected",
+      "error_code": "VERSION_UNSUPPORTED",
+      "reason": "unknown major"
+    },
+    {
+      "identifier": "shongket.content.v1.7",
+      "outcome": "rejected",
+      "error_code": "VERSION_UNSUPPORTED",
+      "reason": "minor above baseline without a registered compatibility entry"
+    },
+    {
+      "identifier": "shongket.widget.v1.0",
+      "outcome": "rejected",
+      "error_code": "SCHEMA_INVALID",
+      "reason": "unknown schema family"
+    }
+  ]
+}

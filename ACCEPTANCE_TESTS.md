@@ -519,6 +519,41 @@ S1 rows (AT-30, AT-37) additionally protect M0 evidence already earned.
 - Severity: S1.
 - Runtime boundary: whole package.
 
+## Milestone 1 Slice 1 harness evidence
+
+Recorded from an actual run. Slice 1 covers **AT-22, AT-23 and AT-24
+only**; every other M1 test remains unimplemented with no recorded
+result.
+
+**Run summary:** 79 Slice-1 tests passed, plus the 125 M0 regression
+tests — **204 passed, 0 failed, 0 skipped**. Modules live in
+`shongket_core/tests/`.
+
+| AT ID | Test module | Result | Evidence summary |
+|---|---|---|---|
+| AT-22 | `test_at22_canonical_serialization.py` | PASS (41) | Encode→decode→encode byte-identical for capsule, manifest, fragment, a reversed-insertion-order manifest and a non-ASCII payload; each matched a committed golden SHA-256; verified identical in a freshly spawned process and across >1s of elapsed time; floats, non-finite constants, non-string keys, tuples, sets and bytes all rejected rather than coerced |
+| AT-23 | `test_at23_minor_compatibility.py` | PASS (14) | Registered minor `1.1` accepted with its unknown field named and ignored; unregistered `1.1` refused; registering `1.2` grants nothing to `1.1` or `1.3`; compatibility does not leak across families; all 4 construction-order permutations produce equal registries and identical resolutions; legacy `…v1` resolves to `1.0` and never to a registered higher minor |
+| AT-24 | `test_at24_unsupported_version.py` | PASS (24) | Unknown major, unknown-major-plus-malformed, and unregistered minor all rejected `VERSION_UNSUPPORTED`; the malformed case proves version resolution precedes structural parsing; 8 malformed identifier forms rejected; registry, payload and error detail unchanged across repeated attempts |
+| AT-25 … AT-37 | — | NOT IMPLEMENTED | Slices 2–5; no result recorded |
+
+Golden vectors live in `shongket_core/testdata/golden_vectors.json`.
+They were computed independently of `shongket_core` from the canonical
+rules in `PROTOCOL_SPEC.md` §9 and are committed as the expected output;
+the tests compare against them and never regenerate them.
+
+The M0 deterministic CLI hash is unchanged by this slice
+(`D5AC79B1…2CB4DF`, 3114 bytes), which is the running check against the
+AT-37 regression requirement. AT-37 itself is not yet implemented.
+
+### Slice 1 implementation note
+
+`shongket_core` is standard-library only and imports nothing from
+`app/` or `adapters/`. The M0 simulator is untouched and still uses its
+own `validation.py` boundary, so `shongket_core.errors.ProtocolError`
+and `app.simulator.validation.ProtocolError` coexist during Slices 1–4.
+Both carry a `code` drawn from the same canonical vocabulary;
+reconciling the two types is Slice 4/5 work.
+
 ## Milestone 1 forwarding-admission coverage
 
 The six clauses of the M1 admission rule (`PROTOCOL_SPEC.md` §6) map to

@@ -11,8 +11,19 @@ afterwards.
 
 Authorised work is limited to the scope in §1 and the slices in §8.
 Android, radios, offline AI inference, production security, eviction and
-all Milestone 2+ work remain unauthorised. Nothing in this document
-records an M1 result: **no M1 code has been written yet.**
+all Milestone 2+ work remain unauthorised.
+
+**Progress — M1 overall: IN PROGRESS.**
+
+| Slice | Status |
+|---|---|
+| Slice 1 — canonical serialization, schema registry, version handling | **IMPLEMENTED** in `shongket_core/`; AT-22, AT-23, AT-24 pass |
+| Slice 2 — durable atomic persistence | NOT STARTED |
+| Slice 3 — migration, rollback, corrupted-state handling | NOT STARTED |
+| Slice 4 — privacy rules, `public_only`, failure taxonomy | NOT STARTED |
+| Slice 5 — conformance suite, adapter isolation, golden vectors | NOT STARTED |
+
+AT-25 through AT-37 have no implementation and no recorded result.
 
 Baseline this freeze was written against:
 
