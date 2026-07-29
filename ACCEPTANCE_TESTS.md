@@ -525,15 +525,16 @@ Recorded from an actual run. Slice 1 covers **AT-22, AT-23 and AT-24
 only**; every other M1 test remains unimplemented with no recorded
 result.
 
-**Run summary:** 79 Slice-1 tests passed, plus the 125 M0 regression
-tests — **204 passed, 0 failed, 0 skipped**. Modules live in
-`shongket_core/tests/`.
+**Run summary:** 103 Slice-1 tests passed, plus the 125 M0 regression
+tests — **228 passed, 0 failed, 0 skipped**. Modules live in
+`shongket_core/tests/`. Counts below are measured per module.
 
 | AT ID | Test module | Result | Evidence summary |
 |---|---|---|---|
 | AT-22 | `test_at22_canonical_serialization.py` | PASS (41) | Encode→decode→encode byte-identical for capsule, manifest, fragment, a reversed-insertion-order manifest and a non-ASCII payload; each matched a committed golden SHA-256; verified identical in a freshly spawned process and across >1s of elapsed time; floats, non-finite constants, non-string keys, tuples, sets and bytes all rejected rather than coerced |
-| AT-23 | `test_at23_minor_compatibility.py` | PASS (14) | Registered minor `1.1` accepted with its unknown field named and ignored; unregistered `1.1` refused; registering `1.2` grants nothing to `1.1` or `1.3`; compatibility does not leak across families; all 4 construction-order permutations produce equal registries and identical resolutions; legacy `…v1` resolves to `1.0` and never to a registered higher minor |
-| AT-24 | `test_at24_unsupported_version.py` | PASS (24) | Unknown major, unknown-major-plus-malformed, and unregistered minor all rejected `VERSION_UNSUPPORTED`; the malformed case proves version resolution precedes structural parsing; 8 malformed identifier forms rejected; registry, payload and error detail unchanged across repeated attempts |
+| AT-23 | `test_at23_minor_compatibility.py` | PASS (23) | Exact registered version accepted without any entry; **unregistered lower *and* higher minors both refused**; registered lower minor accepted and marked compatibility-based; registering `1.2` grants nothing to `1.1` or `1.3`; no leakage across families or majors; all 4 construction-order permutations produce equal registries and identical resolutions; legacy `…v1` resolves to `1.0` only and does not bypass registration when the exact version is later |
+| AT-24 | `test_at24_unsupported_version.py` | PASS (34) | Unknown major, unknown-major-plus-malformed, and unregistered minor all rejected `VERSION_UNSUPPORTED`; the malformed case proves version resolution precedes structural parsing; 8 malformed identifier forms plus 10 leading/trailing whitespace forms — including trailing LF and CRLF — rejected; registry, payload and error detail unchanged across repeated attempts |
+| — | `test_public_exports.py` | PASS (5) | Every `__all__` name reachable after a plain `import shongket_core`, verified in a fresh process; import has no side effects; `canonical_registry()` returns equal but independent instances |
 | AT-25 … AT-37 | — | NOT IMPLEMENTED | Slices 2–5; no result recorded |
 
 Golden vectors live in `shongket_core/testdata/golden_vectors.json`.

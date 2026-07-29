@@ -17,6 +17,7 @@ use its own validation boundary. Reconciling the two is Slice 4/5 work.
 
 from __future__ import annotations
 
+from . import codec
 from .errors import ErrorClass, ErrorCode, ProtocolError, classify
 from .schema import (
     AcceptedPayload,

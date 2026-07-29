@@ -108,17 +108,126 @@ def test_baseline_and_lower_minors_need_no_registration():
     assert baseline.resolution.via_registered_compatibility is False
 
 
-def test_lower_minor_than_baseline_is_always_accepted():
-    """An older sender we still understand needs no compatibility entry."""
-    content_v1_3 = SchemaDefinition(
-        family="content", version=SchemaVersion(1, 3), required_fields=("schema",)
-    )
-    registry = SchemaRegistry(definitions=(content_v1_3,))
+# --- lower minors require registration too (ratified D-M1-05) ---------------
+#
+# This replaces an earlier test that asserted a lower minor is always
+# accepted. Ordering grants nothing: a receiver holds no record of what
+# an unregistered earlier release looked like, so treating "lower" as
+# "safe" would be inference, which D-M1-05 forbids.
 
-    for minor in (0, 1, 2, 3):
-        resolved = registry.resolve(f"shongket.content.v1.{minor}")
-        assert resolved.version.minor == minor
-        assert resolved.via_registered_compatibility is False
+CONTENT_V1_2 = SchemaDefinition(
+    family="content", version=SchemaVersion(1, 2), required_fields=("schema",)
+)
+
+
+@pytest.mark.parametrize("minor", [0, 1])
+def test_unregistered_lower_minor_is_rejected(minor):
+    registry = SchemaRegistry(definitions=(CONTENT_V1_2,))
+
+    with pytest.raises(ProtocolError) as excinfo:
+        registry.resolve(f"shongket.content.v1.{minor}")
+    assert excinfo.value.code is ErrorCode.VERSION_UNSUPPORTED
+    assert "never inferred from ordering" in excinfo.value.detail
+
+
+def test_registered_lower_minor_is_accepted_and_marked_compatibility_based():
+    registry = SchemaRegistry(
+        definitions=(CONTENT_V1_2,),
+        compatibilities=(MinorCompatibility("content", 1, 1),),
+    )
+
+    resolved = registry.resolve("shongket.content.v1.1")
+    assert resolved.version == SchemaVersion(1, 1)
+    assert resolved.via_registered_compatibility is True
+
+    # 1.0 is still unregistered and stays refused.
+    with pytest.raises(ProtocolError) as excinfo:
+        registry.resolve("shongket.content.v1.0")
+    assert excinfo.value.code is ErrorCode.VERSION_UNSUPPORTED
+
+
+def test_exact_version_is_accepted_without_any_compatibility_entry():
+    registry = SchemaRegistry(definitions=(CONTENT_V1_2,))
+
+    resolved = registry.resolve("shongket.content.v1.2")
+    assert resolved.version == SchemaVersion(1, 2)
+    assert resolved.via_registered_compatibility is False
+    assert resolved.legacy_alias is False
+
+
+def test_lower_minor_compatibility_does_not_leak_between_families():
+    registry = SchemaRegistry(
+        definitions=(
+            CONTENT_V1_2,
+            SchemaDefinition(
+                family="capsule",
+                version=SchemaVersion(1, 2),
+                required_fields=("schema",),
+            ),
+        ),
+        compatibilities=(MinorCompatibility("content", 1, 1),),
+    )
+
+    assert registry.resolve("shongket.content.v1.1").via_registered_compatibility
+
+    with pytest.raises(ProtocolError) as excinfo:
+        registry.resolve("shongket.capsule.v1.1")
+    assert excinfo.value.code is ErrorCode.VERSION_UNSUPPORTED
+
+
+def test_compatibility_does_not_leak_between_majors():
+    """An entry on major 1 grants nothing on major 2."""
+    registry = SchemaRegistry(
+        definitions=(
+            CONTENT_V1_2,
+            SchemaDefinition(
+                family="content",
+                version=SchemaVersion(2, 5),
+                required_fields=("schema",),
+            ),
+        ),
+        compatibilities=(MinorCompatibility("content", 1, 1),),
+    )
+
+    assert registry.resolve("shongket.content.v1.1").via_registered_compatibility
+    assert registry.resolve("shongket.content.v2.5").via_registered_compatibility is False
+
+    with pytest.raises(ProtocolError) as excinfo:
+        registry.resolve("shongket.content.v2.1")
+    assert excinfo.value.code is ErrorCode.VERSION_UNSUPPORTED
+
+
+def test_legacy_alias_does_not_bypass_registration_when_exact_is_later():
+    """`...v1` resolves to 1.0, then must still clear the same gate.
+
+    With an exact registered version of 1.2, the alias is not a back
+    door to an unregistered 1.0.
+    """
+    registry = SchemaRegistry(definitions=(CONTENT_V1_2,))
+
+    with pytest.raises(ProtocolError) as excinfo:
+        registry.resolve("shongket.content.v1")
+    assert excinfo.value.code is ErrorCode.VERSION_UNSUPPORTED
+
+    # Registering 1.0 explicitly opens the alias, still marked as
+    # compatibility-based rather than exact.
+    opened = SchemaRegistry(
+        definitions=(CONTENT_V1_2,),
+        compatibilities=(MinorCompatibility("content", 1, 0),),
+    )
+    resolved = opened.resolve("shongket.content.v1")
+    assert resolved.version == SchemaVersion(1, 0)
+    assert resolved.legacy_alias is True
+    assert resolved.via_registered_compatibility is True
+
+
+def test_legacy_alias_at_exact_one_point_zero_needs_no_registration():
+    registry = SchemaRegistry(definitions=(CONTENT_V1,))
+
+    resolved = registry.resolve("shongket.content.v1")
+    assert resolved.version == SchemaVersion(1, 0)
+    assert resolved.legacy_alias is True
+    assert resolved.via_registered_compatibility is False
 
 
 # --- compatibility is never inferred ----------------------------------------
@@ -222,13 +331,32 @@ def test_compatibility_must_reference_a_registered_schema():
         )
 
 
-def test_ineffective_compatibility_entry_is_refused():
-    """Declaring compatibility at or below baseline is a mistake, not a no-op."""
-    with pytest.raises(ValueError, match="not above the registered baseline"):
+def test_compatibility_entry_for_the_exact_version_is_refused():
+    """Registering the exact version is dead configuration, not a no-op."""
+    with pytest.raises(ValueError, match="equals the exact registered version"):
         SchemaRegistry(
             definitions=(CONTENT_V1,),
             compatibilities=(MinorCompatibility("content", 1, 0),),
         )
+
+
+def test_lower_minor_compatibility_entries_are_registrable():
+    """The ratified rule requires lower minors to be declarable at all."""
+    registry = SchemaRegistry(
+        definitions=(CONTENT_V1_2,),
+        compatibilities=(
+            MinorCompatibility("content", 1, 0),
+            MinorCompatibility("content", 1, 1),
+        ),
+    )
+    assert registry.registered_compatibilities() == (
+        MinorCompatibility("content", 1, 0),
+        MinorCompatibility("content", 1, 1),
+    )
+    for minor in (0, 1):
+        assert registry.resolve(
+            f"shongket.content.v1.{minor}"
+        ).via_registered_compatibility is True
 
 
 def test_registry_has_no_shared_mutable_state():

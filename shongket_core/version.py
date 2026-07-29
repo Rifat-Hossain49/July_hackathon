@@ -17,7 +17,8 @@ alternative would be a silent coercion, which D-M1-05 forbids:
 * leading zeros (``v01``) are rejected — otherwise ``v01`` and ``v1``
   would be two spellings of one version, and a version string that has
   two spellings cannot be part of byte-stable serialization;
-* surrounding whitespace is rejected rather than stripped;
+* surrounding whitespace is rejected rather than stripped, including a
+  trailing newline or CRLF;
 * more than two numeric components is rejected, not truncated;
 * a missing minor becomes ``0`` **only** through the documented legacy
   alias, never through inference about intent.
@@ -36,8 +37,15 @@ from .errors import ErrorCode, ProtocolError
 PREFIX = "shongket"
 
 # family: lowercase, starts with a letter. major/minor: no leading zeros.
+#
+# Matched with re.fullmatch and no anchors. Using ``$`` here would be a
+# bug: in Python ``$`` also matches immediately before a trailing
+# newline, so "shongket.content.v1.0\n" would parse as a valid
+# identifier. Two byte strings mapping to one schema identity breaks the
+# one-spelling-per-version property that byte-stable serialization
+# depends on. ``fullmatch`` has no such exception.
 _IDENTIFIER = re.compile(
-    r"^shongket\.([a-z][a-z0-9_]*)\.v(0|[1-9][0-9]*)(?:\.(0|[1-9][0-9]*))?$"
+    r"shongket\.([a-z][a-z0-9_]*)\.v(0|[1-9][0-9]*)(?:\.(0|[1-9][0-9]*))?"
 )
 
 
@@ -114,7 +122,7 @@ def parse_schema_id(identifier: object) -> SchemaId:
             f"{type(identifier).__name__}",
         )
 
-    match = _IDENTIFIER.match(identifier)
+    match = _IDENTIFIER.fullmatch(identifier)
     if match is None:
         raise ProtocolError(
             ErrorCode.VERSION_UNSUPPORTED,

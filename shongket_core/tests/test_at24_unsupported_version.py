@@ -124,6 +124,48 @@ def test_well_formed_version_identifiers_parse_as_committed(case):
     assert parsed.legacy_alias == case["legacy_alias"]
 
 
+@pytest.mark.parametrize(
+    "identifier, note",
+    [
+        ("shongket.content.v1.0\n", "trailing LF"),
+        ("shongket.content.v1.0\r\n", "trailing CRLF"),
+        ("shongket.content.v1.0\r", "trailing CR"),
+        ("shongket.content.v1.0 ", "trailing space"),
+        ("shongket.content.v1.0\t", "trailing tab"),
+        ("\nshongket.content.v1.0", "leading LF"),
+        (" shongket.content.v1.0", "leading space"),
+        ("\tshongket.content.v1.0", "leading tab"),
+        (" shongket.content.v1.0 ", "surrounding spaces"),
+        ("shongket.content.v1\n", "legacy alias with trailing LF"),
+    ],
+)
+def test_surrounding_whitespace_is_rejected_not_stripped(identifier, note):
+    """A trailing newline must not slip through.
+
+    Python's ``$`` also matches immediately before a trailing newline,
+    so an anchored pattern would accept ``...v1.0\\n``. Two byte strings
+    resolving to one schema identity would break the
+    one-spelling-per-version property byte-stable serialization relies
+    on, so the parser uses ``fullmatch``.
+    """
+    with pytest.raises(ProtocolError) as excinfo:
+        parse_schema_id(identifier)
+    assert excinfo.value.code is ErrorCode.VERSION_UNSUPPORTED
+
+
+def test_valid_identifiers_still_parse_after_the_whitespace_fix():
+    for identifier, expected_minor, legacy in (
+        ("shongket.content.v1.0", 0, False),
+        ("shongket.capsule.v1.0", 0, False),
+        ("shongket.fragment.v1.0", 0, False),
+        ("shongket.content.v1", 0, True),
+        ("shongket.content.v2.13", 13, False),
+    ):
+        parsed = parse_schema_id(identifier)
+        assert parsed.minor == expected_minor
+        assert parsed.legacy_alias is legacy
+
+
 def test_absent_or_non_string_schema_is_schema_invalid():
     """Not a version problem: the payload cannot be identified at all."""
     for identifier in (None, 42, [], {}, True):

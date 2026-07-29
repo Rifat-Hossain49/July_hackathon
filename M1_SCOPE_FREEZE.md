@@ -277,15 +277,23 @@ rules:
 - **Major** = breaking. A receiver seeing an unknown major rejects with
   `VERSION_UNSUPPORTED` and performs **no partial decode**.
 - **Minor** = additive only, and **compatibility must be explicitly
-  registered**. A higher minor is accepted only when the receiver holds
-  a registered compatibility entry for that `(object, major, minor)`;
-  an unregistered minor is refused with `VERSION_UNSUPPORTED`. A lower
-  minor is always accepted.
+  registered**. The exact registered version is accepted. *Any* other
+  minor — numerically lower or higher — is accepted only when the
+  receiver holds a registered compatibility entry for that
+  `(object, major, minor)`; otherwise it is refused with
+  `VERSION_UNSUPPORTED`.
+- **Ordering grants nothing.** An earlier draft of this decision said "a
+  lower minor is always accepted", reasoning that an older sender is one
+  we already understand. That was ratified out: a receiver holds no
+  record of what an unregistered earlier release actually looked like,
+  so treating "lower" as "safe" is inference from numeric ordering —
+  precisely what this decision forbids. This wording previously
+  contradicted `PROTOCOL_SPEC.md` §9.1; the two now agree.
 - Accepted rule is **stricter than originally proposed**. The draft
   accepted any higher minor optimistically and ignored unknown fields.
   The accepted rule requires compatibility to be *declared, never
   inferred*, so a receiver cannot silently accept a payload shaped by a
-  future release it knows nothing about.
+  release it knows nothing about, in either direction.
 - On an accepted minor, unknown fields are ignored, not persisted and
   not echoed back.
 - A schema registry maps `(object, major)` to a validator and holds the

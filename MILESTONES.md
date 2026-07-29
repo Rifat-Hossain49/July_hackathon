@@ -124,7 +124,7 @@ interfaces, but does not add Android transport or coded delivery.
 - **Implementation state:** IN PROGRESS.
   - **Slice 1 — canonical serialization, schema registry, version
     handling: IMPLEMENTED** in `shongket_core/`. AT-22, AT-23 and AT-24
-    pass; 79 Slice-1 tests plus the 125 M0 regression tests, 204 total,
+    pass; 103 Slice-1 tests plus the 125 M0 regression tests, 228 total,
     0 failed, 0 skipped.
   - **Slices 2–5: NOT STARTED.** AT-25 through AT-37 have no
     implementation and no recorded result.

@@ -229,7 +229,7 @@ its three tests have run and their evidence is recorded below. Every
 other row remains empty because that code does not exist — filling any
 of them before the harness runs would violate DR-EXP-01.
 
-Slice 1 run: **204 passed, 0 failed, 0 skipped** (79 Slice-1 tests plus
+Slice 1 run: **228 passed, 0 failed, 0 skipped** (103 Slice-1 tests plus
 the 125 M0 regression tests).
 
 | Evidence | Source test | Value |

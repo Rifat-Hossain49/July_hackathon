@@ -15,20 +15,31 @@ Design constraints, all from the approved decisions:
   path.
 * **No discovery.** No plugin scanning, dynamic import or network fetch.
 
-Minor-version policy (D-M1-05)
-------------------------------
-For a known family and major, with ``baseline`` = the minor of the
+Minor-version policy (D-M1-05, as ratified)
+-------------------------------------------
+For a known family and major, with ``exact`` = the minor of the
 registered definition:
 
-===================  ==========================================
-Declared minor       Outcome
-===================  ==========================================
-``< baseline``       accepted — an older sender we still understand
-``== baseline``      accepted
-``> baseline``       accepted **only** if explicitly registered
-unknown major        ``VERSION_UNSUPPORTED``
-unknown family       ``SCHEMA_INVALID``
-===================  ==========================================
+=====================  ========================================
+Declared minor         Outcome
+=====================  ========================================
+``== exact``           accepted — the exact registered version
+``!= exact``           accepted **only** if explicitly registered,
+                       whether numerically lower or higher
+unknown major          ``VERSION_UNSUPPORTED``
+unknown family         ``SCHEMA_INVALID``
+=====================  ========================================
+
+**Ordering grants nothing.** An earlier draft accepted any lower minor
+automatically, on the reasoning that an older sender is one we already
+understand. That reasoning does not hold: a receiver holds no record of
+what an unregistered earlier release actually looked like, so treating
+"lower" as "safe" is inference — exactly what D-M1-05 forbids. Both
+directions now require an explicit entry.
+
+A compatibility entry for the exact registered minor is refused at
+construction, because that version is already accepted and the entry
+would be dead configuration.
 
 The unknown-family case is ``SCHEMA_INVALID`` rather than
 ``VERSION_UNSUPPORTED`` because the failure is not about a version: the
@@ -149,13 +160,13 @@ class SchemaRegistry:
                     f"compatibility for unregistered schema "
                     f"{entry.family} major {entry.major}"
                 )
-            baseline = by_key[(entry.family, entry.major)].version.minor
-            if entry.minor <= baseline:
+            exact = by_key[(entry.family, entry.major)].version.minor
+            if entry.minor == exact:
                 raise ValueError(
                     f"compatibility entry {entry.family} "
-                    f"v{entry.major}.{entry.minor} is not above the "
-                    f"registered baseline minor {baseline}; it would have "
-                    "no effect"
+                    f"v{entry.major}.{entry.minor} equals the exact "
+                    "registered version, which is already accepted; the "
+                    "entry would have no effect"
                 )
             if entry.key in compat:
                 raise ValueError(f"duplicate compatibility entry {entry.key!r}")
@@ -222,16 +233,20 @@ class SchemaRegistry:
                 f"{schema_id.family!r}",
             )
 
-        baseline = definition.version.minor
+        exact_minor = definition.version.minor
         via_compat = False
-        if schema_id.minor > baseline:
+        if schema_id.minor != exact_minor:
+            # Non-exact in either direction. Numeric ordering grants
+            # nothing: a lower minor is no more "obviously safe" than a
+            # higher one, because the receiver has no record of what that
+            # release actually looked like.
             if schema_id.to_compat_key() not in self._compatibilities:
                 raise ProtocolError(
                     ErrorCode.VERSION_UNSUPPORTED,
                     f"minor version {schema_id.minor} of {schema_id.family!r} "
                     f"v{schema_id.major} is not registered as compatible "
-                    f"(baseline minor {baseline}); compatibility is never "
-                    "inferred",
+                    f"(exact registered minor is {exact_minor}); "
+                    "compatibility is never inferred from ordering",
                 )
             via_compat = True
 
