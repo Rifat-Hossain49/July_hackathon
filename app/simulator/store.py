@@ -24,6 +24,7 @@ class StoreStats:
     duplicate_no_op: int = 0
     rejected_corruption: int = 0
     rejected_schema: int = 0
+    rejected_budget: int = 0
 
     def as_dict(self) -> dict:
         return {
@@ -31,15 +32,26 @@ class StoreStats:
             "duplicate_no_op": self.duplicate_no_op,
             "rejected_corruption": self.rejected_corruption,
             "rejected_schema": self.rejected_schema,
+            "rejected_budget": self.rejected_budget,
         }
 
 
 @dataclass
 class ContentAddressedStore:
-    """In-memory fragment store keyed by ``(object_id, representation_id, chunk_index)``."""
+    """In-memory fragment store keyed by ``(object_id, representation_id, chunk_index)``.
+
+    ``capacity_bytes`` is the AT-12 deterministic storage budget measured
+    in actual stored payload bytes. ``None`` (the default) means
+    unbounded, which preserves the behaviour every earlier slice relies
+    on. When a budget is set, a chunk whose payload does not fit in the
+    remaining capacity is refused *before* any mutation, so existing
+    fragments survive the refusal untouched.
+    """
 
     _fragments: dict[tuple[str, str, int], Chunk] = field(default_factory=dict)
     stats: StoreStats = field(default_factory=StoreStats)
+    capacity_bytes: int | None = None
+    _used_bytes: int = field(default=0, init=False)
 
     def has(self, object_id: str, representation_id: str, chunk_index: int) -> bool:
         return (object_id, representation_id, chunk_index) in self._fragments
@@ -56,6 +68,50 @@ class ContentAddressedStore:
             for (_o, _r, idx) in self._fragments.keys()
             if _o == object_id and _r == representation_id
         }
+
+    # -- storage budget (AT-12) ---------------------------------------------
+
+    @property
+    def used_bytes(self) -> int:
+        """Actual stored payload bytes, maintained incrementally."""
+        return self._used_bytes
+
+    @property
+    def remaining_bytes(self) -> int | None:
+        """Remaining capacity, or ``None`` when the store is unbounded."""
+        if self.capacity_bytes is None:
+            return None
+        return self.capacity_bytes - self._used_bytes
+
+    def recompute_used_bytes(self) -> int:
+        """Sum payload lengths from scratch.
+
+        Exists so tests can prove the incremental ``used_bytes`` counter
+        never drifts from the bytes actually held.
+        """
+        return sum(len(c.payload) for c in self._fragments.values())
+
+    def quota(self) -> dict:
+        """Deterministic quota values recorded as AT-12 evidence."""
+        return {
+            "capacity_bytes": self.capacity_bytes,
+            "used_bytes": self._used_bytes,
+            "remaining_bytes": self.remaining_bytes,
+            "fragment_count": len(self._fragments),
+        }
+
+    def _would_exceed(self, payload_len: int) -> bool:
+        if self.capacity_bytes is None:
+            return False
+        return self._used_bytes + payload_len > self.capacity_bytes
+
+    def _budget_error(self, chunk: Chunk) -> validation.ProtocolError:
+        return validation.ProtocolError(
+            "OUT_OF_BUDGET",
+            f"storage budget exceeded: used={self._used_bytes} "
+            f"payload={len(chunk.payload)} capacity={self.capacity_bytes}",
+            object_id=chunk.object_id,
+        )
 
     # -- ingest -------------------------------------------------------------
 
@@ -111,7 +167,18 @@ class ContentAddressedStore:
                 )
             self.stats.duplicate_no_op += 1
             return
+
+        # AT-12 storage budget. Reached only by a chunk that is
+        # schema-valid, hash-verified and genuinely new, so malformed,
+        # corrupted and duplicate chunks never consume capacity. Checked
+        # before the assignment below, so a refusal cannot mutate the
+        # fragment map or the byte counter.
+        if self._would_exceed(len(chunk.payload)):
+            self.stats.rejected_budget += 1
+            raise self._budget_error(chunk)
+
         self._fragments[key] = chunk
+        self._used_bytes += len(chunk.payload)
         self.stats.stored += 1
 
     # -- snapshot / restore (slice 2 / AT-07) -------------------------------
@@ -131,7 +198,10 @@ class ContentAddressedStore:
         the key was already present (dedup). Raises
         :class:`validation.ProtocolError` with
         ``code == "SNAPSHOT_CORRUPTED"`` when the supplied chunk's
-        declared SHA-256 does not match its payload.
+        declared SHA-256 does not match its payload, or
+        ``code == "OUT_OF_BUDGET"`` when the restored bytes would not fit
+        the configured capacity. Restored bytes are accounted exactly as
+        ingested bytes are, so budget accounting survives a restart.
         """
         if chunk.sha256 != hashutil.sha256_hex(chunk.payload):
             raise validation.ProtocolError(
@@ -142,6 +212,10 @@ class ContentAddressedStore:
         key = (chunk.object_id, chunk.representation_id, chunk.chunk_index)
         if key in self._fragments:
             return False
+        if self._would_exceed(len(chunk.payload)):
+            self.stats.rejected_budget += 1
+            raise self._budget_error(chunk)
         self._fragments[key] = chunk
+        self._used_bytes += len(chunk.payload)
         self.stats.stored += 1
         return True

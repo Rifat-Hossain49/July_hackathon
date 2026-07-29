@@ -29,6 +29,18 @@ class ProtocolError(Exception):
       persisted progress snapshot cannot be loaded because the JSON is
       malformed or the recorded SHA-256 no longer matches the stored
       bytes.
+
+    The slice-3 boundaries add one more:
+
+    * ``"OUT_OF_BUDGET"`` (AT-12): a schema-valid, hash-verified, new
+      chunk does not fit the store's remaining byte capacity. Named
+      after the canonical ``FragmentAck`` status ``out_of_budget``
+      (PROTOCOL_SPEC.md §3.6); nothing is stored and no existing
+      fragment is touched.
+
+    AT-11 expiry does not raise: expired content is refused at queue
+    admission (``priority.admit_for_forwarding``) and never reaches a
+    store boundary at all.
     """
 
     def __init__(self, code: str, detail: str, *, object_id: str | None = None) -> None:

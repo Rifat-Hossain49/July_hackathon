@@ -174,6 +174,93 @@ def schedule_full_transfer(scenario: TwoPeerScenario) -> list:
     return pri.order(items)
 
 
+@dataclass(frozen=True)
+class MultiPeerScenario:
+    """Deterministic AT-08 fixture: one receiver, several partial providers."""
+
+    base: TwoPeerScenario
+    representation_id: str
+    plan: chunks.ChunkPlan
+    receiver: SimulatedPeer
+    providers: list[SimulatedPeer]
+    holdings: dict[str, list[int]]
+
+    @property
+    def object_id(self) -> str:
+        return self.base.object_id
+
+    @property
+    def chunk_indexes(self) -> list[int]:
+        return [c.chunk_index for c in self.plan.chunks]
+
+
+def build_multi_peer_scenario(
+    *,
+    seed: int = 42,
+    chunk_size: int = 16_384,
+    source_size_bytes: int = 200_000,
+    representation_id: str = "original",
+    overlap: int = 2,
+) -> MultiPeerScenario:
+    """Build a deterministic multi-peer completion fixture for AT-08.
+
+    One representation is split across three providers so that:
+
+    * ``peer-A`` holds a leading block;
+    * ``peer-B`` holds a trailing block that *overlaps* ``peer-A``;
+    * ``peer-C`` holds only chunks both others already cover.
+
+    Neither ``peer-A`` nor ``peer-B`` alone completes the object, so
+    completion necessarily draws on at least two distinct peer IDs. The
+    deliberate overlap is what makes "request only missing chunks"
+    falsifiable: a receiver that re-requested everything a peer holds
+    would visibly retransmit the overlapping indexes, and ``peer-C``
+    would contribute despite holding nothing new.
+
+    The receiver starts empty. Providers are seeded through
+    ``restore_fragment``, which verifies SHA-256 per chunk, so every
+    holding is genuinely verified content.
+    """
+    base = build_two_peer_scenario(
+        seed=seed,
+        chunk_size=chunk_size,
+        source_size_bytes=source_size_bytes,
+    )
+    plan = base.plans[representation_id]
+    n = len(plan.chunks)
+    if n < 4:
+        raise ValueError(
+            f"multi-peer scenario needs at least 4 chunks, got {n}; "
+            "lower chunk_size or raise source_size_bytes"
+        )
+    if not 1 <= overlap < n // 2:
+        raise ValueError(f"overlap must satisfy 1 <= overlap < {n // 2}, got {overlap}")
+
+    cut = n // 2
+    holdings: dict[str, list[int]] = {
+        "peer-A": list(range(0, cut + overlap)),
+        "peer-B": list(range(cut - overlap, n)),
+        "peer-C": list(range(0, overlap)),
+    }
+
+    receiver = SimulatedPeer(peer_id="peer-R")
+    providers: list[SimulatedPeer] = []
+    for peer_id in ("peer-A", "peer-B", "peer-C"):
+        peer = SimulatedPeer(peer_id=peer_id)
+        for idx in holdings[peer_id]:
+            peer.store.restore_fragment(plan.chunks[idx])
+        providers.append(peer)
+
+    return MultiPeerScenario(
+        base=base,
+        representation_id=representation_id,
+        plan=plan,
+        receiver=receiver,
+        providers=providers,
+        holdings=holdings,
+    )
+
+
 def all_chunks(scenario: TwoPeerScenario) -> list[chunks.Chunk]:
     """Return every media fragment across every representation, in tier order."""
     from . import priority as pri

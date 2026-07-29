@@ -10,9 +10,9 @@ The seven-tier order is:
 6. standard representations
 7. original-quality fragments
 
-This module implements the ordering only. Multi-object contention,
-``expires_at`` and ``copy_budget`` enforcement, and ``FragmentRequest``
-negotiation are introduced in later M0 slices (AT-05, AT-06, AT-11).
+This module implements the ordering and the ``expires_at`` admission
+rule. ``copy_budget`` enforcement and multi-object contention remain out
+of scope for M0.
 """
 
 from __future__ import annotations
@@ -96,3 +96,46 @@ def order(items: list[SchedulerItem]) -> list[SchedulerItem]:
         return (it.tier, it.chunk_index if it.chunk_index is not None else -1, it.representation_id or "", it.object_id)
 
     return sorted(items, key=sort_key)
+
+
+# --- expiry admission (AT-11) ------------------------------------------------
+
+
+def is_expired(*, expires_at_unix: int | None, now_unix: int) -> bool:
+    """Return ``True`` when ``now_unix`` has reached or passed expiry.
+
+    ``expires_at_unix is None`` means the object never expires.
+
+    The boundary is **inclusive**: an object is expired at exactly
+    ``now_unix == expires_at_unix``. PROTOCOL_SPEC.md §7 models this as
+    ``Persisted --> Expiring: expires_at reached``, and the M0 forwarding
+    policy admits an object only when it is "not expired".
+
+    ``now_unix`` is a deterministic simulator tick supplied by the
+    caller. No wall-clock is consulted anywhere in this module.
+    """
+    if expires_at_unix is None:
+        return False
+    return now_unix >= expires_at_unix
+
+
+def admit_for_forwarding(
+    items: list[SchedulerItem],
+    *,
+    expires_at_unix: int | None,
+    now_unix: int,
+) -> list[SchedulerItem]:
+    """Return the ordered forwarding queue for ``items``.
+
+    Returns an **empty** queue when the object is expired: expired
+    content never enters the forwarding queue, so it can never be
+    selected for transmission (PROTOCOL_SPEC.md §6 factor 6, and the M0
+    policy "accept to forward iff: not expired, ...").
+
+    This is an admission rule for *forwarding* only. It does not delete
+    anything: an expired object already held locally stays in the store,
+    because no canonical M0 document requires deletion.
+    """
+    if is_expired(expires_at_unix=expires_at_unix, now_unix=now_unix):
+        return []
+    return order(items)

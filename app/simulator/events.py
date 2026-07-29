@@ -31,6 +31,12 @@ class EventType(str, Enum):
     TRANSFER_INTERRUPTED = "transfer_interrupted"
     TRANSFER_RESUMED = "transfer_resumed"
     RESTART_COMPLETED = "restart_completed"
+    # Slice 3 (AT-08 multi-peer completion, AT-11 expiry, AT-12 budget).
+    FRAGMENT_REQUESTED = "fragment_requested"
+    MULTI_PEER_COMPLETED = "multi_peer_completed"
+    FORWARD_QUEUED = "forward_queued"
+    FORWARD_REFUSED = "forward_refused"
+    STORAGE_BUDGET_REJECTED = "storage_budget_rejected"
 
 
 @dataclass
