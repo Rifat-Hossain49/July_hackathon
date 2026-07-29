@@ -193,6 +193,32 @@ Simulated behavior must never be presented as real networking behavior.
 - Device compatibility target
 - Measurable throughput target
 
+### Milestone 1 blocking decisions — REQUIRES_USER_DECISION
+
+Eight decisions must be settled before Milestone 1 can be approved or
+implemented. Proposed options, trade-offs and recommendations are
+drafted in [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md) §5. None is
+adopted here.
+
+| ID | Decision | Status |
+|---|---|---|
+| D-M1-01 | Privacy classification field name, type and default | REQUIRES_USER_DECISION |
+| D-M1-02 | Forwarding-consent field name, type and strictness | REQUIRES_USER_DECISION |
+| D-M1-03 | `PeerCapabilities.public_only` meaning and enforcement point | REQUIRES_USER_DECISION |
+| D-M1-04 | Storage pressure: rejection-only at M1 versus eviction | REQUIRES_USER_DECISION |
+| D-M1-05 | Protocol version format, negotiation and deprecation policy | REQUIRES_USER_DECISION |
+| D-M1-06 | Durable persistence format, integrity, locking and migration | REQUIRES_USER_DECISION |
+| D-M1-07 | Canonical error taxonomy and retryable/terminal classification | REQUIRES_USER_DECISION |
+| D-M1-08 | Core language and package boundary | REQUIRES_USER_DECISION |
+
+Three documented contradictions must also be reconciled before M1
+approval: the schema-version format cannot express the versioning rule
+in `PROTOCOL_SPEC.md` §9; the timestamp fields diverge between spec and
+implementation; and `hop_limit` / `copy_budget` are declared but never
+enforced. See `M1_SCOPE_FREEZE.md` §4.
+
+### Open decisions carried from Milestone 0
+
 The following surfaced during Milestone 0 implementation and are
 recorded here as open, not resolved:
 

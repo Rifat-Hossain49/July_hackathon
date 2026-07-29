@@ -110,6 +110,12 @@ interfaces, but does not add Android transport or coded delivery.
 - **Estimated complexity:** M.
 - **Primary risks:** scope creep; premature optimization.
 - **Implementation approval status:** PROPOSED.
+- **Scope freeze:** a proposed scope, architecture, acceptance
+  catalogue (AT-22 … AT-37) and implementation slices are drafted in
+  [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md), status
+  READY_FOR_MILESTONE_1_APPROVAL pending eight REQUIRES_USER_DECISION
+  items. Those tests are **not** yet part of `ACCEPTANCE_TESTS.md` and
+  no implementation is authorised.
 
 ---
 
