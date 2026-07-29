@@ -2,10 +2,40 @@
 
 ## Current status
 
-IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_0
+IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_1
 
-Implementation must not begin until this value is changed to
-APPROVED_FOR_MILESTONE_0 (or later milestone-scoped approval).
+Implementation must not begin until this value is changed to the
+milestone-scoped approval covering the work in question.
+
+### Milestone 1 approval record
+
+Milestone 1 implementation is authorised, **strictly within the frozen
+M1 scope**.
+
+- The M1 scope was frozen and reviewed in
+  [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md) and merged to `main`
+  before this approval.
+- Decisions **D-M1-01 through D-M1-08** and **D-M1-A1 through D-M1-A5**
+  were accepted and encoded in `PROTOCOL_SPEC.md`,
+  `SYSTEM_ARCHITECTURE.md` and `ACCEPTANCE_TESTS.md`.
+- **AT-22 through AT-37** are the approved M1-blocking acceptance
+  catalogue. The 125 M0 tests are preserved as the AT-37 regression
+  gate.
+- Authorised work is limited to the production-quality deterministic
+  core: canonical serialization, schema registry and protocol version
+  handling, durable crash-safe persistence, migration and rollback,
+  richer validation and failure handling, the frozen privacy and
+  forwarding rules, and the M1 conformance suite.
+- M1 adds **no new product functionality** beyond Milestone 0.
+
+Explicitly **not** authorised by this approval: Android application or
+UI, Bluetooth, Wi-Fi Direct, Nearby Connections, any real radio
+transport, real offline AI inference, production encryption or
+cryptographic identity, Bloom-filter inventory, Reed-Solomon, fountain
+codes, RaptorQ, storage eviction, field trials, and all Milestone 2 or
+later work.
+
+Approval for Milestone 1 does not authorise Milestone 2 or later work.
 
 ### Milestone 0 implementation evidence
 

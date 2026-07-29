@@ -1,12 +1,14 @@
 # Shongket — Milestones (Draft 1)
 
 Implementation approval status is **tracked per milestone**. M0 was
-approved first, as this plan requires; every later milestone remains
-unapproved.
+approved first, as this plan requires, and M1 was approved separately
+after its scope was frozen, reviewed and merged. Milestone 2 and every
+later milestone remain unapproved.
 
-Per `PRODUCT_DECISIONS.md`: `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_0`.
+Per `PRODUCT_DECISIONS.md`: `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_1`.
 
-Approval for Milestone 0 does not authorise Milestone 1 or later work.
+Approval is never cumulative by implication: approval for one milestone
+does not authorise any later milestone's work.
 
 ---
 
@@ -80,7 +82,8 @@ This milestone does not implement coded reconstruction.
 
 ## Milestone 1 — Production-quality deterministic core
 
-**Status:** PROPOSED.
+**Status:** APPROVED_FOR_MILESTONE_1. Implementation is authorised
+strictly within the frozen M1 scope; nothing is implemented yet.
 
 Stabilize the protocol proven in Milestone 0.
 
@@ -109,7 +112,17 @@ interfaces, but does not add Android transport or coded delivery.
 - **Rollback condition:** M2 cannot begin without M1 deliverables.
 - **Estimated complexity:** M.
 - **Primary risks:** scope creep; premature optimization.
-- **Implementation approval status:** PROPOSED.
+- **Implementation approval status:** `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_1`.
+- **Approval record:** the frozen M1 scope was reviewed and merged
+  before approval; D-M1-01 … D-M1-08 and D-M1-A1 … D-M1-A5 are
+  accepted; AT-22 … AT-37 are the approved M1-blocking catalogue; the
+  125 M0 tests are preserved as the AT-37 regression gate. Authorised
+  work is limited to the production-quality deterministic core. Android,
+  radios, offline AI inference, production security, eviction and all
+  M2+ work remain unauthorised. Approval for M1 does not authorise M2 or
+  later. See `PRODUCT_DECISIONS.md` § Milestone 1 approval record.
+- **Implementation state:** NOT STARTED. No M1 code exists and no M1
+  acceptance result is recorded.
 - **Scope freeze:** scope, architecture, acceptance catalogue and
   implementation slices are recorded in
   [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md). All thirteen design
@@ -127,10 +140,11 @@ interfaces, but does not add Android transport or coded delivery.
   tests; integer-second timestamps; frozen serialized-byte limits;
   `hop_limit` / `copy_budget` enforcement via forwarding-state
   `hop_count` and `remaining_copy_budget` that never alter `object_id`.
-- **Approval gate:** the design is settled, but implementation is **not
-  authorised**. This milestone stays PROPOSED and
-  `IMPLEMENTATION_STATUS` stays `APPROVED_FOR_MILESTONE_0` until the
-  user changes both. No M1 code exists and no M1 result is recorded.
+- **Approval gate:** cleared. The design was frozen and reviewed first,
+  then approved separately; `IMPLEMENTATION_STATUS` is now
+  `APPROVED_FOR_MILESTONE_1`. Work may proceed only within the frozen
+  scope above, beginning with Slice 1 (canonical serialization, schema
+  registry, protocol version handling and compatibility tests).
 
 ---
 
