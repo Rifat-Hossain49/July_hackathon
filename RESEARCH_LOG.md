@@ -704,3 +704,24 @@ Date accessed: 2026-07-31.
   publish in each direction, reload, and record the access point and OS/browser
   versions. Retain the numeric URL as a fallback.
 - Tag: design assumption.
+
+### 8.6 First Windows/browser observation
+
+- Environment: Windows laptop, Python 3.14, `zeroconf==0.150.0`, Chromium,
+  Wi-Fi address changed during the exercise from `192.168.0.29` to
+  `10.67.33.247`.
+- Observation: the advertiser registered without a software exception, but a
+  second zeroconf browser did not discover the service on that interface and
+  Chromium navigation to `http://shongket.local:8787` completed at
+  `DNS_PROBE_FINISHED_NXDOMAIN`. Windows PowerShell also failed to resolve the
+  name.
+- Control result: Chromium loaded `http://10.67.33.247:8787`, displayed
+  `local-access-point` mode, published a capsule with an empty final outbox,
+  reloaded and retrieved the same capsule.
+- Effect on Shongket: the numeric Wi-Fi URL is the primary interoperable link.
+  The `.local` name remains optional and visibly labelled as device-dependent.
+  A DHCP reservation on the access point is required if the operator wants the
+  numeric URL to remain unchanged across reconnections.
+- Limitation: this is one laptop/network observation. It does not decide
+  Android or iPad `.local` behavior and is not a general mDNS conformance test.
+- Tag: observed field result / conservative product decision.

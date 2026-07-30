@@ -16,22 +16,22 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="#top" aria-label="Shongket domestic hub home">
+    <a class="brand" href="#top" aria-label="Shongket hub home">
       <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
       <span>SHONGKET</span>
     </a>
     <div class="network-state" id="network-state" data-state="checking">
       <span class="pulse" aria-hidden="true"></span>
-      <span id="network-label">Checking domestic hub</span>
+      <span id="network-label">Checking Shongket hub</span>
     </div>
   </header>
 
   <main id="top">
     <section class="hero">
       <div>
-        <p class="eyebrow">BANGLADESH DOMESTIC ROUTE • PUBLIC CAPSULES</p>
-        <h1>Stay connected when the <em>global</em> Internet goes dark.</h1>
-        <p class="lede">
+        <p class="eyebrow" id="hero-eyebrow">BANGLADESH DOMESTIC ROUTE • PUBLIC CAPSULES</p>
+        <h1 id="hero-title">Stay connected when the <em>global</em> Internet goes dark.</h1>
+        <p class="lede" id="hero-summary">
           Open the same Shongket hub from a laptop, Android phone or iPad.
           Messages cross different Wi-Fi networks only while both ISPs can
           still reach this Bangladesh-hosted server.
@@ -44,27 +44,44 @@
           On iPad/iPhone: Safari → Share → Add to Home Screen. HTTPS is required.
         </p>
       </div>
-      <div class="route-card" aria-label="Domestic route diagram">
-        <div class="route-row"><span class="device">A</span><b>ISP A</b><i></i></div>
-        <div class="hub-node"><small>BANGLADESH HOST</small><strong>SHONGKET HUB</strong><span>PUBLIC TEXT ONLY</span></div>
-        <div class="route-row reverse"><span class="device">B</span><b>ISP B</b><i></i></div>
-        <p>ISP A → domestic / BDIX route → hub → ISP B</p>
+      <div class="route-card" id="route-card" aria-label="Domestic route diagram">
+        <div class="route-row"><span class="device">A</span><b id="route-peer-a">ISP A</b><i></i></div>
+        <div class="hub-node"><small id="route-hub-context">BANGLADESH HOST</small><strong>SHONGKET HUB</strong><span>PUBLIC TEXT ONLY</span></div>
+        <div class="route-row reverse"><span class="device">B</span><b id="route-peer-b">ISP B</b><i></i></div>
+        <p id="route-summary">ISP A → domestic / BDIX route → hub → ISP B</p>
       </div>
     </section>
 
     <section class="truth-strip" role="note">
       <strong>IMPORTANT LIMIT</strong>
-      <span>
+      <span id="truth-text">
         This is not magic communication without every network. If domestic
         ISP/BDIX routing also fails, use Shongket's nearby local-Wi-Fi mode.
         Cross-ISP field validation has not yet been run.
       </span>
     </section>
 
+    <section class="local-entry" id="local-entry" hidden aria-labelledby="local-entry-title">
+      <div>
+        <p class="eyebrow">ONE WI-FI • NO INTERNET REQUIRED</p>
+        <h2 id="local-entry-title">Share one local link</h2>
+        <p>
+          Anyone on this laptop's Wi-Fi can open the friendly address. If the
+          access point blocks local name discovery, use the numeric fallback.
+        </p>
+      </div>
+      <div class="entry-links">
+        <span>Wi-Fi link — works in every browser</span>
+        <a id="fallback-link" href="/">Shown by the laptop</a>
+        <span id="friendly-label">Optional friendly name — device support varies</span>
+        <a id="friendly-link" href="/">http://shongket.local:8787</a>
+      </div>
+    </section>
+
     <section class="hub-shell" id="hub">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">DOMESTIC CRISIS BULLETIN</p>
+          <p class="eyebrow" id="bulletin-eyebrow">DOMESTIC CRISIS BULLETIN</p>
           <h2>Join an incident channel</h2>
         </div>
         <span class="public-badge">PUBLIC • NO ACCOUNT</span>
@@ -193,7 +210,7 @@
       <span>SHONGKET</span>
     </div>
     <p>Public text only • No analytics • No automatic location • No guaranteed delivery</p>
-    <p>BDIX / cross-ISP field validation: <strong>NOT RUN</strong></p>
+    <p id="field-status">BDIX / cross-ISP field validation: <strong>NOT RUN</strong></p>
   </footer>
 </body>
 </html>

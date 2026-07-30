@@ -386,6 +386,22 @@ Then open `http://127.0.0.1:8787`. Local serving is for software testing; a
 real different-ISP blackout test requires the HTTPS deployment described in
 `deploy/bdix/README.md`.
 
+Run the laptop as a no-Internet access-point hub:
+
+```text
+python -m pip install -r deploy/local_access_point/requirements.txt
+python -m bdix_hub --access-point
+```
+
+The launcher prints a numeric Wi-Fi link such as
+`http://10.67.33.247:8787`. Everyone connected to that same Wi-Fi can open the
+link in a browser while the laptop stays running; the access point needs no
+Internet uplink. Reserve the laptop's address in the access point's DHCP
+settings to keep one permanent numeric link. `shongket.local` is also
+advertised as an optional convenience, but device and access-point support
+varies and the numeric link is authoritative. See
+`deploy/local_access_point/README.md`.
+
 ---
 
 ## 15. License

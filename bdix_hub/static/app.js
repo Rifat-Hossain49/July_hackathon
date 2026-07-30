@@ -11,6 +11,21 @@
   const nodes = {
     networkState: byId("network-state"),
     networkLabel: byId("network-label"),
+    heroEyebrow: byId("hero-eyebrow"),
+    heroTitle: byId("hero-title"),
+    heroSummary: byId("hero-summary"),
+    routeCard: byId("route-card"),
+    routePeerA: byId("route-peer-a"),
+    routePeerB: byId("route-peer-b"),
+    routeHubContext: byId("route-hub-context"),
+    routeSummary: byId("route-summary"),
+    truthText: byId("truth-text"),
+    localEntry: byId("local-entry"),
+    friendlyLink: byId("friendly-link"),
+    friendlyLabel: byId("friendly-label"),
+    fallbackLink: byId("fallback-link"),
+    bulletinEyebrow: byId("bulletin-eyebrow"),
+    fieldStatus: byId("field-status"),
     installApp: byId("install-app"),
     installHelp: byId("install-help"),
     channelForm: byId("channel-form"),
@@ -38,7 +53,16 @@
   let feedLoading = false;
   let outboxFlushing = false;
   let installPrompt = null;
+  let deploymentMode = "domestic-hub";
   const seenCapsules = new Set();
+
+  const isLocalMode = () => deploymentMode === "local-access-point";
+  const reachableLabel = () =>
+    isLocalMode() ? "Local laptop hub reachable" : "Domestic hub reachable";
+  const unreachableLabel = () =>
+    isLocalMode() ? "Local laptop hub unreachable" : "Domestic hub unreachable";
+  const hubDescription = () =>
+    isLocalMode() ? "local laptop hub" : "domestic hub";
 
   function normalizedChannel(value) {
     const channel = String(value || "").trim().toUpperCase();
@@ -78,6 +102,68 @@
   function setFeedNotice(message, style = "") {
     nodes.feedNotice.textContent = message;
     nodes.feedNotice.className = `feed-notice${style ? ` ${style}` : ""}`;
+  }
+
+  function safeEntryUrl(value) {
+    try {
+      const url = new URL(String(value || ""));
+      if (
+        url.protocol !== "http:" ||
+        url.username ||
+        url.password ||
+        (url.pathname !== "/" && url.pathname !== "") ||
+        url.search ||
+        url.hash
+      ) {
+        return "";
+      }
+      return url.href.replace(/\/$/, "");
+    } catch (_) {
+      return "";
+    }
+  }
+
+  async function configureDeployment() {
+    let status;
+    try {
+      const response = await fetch("/api/v1/status", { cache: "no-store" });
+      status = await responseJson(response);
+      if (!response.ok) return;
+    } catch (_) {
+      return;
+    }
+    if (status.mode !== "local-access-point") return;
+    const friendly = safeEntryUrl(status.entry && status.entry.friendly_url);
+    const fallback = safeEntryUrl(status.entry && status.entry.fallback_url);
+    if (!friendly || !fallback) return;
+
+    deploymentMode = "local-access-point";
+    document.title = "Shongket — Local Wi-Fi Hub";
+    nodes.heroEyebrow.textContent = "ONE WI-FI • ONE LOCAL LINK • PUBLIC CAPSULES";
+    nodes.heroTitle.textContent = "Talk nearby without Internet.";
+    nodes.heroSummary.textContent =
+      "This laptop is the Shongket hub. Anyone connected to the same Wi-Fi can open the Wi-Fi link shown below and join a public incident channel.";
+    nodes.routeCard.setAttribute("aria-label", "Local Wi-Fi route diagram");
+    nodes.routePeerA.textContent = "LAPTOP";
+    nodes.routePeerB.textContent = "PHONE / IPAD";
+    nodes.routeHubContext.textContent = "SAME ACCESS POINT";
+    nodes.routeSummary.textContent = "laptop ↔ local Wi-Fi ↔ nearby browsers";
+    nodes.truthText.textContent =
+      "The access point needs no Internet uplink. The laptop must stay running, and the Wi-Fi must permit devices and multicast to reach each other.";
+    nodes.localEntry.hidden = false;
+    nodes.friendlyLink.href = friendly;
+    nodes.friendlyLink.textContent = friendly;
+    nodes.fallbackLink.href = fallback;
+    nodes.fallbackLink.textContent = fallback;
+    const friendlyAvailable = status.entry.friendly_available === true;
+    nodes.friendlyLabel.hidden = !friendlyAvailable;
+    nodes.friendlyLink.hidden = !friendlyAvailable;
+    nodes.bulletinEyebrow.textContent = "LOCAL WI-FI CRISIS BULLETIN";
+    nodes.fieldStatus.textContent =
+      "Android / iPad friendly-name field validation: NOT RUN";
+    nodes.installApp.hidden = true;
+    nodes.installHelp.textContent =
+      "Local HTTP works while connected. Keep this page bookmarked; installable offline mode requires HTTPS.";
   }
 
   function newClientId() {
@@ -123,7 +209,10 @@
           });
         } catch (_) {
           setNetworkState("queued", "Hub unreachable • capsule queued");
-          setFeedNotice("The domestic hub is unreachable. Confirmed public capsules remain queued on this device.", "error");
+          setFeedNotice(
+            `The ${hubDescription()} is unreachable. Confirmed public capsules remain queued on this device.`,
+            "error",
+          );
           break;
         }
         const document = await responseJson(response);
@@ -133,7 +222,7 @@
           );
           writeOutbox(entries);
           published += 1;
-          setNetworkState("ready", "Domestic hub reachable");
+          setNetworkState("ready", reachableLabel());
           continue;
         }
         if (retryableStatus(response.status)) {
@@ -214,7 +303,7 @@
         added += 1;
       }
       cursor = Number(document.next_cursor || cursor);
-      setNetworkState("ready", "Domestic hub reachable");
+      setNetworkState("ready", reachableLabel());
       setFeedNotice(
         added
           ? `${added} new public capsule${added === 1 ? "" : "s"} received.`
@@ -222,9 +311,9 @@
         "success",
       );
     } catch (error) {
-      setNetworkState(readOutbox().length ? "queued" : "offline", "Domestic hub unreachable");
+      setNetworkState(readOutbox().length ? "queued" : "offline", unreachableLabel());
       setFeedNotice(
-        "Cannot reach the domestic hub. The app shell still works, and confirmed outgoing capsules stay queued.",
+        `Cannot reach the ${hubDescription()}. Confirmed outgoing capsules stay queued on this device.`,
         "error",
       );
     } finally {
@@ -238,7 +327,7 @@
     seenCapsules.clear();
     nodes.feed.replaceChildren();
     nodes.activeChannel.textContent = channel;
-    nodes.feedSubtitle.textContent = `Polling ${channel} through this domestic hub.`;
+    nodes.feedSubtitle.textContent = `Polling ${channel} through this ${hubDescription()}.`;
     nodes.channel.value = channel;
     localStorage.setItem(CHANNEL_KEY, channel);
     nodes.channelError.textContent = "";
@@ -320,16 +409,23 @@
   });
 
   window.addEventListener("online", () => {
-    setNetworkState("checking", "Reconnecting to domestic hub");
+    setNetworkState("checking", `Reconnecting to ${hubDescription()}`);
     flushOutbox();
     loadFeed();
   });
   window.addEventListener("offline", () => {
+    if (isLocalMode()) {
+      setNetworkState("checking", "Checking local laptop hub");
+      flushOutbox();
+      loadFeed();
+      return;
+    }
     setNetworkState("offline", "Network unavailable");
     setFeedNotice("No network route is currently available. Outgoing capsules remain queued.", "error");
   });
 
   window.addEventListener("beforeinstallprompt", (event) => {
+    if (isLocalMode()) return;
     event.preventDefault();
     installPrompt = event;
     nodes.installHelp.textContent = "This browser can install Shongket. Use the button above.";
@@ -346,6 +442,7 @@
   });
 
   async function registerOfflineShell() {
+    if (isLocalMode() && !window.isSecureContext) return;
     if (!("serviceWorker" in navigator)) {
       nodes.installHelp.textContent =
         "This browser cannot cache the app shell. The website still works while connected.";
@@ -360,21 +457,25 @@
     }
   }
 
-  renderOutbox();
-  const savedChannel = normalizedChannel(localStorage.getItem(CHANNEL_KEY));
-  if (savedChannel) joinChannel(savedChannel);
-  else {
-    setNetworkState("checking", "Select an incident channel");
-    fetch("/healthz", { cache: "no-store" })
-      .then((response) => {
-        if (!response.ok) throw new Error("health refused");
-        setNetworkState("ready", "Domestic hub reachable");
-      })
-      .catch(() => setNetworkState("offline", "Domestic hub unreachable"));
+  async function start() {
+    await configureDeployment();
+    renderOutbox();
+    const savedChannel = normalizedChannel(localStorage.getItem(CHANNEL_KEY));
+    if (savedChannel) joinChannel(savedChannel);
+    else {
+      setNetworkState("checking", "Select an incident channel");
+      fetch("/healthz", { cache: "no-store" })
+        .then((response) => {
+          if (!response.ok) throw new Error("health refused");
+          setNetworkState("ready", reachableLabel());
+        })
+        .catch(() => setNetworkState("offline", unreachableLabel()));
+    }
+    registerOfflineShell();
+    window.setInterval(() => {
+      flushOutbox();
+      loadFeed();
+    }, POLL_INTERVAL_MS);
   }
-  registerOfflineShell();
-  window.setInterval(() => {
-    flushOutbox();
-    loadFeed();
-  }, POLL_INTERVAL_MS);
+  start();
 })();

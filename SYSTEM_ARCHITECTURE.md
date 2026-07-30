@@ -530,6 +530,37 @@ named ISP paths must pass `BDIX_HUB_SCOPE.md` §8 before a cross-ISP/BDIX claim.
 
 ---
 
+## 6.10 Laptop local-access-point browser path
+
+The separately approved `LOCAL_ACCESS_POINT_SCOPE.md` path reuses the strict
+public-capsule hub on one trusted local link:
+
+```mermaid
+flowchart LR
+  L[Laptop Shongket process] --- A[Wi-Fi access point]
+  A --- P[Phone browser]
+  A --- T[iPad browser]
+  L --> D[(Bounded SQLite store)]
+```
+
+`bdix_hub/local_access.py` selects and validates a private/link-local IPv4,
+constructs the exact numeric URL and optionally advertises
+`shongket.local.` / `_http._tcp.local.`. `bdix_hub/local_server.py` caps
+in-flight threaded requests and suppresses request metadata logs. The same
+WSGI application reports `local-access-point` mode and safely renders both
+entry URLs.
+
+The numeric address is authoritative because every target browser understands
+it. The optional `.local` name depends on client resolver, firewall and access
+point multicast behavior; it returned NXDOMAIN in the first Windows Chromium
+observation. A DHCP reservation is an access-point operation, not an
+application protocol feature, and is required for a permanent numeric link.
+
+This path does not route between access points, create a captive portal,
+provide HTTPS on local HTTP, or change capsule validation and identity.
+
+---
+
 ## 7. Decision records
 
 ### DR-ARCH-01 — Plane separation
