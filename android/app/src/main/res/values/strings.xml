@@ -4,4 +4,7 @@
     <string name="home_title">Shongket</string>
     <string name="software_preview_notice">Software preview. Nearby transfer is not configured.</string>
     <string name="transport_unavailable_action">Nearby transfer unavailable</string>
+    <string name="no_active_transfer">No active transfer. Durable recovery is ready.</string>
+    <string name="transfer_recovery_status">Recovered %1$d of %2$d verified fragments.</string>
+    <string name="storage_limit_message">Storage limit reached. Existing verified data was kept; nothing was evicted.</string>
 </resources>

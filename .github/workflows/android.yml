@@ -35,7 +35,7 @@ jobs:
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
       - name: Run Kotlin conformance and assemble debug APK
         working-directory: android
-        run: ./gradlew --no-daemon :core-conformance:testDebugUnitTest :app:assembleDebug
+        run: ./gradlew --no-daemon testDebugUnitTest :app:assembleDebug
       - name: Upload inspectable software evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

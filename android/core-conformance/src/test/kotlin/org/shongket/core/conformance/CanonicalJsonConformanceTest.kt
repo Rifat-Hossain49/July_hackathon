@@ -65,6 +65,16 @@ class CanonicalJsonConformanceTest {
         }
     }
 
+    @Test
+    fun parserEnforcesCharacterAndNestingLimitsBeforeUnboundedWork() {
+        assertThrows(IllegalArgumentException::class.java) {
+            CanonicalJson.parse("[]", maxCharacters = 1)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            CanonicalJson.parse("[[[0]]]", maxDepth = 2)
+        }
+    }
+
     private fun vectorDocuments(): List<Pair<String, Any?>> =
         VECTOR_FILES.map { fileName ->
             val stream = requireNotNull(javaClass.classLoader?.getResourceAsStream(fileName)) {

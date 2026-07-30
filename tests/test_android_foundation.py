@@ -31,6 +31,23 @@ def test_android_manifest_declares_no_runtime_permissions() -> None:
     assert manifest.getroot().findall("uses-permission") == []
 
 
+def test_app_private_persistence_is_bounded_and_rejection_only() -> None:
+    persistence = ANDROID / "data-persistence" / "src" / "main" / "kotlin"
+    source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(persistence.rglob("*.kt"))
+    )
+    strings = (ANDROID / "app" / "src" / "main" / "res" / "values" / "strings.xml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "MAX_FRAGMENT_BYTES: Int = 1_048_576" in source
+    assert "MAX_STORE_CAPACITY_BYTES" in source
+    assert "IngestResult.OutOfBudget" in source
+    assert "evict" not in source.lower()
+    assert "nothing was evicted" in strings
+
+
 def test_core_conformance_has_no_android_or_transport_dependency() -> None:
     source_root = ANDROID / "core-conformance" / "src" / "main"
     source = "\n".join(

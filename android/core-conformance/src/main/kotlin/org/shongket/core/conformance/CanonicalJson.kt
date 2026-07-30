@@ -12,7 +12,16 @@ import java.security.MessageDigest
  * and no insignificant whitespace is emitted.
  */
 object CanonicalJson {
-    fun parse(text: String): Any? = Parser(text).parse()
+    fun parse(
+        text: String,
+        maxDepth: Int = 64,
+        maxCharacters: Int = 1_048_576,
+    ): Any? {
+        require(maxDepth in 1..256) { "JSON depth limit is outside the supported range" }
+        require(maxCharacters > 0) { "JSON character limit must be positive" }
+        require(text.length <= maxCharacters) { "JSON exceeds its character limit" }
+        return Parser(text, maxDepth).parse()
+    }
 
     fun encode(value: Any?): String = buildString {
         appendCanonical(value)
@@ -106,22 +115,26 @@ object CanonicalJson {
         return (left.length - leftIndex).compareTo(right.length - rightIndex)
     }
 
-    private class Parser(private val source: String) {
+    private class Parser(
+        private val source: String,
+        private val maxDepth: Int,
+    ) {
         private var index = 0
 
         fun parse(): Any? {
             skipWhitespace()
-            val value = parseValue()
+            val value = parseValue(depth = 0)
             skipWhitespace()
             require(index == source.length) { "trailing JSON data at index $index" }
             return value
         }
 
-        private fun parseValue(): Any? {
+        private fun parseValue(depth: Int): Any? {
+            require(depth <= maxDepth) { "JSON exceeds its nesting limit" }
             require(index < source.length) { "unexpected end of JSON" }
             return when (source[index]) {
-                '{' -> parseObject()
-                '[' -> parseArray()
+                '{' -> parseObject(depth + 1)
+                '[' -> parseArray(depth + 1)
                 '"' -> parseString()
                 't' -> parseLiteral("true", true)
                 'f' -> parseLiteral("false", false)
@@ -131,7 +144,7 @@ object CanonicalJson {
             }
         }
 
-        private fun parseObject(): Map<String, Any?> {
+        private fun parseObject(depth: Int): Map<String, Any?> {
             index++
             skipWhitespace()
             val result = linkedMapOf<String, Any?>()
@@ -144,7 +157,7 @@ object CanonicalJson {
                 skipWhitespace()
                 require(consume(':')) { "missing ':' after object key at index $index" }
                 skipWhitespace()
-                result[key] = parseValue()
+                result[key] = parseValue(depth)
                 skipWhitespace()
                 if (consume('}')) return result
                 require(consume(',')) { "missing ',' in object at index $index" }
@@ -152,14 +165,14 @@ object CanonicalJson {
             }
         }
 
-        private fun parseArray(): List<Any?> {
+        private fun parseArray(depth: Int): List<Any?> {
             index++
             skipWhitespace()
             val result = mutableListOf<Any?>()
             if (consume(']')) return result
 
             while (true) {
-                result += parseValue()
+                result += parseValue(depth)
                 skipWhitespace()
                 if (consume(']')) return result
                 require(consume(',')) { "missing ',' in array at index $index" }

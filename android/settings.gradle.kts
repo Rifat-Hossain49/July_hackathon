@@ -17,3 +17,4 @@ dependencyResolutionManagement {
 rootProject.name = "Shongket"
 include(":app")
 include(":core-conformance")
+include(":data-persistence")

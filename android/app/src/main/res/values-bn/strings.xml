@@ -4,4 +4,7 @@
     <string name="home_title">সংকেত</string>
     <string name="software_preview_notice">সফটওয়্যার প্রিভিউ। কাছাকাছি স্থানান্তর কনফিগার করা হয়নি।</string>
     <string name="transport_unavailable_action">কাছাকাছি স্থানান্তর অনুপলব্ধ</string>
+    <string name="no_active_transfer">কোনো সক্রিয় স্থানান্তর নেই। টেকসই পুনরুদ্ধার প্রস্তুত।</string>
+    <string name="transfer_recovery_status">%1$d / %2$d যাচাইকৃত অংশ পুনরুদ্ধার হয়েছে।</string>
+    <string name="storage_limit_message">স্টোরেজ সীমা পূর্ণ। বিদ্যমান যাচাইকৃত তথ্য রাখা হয়েছে; কিছুই মুছে ফেলা হয়নি।</string>
 </resources>
