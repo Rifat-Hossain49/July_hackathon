@@ -37,6 +37,12 @@ android {
             signingConfig = null
         }
     }
+
+    sourceSets {
+        named("test") {
+            resources.directories.add("../../protocol-testdata")
+        }
+    }
 }
 
 dependencies {

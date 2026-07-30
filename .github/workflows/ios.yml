@@ -1,0 +1,51 @@
+name: iOS interoperability evidence
+
+on:
+  push:
+    branches:
+      - main
+      - feat/ios-local-wifi-interop
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  protocol-and-simulator:
+    name: Swift vectors and unsigned Simulator build
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Show Apple toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+      - name: Run transport-independent Swift tests
+        run: swift test --package-path ios
+      - name: Build unsigned iOS Simulator app
+        run: |
+          xcodebuild \
+            -project ios/Shongket.xcodeproj \
+            -scheme Shongket \
+            -configuration Debug \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath build/ios \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Upload unsigned Simulator evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ios-simulator-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            build/ios/Build/Products/Debug-iphonesimulator/Shongket.app
+            ios/.build/*/debug/ShongketProtocolPackageTests.xctest

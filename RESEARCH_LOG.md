@@ -414,3 +414,83 @@ These belong in M3+ measurement, not in this plan.
 - Risks: competitive impression.
 - Validation: status table + presenter script.
 - Revisit condition: implementation + measurement.
+
+---
+
+## 6. iOS local-network interoperability research
+
+Date accessed: 2026-07-30.
+
+### 6.1 Apple local-network privacy
+
+- Title: Support local network privacy in your app.
+- Organization: Apple.
+- URL: https://developer.apple.com/videos/play/wwdc2020/10110/
+- Verified fact: iOS 14 and later require user permission before an app can
+  access the local network. Apps using Bonjour must provide a local-network
+  usage description and declare the Bonjour service types they browse.
+- Effect on Shongket: nearby mode starts only after an explicit user action;
+  `NSLocalNetworkUsageDescription` and `_shongket._tcp` in
+  `NSBonjourServices` are required.
+- Limitation: simulator build success does not demonstrate that a user granted
+  permission on a physical iPhone.
+- Tag: fact.
+
+### 6.2 Network framework Bonjour APIs
+
+- Titles: NWListener; NWBrowser; NWConnection.
+- Organization: Apple.
+- URLs:
+  - https://developer.apple.com/documentation/network/nwlistener
+  - https://developer.apple.com/documentation/network/nwbrowser
+  - https://developer.apple.com/documentation/network/nwconnection
+- Verified fact: Network framework provides a listener that can advertise a
+  Bonjour service, a browser that can discover Bonjour service endpoints and
+  a connection that can exchange bytes with a selected endpoint.
+- Effect on Shongket: the iOS adapter uses Network framework instead of a
+  third-party networking or discovery dependency.
+- Limitation: these APIs do not themselves define Shongket framing,
+  validation, authentication or encryption.
+- Tag: fact.
+
+### 6.3 iOS property-list declarations
+
+- Titles: NSLocalNetworkUsageDescription; NSBonjourServices.
+- Organization: Apple.
+- URLs:
+  - https://developer.apple.com/documentation/bundleresources/information-property-list/nslocalnetworkusagedescription
+  - https://developer.apple.com/documentation/bundleresources/information-property-list/nsbonjourservices
+- Verified fact: the usage-description string explains why local-network
+  access is needed, while the Bonjour services array lists service types used
+  by the app.
+- Effect on Shongket: both keys are part of the checked-in iOS Info.plist.
+- Limitation: declarations do not bypass the user permission decision.
+- Tag: fact.
+
+### 6.4 Multicast DNS and DNS-Based Service Discovery
+
+- Titles: RFC 6762 - Multicast DNS; RFC 6763 - DNS-Based Service Discovery.
+- Organization: IETF.
+- URLs:
+  - https://www.rfc-editor.org/rfc/rfc6762
+  - https://www.rfc-editor.org/rfc/rfc6763
+- Verified fact: mDNS performs DNS-like operations on a local link without a
+  conventional DNS server; DNS-SD discovers named service instances and their
+  endpoints.
+- Effect on Shongket: Android NSD and Apple Bonjour use the same
+  `_shongket._tcp` DNS-SD service contract. This provides the standards basis
+  for software-level interoperability.
+- Limitation: a Wi-Fi access point can disable multicast or isolate clients,
+  so standards compatibility does not guarantee discovery on every network.
+- Tag: fact.
+
+### 6.5 Design assumptions requiring physical evidence
+
+- Assumption: a user-enabled phone hotspot permits Bonjour traffic between
+  the hotspot host and its connected peer.
+- Assumption: the selected Android and iOS device/OS combinations preserve
+  service discovery while both Shongket apps remain foregrounded.
+- Assumption: common Wi-Fi access points do not enable client isolation.
+- Validation: the separately gated Android-to-iPhone physical test matrix in
+  `IOS_LOCAL_WIFI_SCOPE.md`.
+- Tag: design assumption.
