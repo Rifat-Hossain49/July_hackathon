@@ -1,0 +1,38 @@
+[Unit]
+Description=Shongket Bangladesh domestic crisis-capsule hub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=shongket
+Group=shongket
+WorkingDirectory=/opt/shongket/current
+EnvironmentFile=/etc/shongket-hub.env
+ExecStart=/opt/shongket/venv/bin/gunicorn \
+  --bind 127.0.0.1:8787 \
+  --workers 1 \
+  --threads 8 \
+  --worker-class gthread \
+  --timeout 30 \
+  --graceful-timeout 30 \
+  --keep-alive 5 \
+  --limit-request-line 2048 \
+  --limit-request-fields 40 \
+  --limit-request-field_size 4096 \
+  --max-requests 10000 \
+  --max-requests-jitter 1000 \
+  --forwarded-allow-ips 127.0.0.1 \
+  --error-logfile - \
+  bdix_hub.app:application
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/shongket-hub
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

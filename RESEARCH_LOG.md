@@ -494,3 +494,127 @@ Date accessed: 2026-07-30.
 - Validation: the separately gated Android-to-iPhone physical test matrix in
   `IOS_LOCAL_WIFI_SCOPE.md`.
 - Tag: design assumption.
+
+---
+
+## 7. Bangladesh domestic/BDIX hub research
+
+Date accessed: 2026-07-31.
+
+### 7.1 Bangladesh Internet Exchange
+
+- Title: Bangladesh Internet Exchange Trust (BDIX).
+- Organization: Sustainable Development Networking Foundation / BDIX.
+- URL: https://bdix.net/
+- Verified fact: BDIX describes itself as an Internet Exchange Point that
+  provides physical peering interconnection so members can exchange and route
+  local Internet traffic locally. It also describes supporting
+  inter-communication among different Bangladeshi ISPs and content providers.
+- Effect on Shongket: a server must be hosted on a network whose routes are
+  actually reachable through the target ISPs' domestic peering. Merely renting
+  a server in Bangladesh does not prove that property.
+- Limitation: BDIX membership and a Bangladesh host do not guarantee that every
+  ISP/customer path will remain available in a shutdown.
+- Tag: fact / deployment inference.
+
+### 7.2 Observed 2024 shutdown
+
+- Title: A recent spate of Internet disruptions.
+- Organization: Cloudflare.
+- URL:
+  https://blog.cloudflare.com/a-recent-spate-of-internet-disruptions-july-2024/
+- Verified fact: Cloudflare observed Bangladesh Internet traffic and announced
+  IP address space fall to near zero during the July 2024 nationwide shutdown.
+- Effect on Shongket: a globally hosted site such as GitHub Pages is not a
+  suitable sole blackout endpoint.
+- Limitation: Internet telemetry measures global reachability and does not by
+  itself prove any particular domestic route survived.
+- Tag: fact.
+
+### 7.3 Reported local-server use during the shutdown
+
+- Title: How Gen Z kept connected after the internet shutdown.
+- Organization: The Daily Star.
+- URL:
+  https://www.thedailystar.net/tech-startup/news/how-gen-z-kept-connected-after-internet-shutdown-3956001
+- Reported observation: while global Internet access was blocked, some
+  dormitory and residential LANs remained alive and users on Wi-Fi connected
+  to shared BDIX servers used for updates, meeting points and makeshift
+  newsrooms.
+- Effect on Shongket: implement a small domestic public bulletin as a browser
+  client plus Bangladesh-hosted hub, separate from one-hop nearby transport.
+- Limitation: this is retrospective reporting, not a reproducible technical
+  guarantee. The Shongket field gate must test named ISPs and a named host.
+- Tag: reported observation.
+
+### 7.4 Installable/offline browser shell
+
+- Titles: Making PWAs installable; Using Service Workers.
+- Organization: MDN Web Docs.
+- URLs:
+  - https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable
+  - https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers
+- Verified fact: an installable PWA requires a manifest and, outside local
+  development, HTTPS. A service worker can cache the application shell for
+  offline opening.
+- Effect on Shongket: serve all assets from the hub origin, include a manifest
+  and service worker, and terminate valid HTTPS at the domestic deployment
+  edge.
+- Limitation: a cached shell remains usable without the server, but cross-ISP
+  message exchange still requires a route to the hub.
+- Tag: fact.
+
+### 7.5 HTTP server boundary
+
+- Title: `http.server` — HTTP servers.
+- Organization: Python Software Foundation.
+- URL: https://docs.python.org/3/library/http.server.html
+- Verified fact: Python's `http.server` documentation says it is not
+  recommended for production and implements only basic security checks.
+- Effect on Shongket: standard-library development serving may be used for
+  local tests only. Production uses a reviewed WSGI server behind a TLS reverse
+  proxy.
+- Limitation: a production WSGI server and reverse proxy do not replace
+  application schema, rate, storage and privacy controls.
+- Tag: fact.
+
+### 7.6 Production WSGI dependency review
+
+- Title: Gunicorn 26.0.0.
+- Organizations: Gunicorn project / Python Package Index.
+- URLs:
+  - https://gunicorn.org/
+  - https://pypi.org/project/gunicorn/26.0.0/
+- Purpose: supervise and serve the dependency-free Shongket WSGI application
+  on a POSIX Bangladesh host.
+- License: MIT.
+- Maintenance status: production/stable on PyPI; 26.0.0 released 2026-05-05;
+  maintained project with current documentation.
+- Download size: universal Python wheel 212.0 kB; source archive 727.3 kB.
+- Offline behavior: after installation it serves the application without
+  contacting PyPI or any external service.
+- Platform requirements: POSIX/Unix and Python >= 3.10; it is not the Windows
+  local-development server.
+- Smaller alternative: `wsgiref.simple_server` is standard-library-only but
+  single-process/development-only; `http.server` is explicitly not recommended
+  for production. Gunicorn is therefore limited to deployment requirements and
+  is not imported by application or test code.
+- Tag: dependency decision.
+
+### 7.7 SQLite journaling decision
+
+- Titles: Write-Ahead Logging; Python `sqlite3`.
+- Organizations: SQLite project / Python Software Foundation.
+- URLs:
+  - https://www.sqlite.org/wal.html
+  - https://docs.python.org/3/library/sqlite3.html
+- Verified fact: SQLite transactions provide local durable storage. WAL can
+  improve reader/writer concurrency, but it adds checkpointing and shared-file
+  behavior; SQLite documents a WAL-reset race fixed only in specified newer
+  SQLite releases.
+- Effect on Shongket: the first low-volume hub keeps SQLite's default rollback
+  journal with short transactions rather than forcing WAL on an unknown host
+  runtime. The bundled SQLite version is recorded at deployment.
+- Limitation: one SQLite hub is not a horizontally scalable or
+  censorship-resistant service.
+- Tag: fact / conservative design decision.

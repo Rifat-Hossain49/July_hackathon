@@ -1,11 +1,11 @@
 # Shongket — Protocol Specification
 
 **Status:** M0 and M1 deterministic behaviour implemented. M2 through
-M9 protocol extensions are scope-frozen and their software-testable
-subset is authorized by the descendant ledger referencing `f85a7c5`,
-but none is implemented at this approval point. Signature mechanics,
-radio behaviour and field results are not claimed by the completed
-baseline.
+M9 protocol extensions are scope-frozen and separately authorized. The
+optional BDIX domestic-hub public-capsule application protocol is implemented
+under its own scope and approval. Signature mechanics, radio behaviour,
+cross-ISP/BDIX reachability and field results are not claimed by the completed
+software baseline.
 
 ## 1. Terms
 
@@ -25,6 +25,7 @@ baseline.
 | Replication budget | Max copies of an object allowed across known peers. |
 | Expiry | Absolute timestamp after which the object is no longer forwarded. |
 | Content ID (CID) | Cryptographic identifier (SHA-256 over canonical form) of a content-addressed unit. |
+| Domestic hub | Optional Bangladesh-hosted public-capsule endpoint reachable only while the clients' domestic ISP route survives. |
 
 ### Multi-peer completion
 
@@ -678,6 +679,38 @@ into an accepted transfer or invent a trust decision.
 - Diagnostics contain codes, counters, bounded identifiers and logical
   ticks only. They exclude capsule text, media bytes, location text,
   peer-identifying material and keys, and export is user-initiated.
+
+### 9.7 BDIX domestic-hub application protocol [IMPLEMENTED SOFTWARE]
+
+This separate adapter does not change M1 content identity or the local-Wi-Fi
+wire protocol. Its accepted request is the exact JSON shape frozen in
+`BDIX_HUB_SCOPE.md` §4.1 and uses schema
+`shongket.bdix.capsule.v1.0`.
+
+- The raw request is at most 8192 bytes and must be strict UTF-8 JSON with no
+  duplicate or unknown fields.
+- `client_id` is a canonical lowercase UUID used for idempotent retry.
+- `channel` is a normalized 3–32 character public incident label, not an
+  authentication secret.
+- message, operator-supplied location, urgency and expiry have the frozen
+  character/enum limits.
+- `visibility` must be literal `"public"`; `human_confirmed` and
+  `public_forwarding_consent` must both be literal boolean `true`.
+- The server computes `capsule_id = SHA-256(canonical accepted request)`,
+  assigns durable cursor and receipt time, and never trusts a client clock for
+  expiry.
+- Reusing `client_id` with identical accepted content returns the original
+  record; conflicting content is refused before mutation.
+- `GET /api/v1/capsules` returns at most 50 unexpired capsules after one
+  cursor. Polling and retry are bounded; API responses are never cached by the
+  service worker.
+- SQLite transactions, active-row caps, per-channel caps, database byte
+  budget and per-address publish rate are rejection-only. Existing unexpired
+  content is not evicted to admit a refused request.
+
+The centralized hub stores public message/location text by design. Transport
+privacy therefore depends on HTTPS at the deployment edge; no end-to-end
+encryption, anonymous identity or factual-verification claim is made.
 
 ---
 

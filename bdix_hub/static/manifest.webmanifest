@@ -1,0 +1,21 @@
+{
+  "name": "Shongket Bangladesh Domestic Hub",
+  "short_name": "Shongket Hub",
+  "description": "Public crisis capsules over a reachable Bangladesh domestic network route.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#07100c",
+  "theme_color": "#07110c",
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
