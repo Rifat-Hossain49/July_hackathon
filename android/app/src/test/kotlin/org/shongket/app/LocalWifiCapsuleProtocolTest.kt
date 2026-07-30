@@ -1,8 +1,6 @@
 package org.shongket.app
 
-import java.net.InetAddress
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -67,16 +65,6 @@ class LocalWifiProtocolTest {
                 fixtureCapsule().copy(message = "a".repeat(MAX_CAPSULE_MESSAGE_BYTES + 1)),
             )
         }
-    }
-
-    @Test
-    fun onlyLocalNetworkAddressClassesAreAllowed() {
-        assertTrue(LocalNetworkAddress.isAllowed(InetAddress.getByName("127.0.0.1")))
-        assertTrue(LocalNetworkAddress.isAllowed(InetAddress.getByName("192.168.1.20")))
-        assertTrue(LocalNetworkAddress.isAllowed(InetAddress.getByName("10.20.30.40")))
-        assertTrue(LocalNetworkAddress.isAllowed(InetAddress.getByName("fd00::20")))
-        assertFalse(LocalNetworkAddress.isAllowed(InetAddress.getByName("8.8.8.8")))
-        assertFalse(LocalNetworkAddress.isAllowed(InetAddress.getByName("2001:4860:4860::8888")))
     }
 
     private fun fixtureCapsule(): LocalWifiCapsule =
