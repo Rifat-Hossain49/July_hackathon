@@ -429,6 +429,35 @@ cross-ISP/BDIX reachability as passing. A named Bangladesh host, two named
 ISPs, controlled loss of global reachability and captured evidence remain the
 separate field gate in `BDIX_HUB_SCOPE.md` §8.
 
+### Local-access-point friendly-link approval record
+
+- `LOCAL_ACCESS_POINT_IMPLEMENTATION_STATUS: APPROVED_FOR_LOCAL_ACCESS_POINT_FRIENDLY_LINK`
+- `LOCAL_ACCESS_POINT_SCOPE_FREEZE_COMMIT: 6ef7a24b76787902dce6b139faa52d59e178f9f6`
+- `LOCAL_ACCESS_POINT_SOFTWARE_ACCEPTANCE: LAP-01_THROUGH_LAP-10`
+- `LOCAL_ACCESS_POINT_FIELD_VALIDATION_STATUS: FIELD_VALIDATION_NOT_APPROVED`
+
+The product owner reported a successful laptop-to-phone exchange through an
+access point with its Internet/LAN uplink removed and explicitly requested one
+stable link that anyone on that Wi-Fi can open. That request authorizes the
+software implementation frozen in `LOCAL_ACCESS_POINT_SCOPE.md`: an explicit
+local-access-point launcher, optional standards-based mDNS/DNS-SD advertisement
+for `shongket.local`, a numeric fallback and honest local-mode browser text.
+
+This is a narrowly scoped implementation approval. It permits:
+
+- local private/link-local IPv4 selection and validation;
+- optional `zeroconf` use isolated to the operator-run local launcher;
+- a bounded threaded WSGI runner for several nearby browser clients;
+- local-mode status and safely rendered friendly/fallback addresses;
+- lifecycle, fallback, validation, concurrency and browser evidence for
+  LAP-01 through LAP-10.
+
+It does not authorize a captive portal, router modification, communication
+between disconnected Wi-Fi networks, a global hostname claim, HTTPS/PWA claims
+for the local HTTP origin, Bluetooth, Wi-Fi Direct, mesh, accounts, private
+chat, media or field-success labels. Android and iPad resolution of the
+friendly name remains a named-device observation after implementation.
+
 AT-38 through AT-78 are approved as the remaining acceptance
 specification. None is implemented or passing at this approval point.
 AT-38 through AT-46, AT-51 through AT-54, AT-58 through AT-60, AT-63,
