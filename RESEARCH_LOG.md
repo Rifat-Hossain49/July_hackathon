@@ -215,6 +215,12 @@ Primary sources:
 | JUnit `4.13.2` | JVM conformance test runner | EPL-1.0 | Mature final JUnit 4 line; test-only | 384,581-byte JAR | Test execution works after cache warm-up | JVM test runtime | A bespoke runner would save a test-only dependency but weaken standard reporting |
 | Hamcrest Core `1.3` | JUnit 4's test-only transitive matcher API | BSD 3-Clause | Mature compatibility dependency | 45,024-byte JAR | Test execution works after cache warm-up | JVM test runtime | Excluding it risks incompatible JUnit runtime linkage |
 
+The downloaded AAR metadata sets Activity Compose 1.13.0's
+`minCompileSdk` to 36 and Material 3 1.4.0's to 35. The admitted BOM
+maps Compose UI to 1.11.3. Shongket therefore selects the stable,
+available API 36 platform; API 37 is within AGP's maximum but is not a
+build requirement for this graph.
+
 No runtime internet permission, analytics SDK, cloud dependency,
 production signing material or transport SDK is admitted by this
 record. The Google Nearby row above remains open and provisional.

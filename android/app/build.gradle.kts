@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "org.shongket.app"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "org.shongket.app"
