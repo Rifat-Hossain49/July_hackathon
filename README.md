@@ -10,18 +10,22 @@ encounters.
 
 **Status:** Milestone 0 is implemented in `app/simulator/`; Milestone 1
 is implemented in `shongket_core/`; and an experimental Milestone 3
-Android local-Wi-Fi slice is implemented in `android/`. The top-level
+Android local-Wi-Fi slice is implemented in `android/`, and the compatible
+native iOS software slice is implemented in `ios/`. The top-level
 `IMPLEMENTATION_STATUS` remains `APPROVED_FOR_MILESTONE_1`; the exact
 local-Wi-Fi software authorization is recorded separately as
 `APPROVED_FOR_MILESTONE_3_LOCAL_WIFI_IMPLEMENTATION` in
-`PRODUCT_DECISIONS.md`. Physical-device, real-radio and field validation
-remain unapproved and unclaimed.
+`PRODUCT_DECISIONS.md`, along with the exact iOS interoperability approval.
+Physical-device, cross-platform radio and field validation remain unapproved
+and unclaimed.
 
-The Android app exchanges human-confirmed text capsules between phones on
-the same Wi-Fi network or a user-enabled phone hotspot. Internet service is
-not required. It does not yet provide Bluetooth, Wi-Fi Direct, background
-relaying, media transfer, end-to-end encryption or offline AI inference.
-See [android/README.md](./android/README.md) for the two-phone instructions.
+The Android and iOS apps use the same bounded wire protocol to exchange
+human-confirmed text capsules between phones on the same Wi-Fi network or a
+user-enabled phone hotspot. Internet service and images are not required. The
+apps do not provide Bluetooth, Wi-Fi Direct, background relaying, media
+transfer, end-to-end encryption or offline AI inference. See
+[android/README.md](./android/README.md) and
+[ios/README.md](./ios/README.md) for build and phone instructions.
 
 > **Public tag discipline:** throughout this document, every
 > capability is labelled as
@@ -98,9 +102,9 @@ Shongket designs for that in-between state.
 ## 5. Architecture (high level)
 
 [SIMULATED/EXPERIMENTAL — the M0 slice is implemented in
-`app/simulator/`; the Android text-capsule local-Wi-Fi adapter is
-implemented in `android/`; capture, offline semantics and progressive
-media remain PLANNED]
+`app/simulator/`; compatible Android and iOS text-capsule local-Wi-Fi
+adapters are implemented in `android/` and `ios/`; capture, offline semantics
+and progressive media remain PLANNED]
 
 ```
 Capture ── Semantic engine (offline) ── Human review ── Confirmed capsule
@@ -163,6 +167,7 @@ left to M3+.
 | Durable crash-safe persistence (in-process) | IMPLEMENTED |
 | Multi-peer simulator run | SIMULATED (deterministic simulated multi-peer completion) |
 | Android text-capsule local-Wi-Fi transfer | IMPLEMENTED (experimental software; physical-device validation pending) |
+| iOS text-capsule local-Wi-Fi transfer | IMPLEMENTED (native iOS 16+ software; Android-to-iPhone validation pending) |
 | Progressive real-media transfer | PLANNED |
 | Offline AI extraction | PLANNED |
 | Reed-Solomon / RaptorQ | RESEARCH ONLY |
@@ -182,6 +187,7 @@ Shongket does not currently claim:
 - guaranteed delivery;
 - guaranteed multimedia transfer rates;
 - tested Android compatibility;
+- tested Android-to-iPhone radio interoperability;
 - tested battery performance;
 - implemented coded reconstruction;
 - automatic verification of factual truth.

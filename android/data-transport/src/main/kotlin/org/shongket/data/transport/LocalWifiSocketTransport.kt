@@ -231,13 +231,13 @@ object LocalWifiSocketClient {
     private const val SOCKET_TIMEOUT_MILLIS = 5_000
 }
 
-private enum class AckStatus(val wireCode: Int) {
+internal enum class AckStatus(val wireCode: Int) {
     ACCEPTED(1),
     DUPLICATE(2),
     REFUSED(3),
 }
 
-private object LocalWifiFraming {
+internal object LocalWifiFraming {
     private const val ACK_MAGIC = 0x53484B41
     private const val ACK_BYTES = 4 + 1 + 1 + 32
 

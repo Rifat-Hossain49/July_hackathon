@@ -14,6 +14,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    sourceSets {
+        named("test") {
+            resources.directories.add("../../protocol-testdata")
+        }
+    }
 }
 
 dependencies {

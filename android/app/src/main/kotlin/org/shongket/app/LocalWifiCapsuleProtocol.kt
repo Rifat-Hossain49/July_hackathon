@@ -108,8 +108,8 @@ object LocalWifiCapsuleCodec {
                 requireTimestampRange(createdAt, expiresAt)
                 val urgencyCode = input.readUnsignedByte()
                 val visibilityCode = input.readUnsignedByte()
-                val humanConfirmed = input.readBoolean()
-                val forwardingConsent = input.readBoolean()
+                val humanConfirmed = readStrictBoolean(input)
+                val forwardingConsent = readStrictBoolean(input)
                 val sender = readSized(
                     input,
                     MAX_CAPSULE_SENDER_LABEL_BYTES,
@@ -180,6 +180,13 @@ object LocalWifiCapsuleCodec {
             fail("${field}_UTF8_INVALID")
         }
     }
+
+    private fun readStrictBoolean(input: DataInputStream): Boolean =
+        when (input.readUnsignedByte()) {
+            0 -> false
+            1 -> true
+            else -> fail("BOOLEAN_INVALID")
+        }
 
     private fun fail(code: String): Nothing = throw LocalWifiProtocolException(code)
 
