@@ -247,6 +247,29 @@ physical-device acceptance result.
 
 ---
 
+### 1.12 Local-Wi-Fi NSD and socket verification
+
+Accessed 2026-07-30. These primary sources define the implementation boundary
+in `M3_LOCAL_WIFI_SCOPE.md`. They are platform facts, not physical-device
+success evidence.
+
+| Primary source | Verified fact | Effect on Shongket |
+|---|---|---|
+| Android Developers, [Use network service discovery](https://developer.android.com/develop/connectivity/wifi/use-nsd) and [`NsdManager`](https://developer.android.com/reference/android/net/nsd/NsdManager) | Android NSD advertises and discovers DNS-SD/mDNS services on a local network. Applications should unregister active discovery and service registration. Older devices may require a Wi-Fi multicast lock for mDNS reception. | Use `_shongket._tcp` discovery while the app is open, release registration/discovery/lock on stop, and keep an explicit unsupported/error state. |
+| Android Developers, [Local network permission](https://developer.android.com/privacy-and-security/local-network-permission) | Apps targeting SDK 36 or lower retain local-network access through `INTERNET`; `ACCESS_LOCAL_NETWORK` becomes required for apps targeting SDK 37+, with privacy-preserving NSD picker alternatives. | The current target remains 36. Do not declare the API 37 permission early. Record a mandatory permission/API review before any future target-37 update. |
+| Android Developers, [Android 16 behavior changes](https://developer.android.com/about/versions/16/behavior-changes-16) | Android 16 local-network restrictions are opt-in; granting `NEARBY_WIFI_DEVICES` restores access during that compatibility test. | Declare and request `NEARBY_WIFI_DEVICES` at point of use on Android 13+, handle denial, and test the Android 16 compatibility restriction when a device is available. |
+| Android Developers, [Nearby Wi-Fi device permissions](https://developer.android.com/develop/connectivity/wifi/wifi-permissions) | Android 13+ groups nearby Wi-Fi access under the runtime `NEARBY_WIFI_DEVICES` permission and supports `neverForLocation` when the app does not derive location. | Request only the nearby-device permission for this feature and explicitly assert no location derivation. No fine-location permission is introduced. |
+| Android Developers, [`startLocalOnlyHotspot`](https://developer.android.com/reference/android/net/wifi/WifiManager#startLocalOnlyHotspot(android.net.wifi.WifiManager.LocalOnlyHotspotCallback,android.os.Handler)) | Android can create a local-only hotspot for co-located device communication with no internet access. | A user-enabled hotspot is supported as a network topology. Programmatic hotspot creation is excluded from the first slice to avoid credential-sharing and additional Wi-Fi-management scope. |
+| Android Developers, [Wi-Fi Direct](https://developer.android.com/develop/connectivity/wifi/wifi-direct) | Wi-Fi Direct can connect devices without a network or hotspot but requires a separate P2P API, permissions and OEM-sensitive group negotiation. | Wi-Fi Direct remains a later alternate. It is not silently mixed with the same-LAN NSD adapter. |
+
+**Design assumption:** the intended first demo uses two phones on the same
+local Wi-Fi network or on a hotspot enabled by the user. Whether NSD is
+reliable on each intended phone/hotspot pairing remains AT-47 through AT-50
+physical evidence.
+
+**Dependency record:** no external dependency is added. Android platform APIs,
+Java sockets and JCA SHA-256 are sufficient for this slice.
+
 ## 2. Coded-delivery candidates
 
 | Strategy | Description | License / availability | M0 plan |
