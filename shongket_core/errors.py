@@ -11,6 +11,13 @@ classified **terminal** or **retryable**.
 No code carries both classifications, and no code exists outside the
 canonical enum.
 
+Slice 2 adds ``STORE_LOCKED`` (retryable): another writer holds the
+advisory single-writer lock on a store path. This follows the precedent
+already set by ``SNAPSHOT_INVALID`` and ``SNAPSHOT_CORRUPTED``, which
+are likewise local persistence conditions admitted into this enum rather
+than given a separate vocabulary. It is recorded in
+``PROTOCOL_SPEC.md`` §3.8.
+
 Slice-1 scope
 -------------
 The full enum is declared here because it is approved specification
@@ -57,6 +64,7 @@ class ErrorCode(str, Enum):
     OUT_OF_BUDGET = "OUT_OF_BUDGET"
     SNAPSHOT_INVALID = "SNAPSHOT_INVALID"
     SNAPSHOT_CORRUPTED = "SNAPSHOT_CORRUPTED"
+    STORE_LOCKED = "STORE_LOCKED"
     INTERNAL = "INTERNAL"
 
 
@@ -78,6 +86,7 @@ ERROR_CLASSES: dict[ErrorCode, ErrorClass] = {
     ErrorCode.OUT_OF_BUDGET: ErrorClass.RETRYABLE,
     ErrorCode.SNAPSHOT_INVALID: ErrorClass.RETRYABLE,
     ErrorCode.SNAPSHOT_CORRUPTED: ErrorClass.RETRYABLE,
+    ErrorCode.STORE_LOCKED: ErrorClass.RETRYABLE,
     ErrorCode.INTERNAL: ErrorClass.TERMINAL,
 }
 
