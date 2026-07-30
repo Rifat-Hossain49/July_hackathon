@@ -155,6 +155,8 @@ left to M3+.
 | Protocol specification | IMPLEMENTED |
 | Acceptance-test specification | IMPLEMENTED |
 | Milestone 0 simulator | IMPLEMENTED |
+| Milestone 1 deterministic protocol core | IMPLEMENTED |
+| Durable crash-safe persistence (in-process) | IMPLEMENTED |
 | Multi-peer simulator run | SIMULATED (deterministic simulated multi-peer completion) |
 | Android peer transfer | PLANNED |
 | Progressive real-media transfer | PLANNED |
@@ -253,10 +255,13 @@ preemption, manual-form fallback for AI), and what remains an
 See [MILESTONES.md](./MILESTONES.md). Milestones:
 
 - M0: executable protocol simulator. **Implemented.**
-- M1: production-quality deterministic core. **Scope frozen and design
-  decisions accepted** — see
-  [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md). Still `PROPOSED`; no M1
-  code exists and implementation is not authorised.
+- M1: production-quality deterministic core. **Implemented** in
+  `shongket_core/` — canonical serialization, schema registry and
+  versioning, durable crash-safe persistence, migration and rollback,
+  forwarding policy and a canonical error taxonomy. All sixteen
+  M1-blocking acceptance tests pass alongside the 125 M0 tests. Still a
+  deterministic in-process core: no Android, radio, AI or production
+  security. See [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md).
 - M2: local two-process transfer.
 - M3: Android direct peer transport (gated by the transport smoke-test gate).
 - M4: progressive media transfer on real devices.

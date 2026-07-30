@@ -326,6 +326,7 @@ No error may carry both classifications.
 | `OUT_OF_BUDGET` | retryable | No storage capacity now; may free later |
 | `SNAPSHOT_INVALID` | retryable | Malformed persisted document; last good recoverable |
 | `SNAPSHOT_CORRUPTED` | retryable | Integrity failure; recoverable per `SYSTEM_ARCHITECTURE.md` §3.1 |
+| `STORE_LOCKED` | retryable | Another writer holds the advisory single-writer lock on a store path |
 | `INTERNAL` | terminal | Defect; must never result from valid input |
 
 `EXPIRED`, `HOP_LIMIT`, `COPY_BUDGET` and `PEER_REFUSES_PRIVATE` are

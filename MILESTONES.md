@@ -121,13 +121,25 @@ interfaces, but does not add Android transport or coded delivery.
   radios, offline AI inference, production security, eviction and all
   M2+ work remain unauthorised. Approval for M1 does not authorise M2 or
   later. See `PRODUCT_DECISIONS.md` § Milestone 1 approval record.
-- **Implementation state:** IN PROGRESS.
-  - **Slice 1 — canonical serialization, schema registry, version
-    handling: IMPLEMENTED** in `shongket_core/`. AT-22, AT-23 and AT-24
-    pass; 103 Slice-1 tests plus the 125 M0 regression tests, 228 total,
-    0 failed, 0 skipped.
-  - **Slices 2–5: NOT STARTED.** AT-25 through AT-37 have no
-    implementation and no recorded result.
+- **Implementation state:** COMPLETE. All five slices are implemented in
+  `shongket_core/`; AT-22 through AT-37 pass. 242 M1 tests plus the 125
+  M0 regression tests — 367 total, 0 failed, 0 skipped.
+  - Slice 1 — canonical serialization, schema registry, version handling
+    (AT-22, AT-23, AT-24).
+  - Slice 2 — durable crash-safe persistence and recovery
+    (AT-26, AT-27, AT-28, AT-30, AT-31).
+  - Slice 3 — deterministic migration, rollback, schema upgrade
+    (AT-25, AT-29, AT-36).
+  - Slice 4 — policy, privacy, `public_only`, hop/copy, error taxonomy
+    (AT-32, AT-33, AT-34, AT-35).
+  - Slice 5 — conformance vectors, core isolation, M0 regression gate
+    (AT-37).
+- **Completion boundary:** M1 delivers a deterministic, platform-neutral,
+  standard-library-only protocol core. It adds no product behaviour
+  beyond M0 and asserts nothing about Android, radios, offline AI,
+  production security, storage eviction or real-device performance.
+  `IMPLEMENTATION_STATUS` remains `APPROVED_FOR_MILESTONE_1`; Milestone 2
+  is neither approved nor started.
 - **Scope freeze:** scope, architecture, acceptance catalogue and
   implementation slices are recorded in
   [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md). All thirteen design

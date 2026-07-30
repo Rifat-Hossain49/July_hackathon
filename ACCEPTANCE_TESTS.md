@@ -519,14 +519,19 @@ S1 rows (AT-30, AT-37) additionally protect M0 evidence already earned.
 - Severity: S1.
 - Runtime boundary: whole package.
 
-## Milestone 1 Slice 1 harness evidence
+## Milestone 1 harness evidence
 
-Recorded from an actual run. Slice 1 covers **AT-22, AT-23 and AT-24
-only**; every other M1 test remains unimplemented with no recorded
-result.
+Recorded from actual runs. **All 16 M1-blocking acceptance IDs
+(AT-22 … AT-37) are implemented and passing.** Milestone 1 is COMPLETE;
+`IMPLEMENTATION_STATUS` remains `APPROVED_FOR_MILESTONE_1` and no later
+milestone is approved or started.
 
-**Run summary:** 103 Slice-1 tests passed, plus the 125 M0 regression
-tests — **228 passed, 0 failed, 0 skipped**. Modules live in
+Modules implemented: `shongket_core/` — `errors.py`, `version.py`,
+`codec.py`, `schema.py`, `store.py`, `persist.py`, `migrate.py`,
+`policy.py`, `evidence.py`.
+
+**Run summary (complete M1):** 242 M1 tests passed, plus the 125 M0
+regression tests — **367 passed, 0 failed, 0 skipped**. Modules live in
 `shongket_core/tests/`. Counts below are measured per module.
 
 | AT ID | Test module | Result | Evidence summary |
@@ -534,26 +539,64 @@ tests — **228 passed, 0 failed, 0 skipped**. Modules live in
 | AT-22 | `test_at22_canonical_serialization.py` | PASS (41) | Encode→decode→encode byte-identical for capsule, manifest, fragment, a reversed-insertion-order manifest and a non-ASCII payload; each matched a committed golden SHA-256; verified identical in a freshly spawned process and across >1s of elapsed time; floats, non-finite constants, non-string keys, tuples, sets and bytes all rejected rather than coerced |
 | AT-23 | `test_at23_minor_compatibility.py` | PASS (23) | Exact registered version accepted without any entry; **unregistered lower *and* higher minors both refused**; registered lower minor accepted and marked compatibility-based; registering `1.2` grants nothing to `1.1` or `1.3`; no leakage across families or majors; all 4 construction-order permutations produce equal registries and identical resolutions; legacy `…v1` resolves to `1.0` only and does not bypass registration when the exact version is later |
 | AT-24 | `test_at24_unsupported_version.py` | PASS (34) | Unknown major, unknown-major-plus-malformed, and unregistered minor all rejected `VERSION_UNSUPPORTED`; the malformed case proves version resolution precedes structural parsing; 8 malformed identifier forms plus 10 leading/trailing whitespace forms — including trailing LF and CRLF — rejected; registry, payload and error detail unchanged across repeated attempts |
+| AT-25 | `test_at25_29_36_migration.py` | PASS (32, shared with AT-29/36) | Two runs from identical starting bytes produce byte-identical migrated documents; every verified fragment preserved with matching SHA-256; a two-edge chain applies in order; migration output is path-independent |
+| AT-26 | `test_at26_28_persistence.py` | PASS (19, shared with AT-27/28) | Interruption injected after temp write, after temp fsync, after replace and before parent-directory fsync; every reader sees a complete previous or complete new document, never a blend; temp artefacts cleaned; lock released after a crash; parent-directory sync outcome recorded, not skipped |
+| AT-27 | `test_at26_28_persistence.py` | PASS (shared) | A truncated temp file is discarded and named in the recovery evidence; the previous durable snapshot loads intact; multiple stray temps all removed |
+| AT-28 | `test_at26_28_persistence.py` | PASS (shared) | (a) corrupted document checksum quarantines the file — renamed aside, still readable on disk — and the last good snapshot loads; (b) a corrupted fragment under a valid document checksum drops only that fragment and preserves the other three |
+| AT-29 | `test_at25_29_36_migration.py` | PASS (shared) | Failure injected mid-chain and during the durable write; the original document remains byte-identical and still at its old version; no partially migrated state visible; failure classified retryable |
+| AT-30 | `test_at30_31_recovery.py` + `test_at25_29_36_migration.py` | PASS (11 + 1) | All five recovery paths — restart, partial write, corrupted document, failed migration, refused over-budget write — preserve every fragment with its original SHA-256; only the deliberately corrupted fragment is lost; byte accounting equals a recomputed sum in every case |
+| AT-31 | `test_at30_31_recovery.py` | PASS (shared) | Two independent interrupt→restart→resume runs produce byte-identical evidence digests and identical stores; only the missing chunk indexes are requested; evidence is directory-independent |
+| AT-32 | `test_at32_35_policy.py` | PASS (57, shared with AT-33/34/35) | All 16 enum members classified exactly once; 13 codes triggered by an executable reachability test; 3 recorded unreachable-by-design with reasons; error details deterministic and address-free |
+| AT-33 | `test_at32_35_policy.py` | PASS (shared) | A terminal failure repeats identically three times with no state change; a retryable `OUT_OF_BUDGET` succeeds once capacity is freed; neither mutates state on the failing attempt |
+| AT-34 | `test_at32_35_policy.py` | PASS (shared) | Legacy `private` maps to `visibility`; 8 malformed `visibility` values are `SCHEMA_INVALID`; 6 non-boolean consent values are `CONSENT_REQUIRED`; the full AT-16 refusal matrix re-runs green after migration |
+| AT-35 | `test_at32_35_policy.py` | PASS (shared) | A private object **with valid consent** is refused by a `public_only` peer with `PEER_REFUSES_PRIVATE` before queueing; the same object reaches an ordinary peer; a public object reaches the `public_only` peer; the manifest is unmutated |
+| AT-36 | `test_at25_29_36_migration.py` | PASS (shared) | A v0.9 store upgrades transparently, resumes without re-requesting the three migrated chunks, ends at v1.0, and a second open performs no further migration; repeated upgrades are byte-idempotent |
+| AT-37 | `test_at37_conformance.py` | PASS (20) | All 125 M0 tests pass unchanged in a subprocess; M0 CLI and metrics hashes unchanged; Slice-1 golden vectors unchanged; AST scan proves the core imports nothing from `app/`, `adapters/` or outside the standard library; `git diff` confirms `app/` untouched |
 | — | `test_public_exports.py` | PASS (5) | Every `__all__` name reachable after a plain `import shongket_core`, verified in a fresh process; import has no side effects; `canonical_registry()` returns equal but independent instances |
-| AT-25 … AT-37 | — | NOT IMPLEMENTED | Slices 2–5; no result recorded |
 
-Golden vectors live in `shongket_core/testdata/golden_vectors.json`.
-They were computed independently of `shongket_core` from the canonical
-rules in `PROTOCOL_SPEC.md` §9 and are committed as the expected output;
-the tests compare against them and never regenerate them.
+Golden vectors live in `shongket_core/testdata/golden_vectors.json`
+(Slice 1) and `m1_conformance_vectors.json` (Slice 5). Both were
+computed independently of `shongket_core` from the canonical rules and
+are committed as expected output; the tests compare against them and
+never regenerate them.
 
-The M0 deterministic CLI hash is unchanged by this slice
-(`D5AC79B1…2CB4DF`, 3114 bytes), which is the running check against the
-AT-37 regression requirement. AT-37 itself is not yet implemented.
+| Vector | Bytes | SHA-256 |
+|---|---|---|
+| capsule v1.0 | 555 | `8b0a3231…` |
+| content v1.0 | 464 | `d61e057b…` |
+| fragment v1.0 | 283 | `8eea53cc…` |
+| non-ASCII capsule | 297 | `028d7ab7…` |
+| snapshot envelope v1.0 | 1365 | `4cfa18dd…` |
+| snapshot envelope v0.9 | 1365 | `b8a72f83…` |
+| snapshot, reversed fragment order | 1365 | `4cfa18dd…` (identical) |
+| manifest identity excl. forwarding state | — | `dad9f3c6…` |
 
-### Slice 1 implementation note
+Preserved M0 evidence, re-verified by AT-37: CLI
+`D5AC79B1…2CB4DF` (3114 bytes) and metrics `E10E11D4…891B28`
+(1580 bytes), both unchanged.
 
-`shongket_core` is standard-library only and imports nothing from
-`app/` or `adapters/`. The M0 simulator is untouched and still uses its
-own `validation.py` boundary, so `shongket_core.errors.ProtocolError`
-and `app.simulator.validation.ProtocolError` coexist during Slices 1–4.
-Both carry a `code` drawn from the same canonical vocabulary;
-reconciling the two types is Slice 4/5 work.
+### Implementation notes
+
+`shongket_core` is standard-library only. An AST scan in AT-37 proves it
+imports nothing from `app/`, `adapters/` or any third-party package, and
+`git diff` confirms `app/simulator/` was not modified by any M1 slice.
+
+`shongket_core.errors.ProtocolError` and
+`app.simulator.validation.ProtocolError` still coexist. Unifying the two
+*types* would require editing M0 source, which AT-37 forbids; both draw
+their `code` from the same canonical vocabulary, so the semantics are
+already unified. Collapsing the types belongs with the M2 adapter work.
+
+`STORE_LOCKED` (retryable) was added to the canonical enum in Slice 2
+for advisory single-writer lock contention, following the precedent of
+`SNAPSHOT_INVALID` and `SNAPSHOT_CORRUPTED`. It is recorded in
+`PROTOCOL_SPEC.md` §3.8.
+
+Parent-directory `fsync` is a POSIX facility. On Windows it cannot be
+performed, so the outcome is **recorded as evidence** (`"synced"` or
+`"unsupported"`) rather than silently skipped, and AT-26 asserts the
+recorded value matches the platform's capability. No test is skipped on
+any platform.
 
 ## Milestone 1 forwarding-admission coverage
 

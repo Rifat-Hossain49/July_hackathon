@@ -73,6 +73,7 @@ def canonical_registry() -> SchemaRegistry:
                     "object_ref",
                     "human_confirmed",
                 ),
+                size_limit_bytes=4 * 1024,
                 optional_fields=(
                     "source_media_ref",
                     "extracted_fields",
@@ -97,6 +98,7 @@ def canonical_registry() -> SchemaRegistry:
                     "hop_limit",
                     "copy_budget",
                 ),
+                size_limit_bytes=32 * 1024,
                 optional_fields=(
                     "manifest_id",
                     "expires_at_unix",
@@ -119,6 +121,7 @@ def canonical_registry() -> SchemaRegistry:
                     "byte_range",
                     "hash",
                 ),
+                size_limit_bytes=512,
                 optional_fields=("signature",),
             ),
         ),
