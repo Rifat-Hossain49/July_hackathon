@@ -34,6 +34,7 @@ android {
 dependencies {
     implementation(project(":data-persistence"))
     implementation(project(":data-transport"))
+    implementation(project(":semantic"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

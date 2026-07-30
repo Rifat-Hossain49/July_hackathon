@@ -84,6 +84,36 @@ def test_media_pipeline_preserves_source_and_reports_availability() -> None:
     assert "RepresentationId.ORIGINAL" in source
 
 
+def test_semantic_default_is_manual_offline_and_human_confirmed() -> None:
+    semantic = ANDROID / "semantic" / "src" / "main" / "kotlin"
+    source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(semantic.rglob("*.kt"))
+    )
+    lowered = source.lower()
+
+    assert "UnavailableSemanticExtractor" in source
+    assert "HUMAN_CONFIRMATION_REQUIRED" in source
+    assert "sourceObjectId" in source
+    assert "MODEL_SUGGESTION" in source
+    assert "http://" not in lowered
+    assert "https://" not in lowered
+    assert "urlconnection" not in lowered
+    form = (
+        ANDROID
+        / "app"
+        / "src"
+        / "main"
+        / "kotlin"
+        / "org"
+        / "shongket"
+        / "app"
+        / "ManualCapsuleForm.kt"
+    ).read_text(encoding="utf-8")
+    assert "OutlinedTextField" in form
+    assert "complete && confirmed" in form
+
+
 def test_core_conformance_has_no_android_or_transport_dependency() -> None:
     source_root = ANDROID / "core-conformance" / "src" / "main"
     source = "\n".join(

@@ -9,4 +9,11 @@
     <string name="storage_limit_message">স্টোরেজ সীমা পূর্ণ। বিদ্যমান যাচাইকৃত তথ্য রাখা হয়েছে; কিছুই মুছে ফেলা হয়নি।</string>
     <string name="transport_permission_available">নিকটবর্তী স্থানান্তরের অনুমতি পাওয়া গেছে।</string>
     <string name="transport_permission_blocked">%1$s অনুমতি দেওয়া হয়নি। নিকটবর্তী স্থানান্তর বন্ধ থাকবে; হাতে চালানো সুবিধাগুলো চলবে।</string>
+    <string name="manual_form_title">হাতে লেখা সংকট ক্যাপসুল (মডেল ছাড়াই চলে)</string>
+    <string name="manual_event_type">ঘটনার ধরন</string>
+    <string name="manual_location">স্থানের বিবরণ</string>
+    <string name="manual_action">প্রয়োজনীয় কাজ</string>
+    <string name="manual_summary_bn">বাংলা সারাংশ</string>
+    <string name="manual_human_confirmation">উৎসের সঙ্গে মিলিয়ে ক্যাপসুলটি দেখেছি</string>
+    <string name="manual_schedule">নিশ্চিত করে তালিকাভুক্ত করুন</string>
 </resources>

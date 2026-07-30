@@ -9,4 +9,11 @@
     <string name="storage_limit_message">Storage limit reached. Existing verified data was kept; nothing was evicted.</string>
     <string name="transport_permission_available">Peer transport permission is available.</string>
     <string name="transport_permission_blocked">%1$s permission is not granted. Peer transport stays off; manual features remain available.</string>
+    <string name="manual_form_title">Manual crisis capsule (works without a model)</string>
+    <string name="manual_event_type">Event type</string>
+    <string name="manual_location">Location description</string>
+    <string name="manual_action">Required action</string>
+    <string name="manual_summary_bn">Bangla summary</string>
+    <string name="manual_human_confirmation">I reviewed this capsule against the source</string>
+    <string name="manual_schedule">Confirm and schedule</string>
 </resources>
