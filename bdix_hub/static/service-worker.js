@@ -1,4 +1,4 @@
-const CACHE_NAME = "shongket-bdix-shell-v1";
+const CACHE_NAME = "shongket-bdix-shell-v2";
 const SHELL = [
   "/",
   "/index.html",

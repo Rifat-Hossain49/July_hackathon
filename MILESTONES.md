@@ -213,6 +213,34 @@ deterministic core or imply approval for any numbered milestone.
 
 ---
 
+## Separate delivery path — laptop local-access-point link
+
+**Status:** SCOPE_FROZEN;
+APPROVED_FOR_LOCAL_ACCESS_POINT_FRIENDLY_LINK;
+FIELD_VALIDATION_NOT_APPROVED.
+**Classification:** local software plus named-device/network observation.
+
+- **Objective:** let anyone on the laptop's current Wi-Fi open one printed
+  numeric link and exchange public text without an Internet uplink.
+- **Scope freeze:** `LOCAL_ACCESS_POINT_SCOPE.md`, commit
+  `6ef7a24b76787902dce6b139faa52d59e178f9f6`.
+- **Deliverables:** private/link-local address selection; bounded threaded
+  runner; optional mDNS/DNS-SD advertisement; numeric fallback; local-mode UI.
+- **Acceptance IDs:** LAP-01 through LAP-10.
+- **Exclusions:** captive portal, router modification, disconnected Wi-Fi
+  bridging, global hostname, Bluetooth, Wi-Fi Direct, mesh and private chat.
+- **Software gate:** deterministic validation/lifecycle/concurrency tests and a
+  real browser publish/reload/retrieve exercise.
+- **Field gate:** named Android and iPad `.local` behavior, access-point
+  multicast behavior and a separately configured DHCP reservation.
+- **Observed result:** the numeric link passed Chromium; `.local` returned
+  NXDOMAIN on the Windows Chromium path and remains optional.
+
+This path reuses the public capsule hub locally. It changes neither the
+canonical protocol nor any numbered milestone result.
+
+---
+
 ## Milestone 2 — Local two-process transfer
 
 **Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION.

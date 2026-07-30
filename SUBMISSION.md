@@ -53,6 +53,15 @@ same HTTPS origin, join the same public incident channel and publish/fetch
 text-only capsules. This path works only if both ISPs can still reach that
 host; it has not yet passed the named-host/two-ISP BDIX field gate.
 
+For a cable-free single-access-point demonstration, install
+`deploy/local_access_point/requirements.txt` and run
+`python -m bdix_hub --access-point`. Every nearby browser uses the numeric
+Wi-Fi link printed by the laptop. The link works without an Internet uplink;
+the laptop and access point must stay on. Reserve the laptop address in the
+access point DHCP configuration if the link must remain permanent.
+`shongket.local` is advertised only as an optional device-dependent
+convenience.
+
 ## Functional scope
 
 - Bengali and English crisis-message input.
@@ -69,6 +78,8 @@ host; it has not yet passed the named-host/two-ISP BDIX field gate.
   text-capsule exchange on a shared Wi-Fi network.
 - Public-only, text-only domestic hub with strict validation, durable SQLite,
   expiry, idempotent retry, bounded abuse controls and a cached browser shell.
+- Laptop local-access-point mode with a bounded multi-client runner, automatic
+  private-address detection, a primary numeric Wi-Fi link and optional mDNS.
 
 ## Architecture
 
@@ -100,6 +111,12 @@ validation have not been run.
 The BDIX hub software uses a real central-server API rather than simulated peer
 transport, but it is not yet deployed to a named Bangladesh host and
 cross-ISP/BDIX validation has not been run.
+
+The numeric laptop-to-browser access-point path passed a real Chromium
+publish/reload/retrieve exercise. The optional `shongket.local` name returned
+NXDOMAIN in that Windows observation; Android and iPad friendly-name behavior
+is still unverified. The laptop's numeric address also changes unless the
+access point reserves it.
 
 - This is a functional software demo, not a production or field-validated
   emergency system.

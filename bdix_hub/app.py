@@ -11,8 +11,9 @@ from pathlib import Path
 import threading
 import time
 from typing import Any
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlsplit
 
+from .local_access import FRIENDLY_LABEL, validate_local_ipv4
 from .store import CapsuleStore, StoreLimits
 from .validation import (
     HubError,
@@ -26,6 +27,7 @@ from .validation import (
 StartResponse = Callable[[str, list[tuple[str, str]]], Any]
 Clock = Callable[[], float]
 STATIC_ROOT = Path(__file__).with_name("static")
+DEPLOYMENT_MODES = frozenset({"domestic-hub", "local-access-point"})
 
 _STATUS_TEXT = {
     200: "OK",
@@ -125,6 +127,31 @@ def _positive_environment_integer(name: str, default: int) -> int:
     return value
 
 
+def _validated_local_entry_url(value: str, *, friendly: bool) -> str:
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError as exc:
+        raise ValueError("local entry URL is invalid") from exc
+    if (
+        parsed.scheme != "http"
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path not in {"", "/"}
+        or parsed.query
+        or parsed.fragment
+        or (port is not None and not 1 <= port <= 65535)
+    ):
+        raise ValueError("local entry URL is invalid")
+    if friendly:
+        if parsed.hostname.lower() != FRIENDLY_LABEL:
+            raise ValueError("friendly entry URL must use shongket.local")
+    else:
+        validate_local_ipv4(parsed.hostname)
+    return value.rstrip("/")
+
+
 def _base_headers(content_type: str, body_length: int) -> list[tuple[str, str]]:
     return [
         ("Content-Type", content_type),
@@ -155,13 +182,44 @@ class HubApplication:
         trusted_proxy: str | None,
         rate_limiter: PublishRateLimiter,
         static_root: Path,
+        deployment_mode: str,
+        friendly_url: str | None,
+        fallback_url: str | None,
+        friendly_available: bool,
     ) -> None:
+        if deployment_mode not in DEPLOYMENT_MODES:
+            raise ValueError("deployment_mode is unsupported")
+        if deployment_mode == "local-access-point" and (
+            not friendly_url or not fallback_url
+        ):
+            raise ValueError("local-access-point mode requires both entry URLs")
+        if deployment_mode == "domestic-hub" and (
+            friendly_url is not None or fallback_url is not None
+        ):
+            raise ValueError("domestic-hub mode does not accept local entry URLs")
         self.store = store
         self.clock = clock
         self.public_origin = public_origin.rstrip("/") if public_origin else None
         self.trusted_proxy = trusted_proxy
         self.rate_limiter = rate_limiter
         self.static_root = static_root.resolve()
+        self.deployment_mode = deployment_mode
+        self.friendly_url = (
+            _validated_local_entry_url(friendly_url, friendly=True)
+            if friendly_url is not None
+            else None
+        )
+        self.fallback_url = (
+            _validated_local_entry_url(fallback_url, friendly=False)
+            if fallback_url is not None
+            else None
+        )
+        self.friendly_available = bool(friendly_available)
+
+    def set_friendly_available(self, available: bool) -> None:
+        if self.deployment_mode != "local-access-point":
+            raise ValueError("friendly advertisement applies only to local mode")
+        self.friendly_available = bool(available)
 
     def _respond(
         self,
@@ -361,24 +419,39 @@ class HubApplication:
             status=200,
             document={
                 "schema": "shongket.bdix.health.v1.0",
-                "mode": "domestic-hub",
+                "mode": self.deployment_mode,
                 "unix": int(self.clock()),
                 **health,
             },
         )
 
     def _status(self, start_response: StartResponse) -> list[bytes]:
+        if self.deployment_mode == "local-access-point":
+            mode_fields: dict[str, Any] = {
+                "requires": "same local Wi-Fi as the laptop hub",
+                "fallback": "use the numeric local URL if multicast is blocked",
+                "entry": {
+                    "friendly_url": self.friendly_url,
+                    "fallback_url": self.fallback_url,
+                    "friendly_available": self.friendly_available,
+                },
+            }
+        else:
+            mode_fields = {
+                "requires": "reachable domestic route to this hub",
+                "fallback": "nearby local-Wi-Fi mode",
+                "entry": None,
+            }
         return self._json_response(
             start_response,
             status=200,
             document={
                 "schema": "shongket.bdix.status.v1.0",
-                "mode": "domestic-hub",
+                "mode": self.deployment_mode,
                 "accepts": "public-text-capsules",
                 "private_content": "refused",
                 "field_validation": "not-run",
-                "requires": "reachable domestic route to this hub",
-                "fallback": "nearby local-Wi-Fi mode",
+                **mode_fields,
             },
         )
 
@@ -460,6 +533,10 @@ def create_app(
     store_limits: StoreLimits | None = None,
     rate_limiter: PublishRateLimiter | None = None,
     static_root: str | Path | None = None,
+    deployment_mode: str = "domestic-hub",
+    friendly_url: str | None = None,
+    fallback_url: str | None = None,
+    friendly_available: bool = False,
 ) -> HubApplication:
     selected_path = Path(
         db_path
@@ -502,6 +579,10 @@ def create_app(
         trusted_proxy=selected_trusted_proxy,
         rate_limiter=selected_rate_limiter,
         static_root=Path(static_root or STATIC_ROOT),
+        deployment_mode=deployment_mode,
+        friendly_url=friendly_url,
+        fallback_url=fallback_url,
+        friendly_available=friendly_available,
     )
 
 

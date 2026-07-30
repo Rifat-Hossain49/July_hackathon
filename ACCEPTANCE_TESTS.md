@@ -1242,6 +1242,39 @@ The automated field gate remains **not passing**. It requires the named
 Bangladesh host, two named ISPs and controlled international-route loss in
 `BDIX_HUB_SCOPE.md` §8.
 
+# Separate local-access-point acceptance (LAP-01 … LAP-10)
+
+**Software status: IMPLEMENTED. Friendly-name field status: NOT RUN on
+Android/iPad; FAILED on this Windows Chromium observation.** This catalogue is
+governed by `LOCAL_ACCESS_POINT_SCOPE.md` and its exact separate approval in
+`PRODUCT_DECISIONS.md`. The numeric same-Wi-Fi path is the primary browser
+entry because it passed the real Chromium exercise.
+
+| ID | Software result | Evidence |
+|---|---|---|
+| LAP-01 Access-point listener | PASS | launcher test selects `0.0.0.0`, preserves explicit configuration and prints one exact Wi-Fi URL |
+| LAP-02 Exact entry URLs | PASS | private/link-local selection, deterministic `shongket.local` and numeric URL tests, including port-80 canonical form |
+| LAP-03 Address safety | PASS | public, loopback, multicast, unspecified, malformed and IPv6 advertised addresses are rejected |
+| LAP-04 Standards advertisement | PASS (software) | fake API verifies exact `_http._tcp.local.`, `shongket.local.`, A record, port and bounded TXT data; real-network discovery did not pass |
+| LAP-05 Lifecycle/conflict | PASS | conflict closes the advertiser and fails explicitly; unregister/close is idempotent |
+| LAP-06 Dependency fallback | PASS | missing optional package leaves numeric HTTP mode usable with a bounded warning |
+| LAP-07 Honest local UI | PASS | status/UI distinguish local mode, validate HTTP entry URLs and render with `textContent`; numeric link is primary |
+| LAP-08 Existing hub regression | PASS | complete focused API/storage/static/backup suite remains passing |
+| LAP-09 Multi-client serving | PASS | 16 concurrent health requests complete with a 16-worker/32-queue bound and content-free request handler |
+| LAP-10 Browser exercise | PASS for numeric URL | Chromium loaded local mode at `10.67.33.247`, published to `LOCAL-LINK`, ended with zero queued, reloaded and retrieved the capsule; `.local` returned NXDOMAIN on Windows |
+
+Focused local evidence command:
+
+```text
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q -p no:cacheprovider \
+  tests/test_bdix_hub.py tests/test_bdix_hub_static.py tests/test_bdix_backup.py \
+  tests/test_local_access_point.py
+```
+
+Android and iPad must still try the optional friendly name on the named access
+point. A stable numeric link additionally requires the operator to reserve the
+laptop's address in that access point's DHCP configuration.
+
 ## Test-count inventory
 
 Counts are measured from the 78 definitions. The completed M0 and M1

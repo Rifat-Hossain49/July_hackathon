@@ -46,7 +46,7 @@ def test_bh10_service_worker_caches_shell_but_never_api_responses() -> None:
         (STATIC / "manifest.webmanifest").read_text(encoding="utf-8")
     )
 
-    assert 'const CACHE_NAME = "shongket-bdix-shell-v1"' in worker
+    assert 'const CACHE_NAME = "shongket-bdix-shell-v2"' in worker
     assert 'url.pathname.startsWith("/api/")' in worker
     assert 'url.origin !== self.location.origin' in worker
     assert '"/app.js"' in worker
@@ -65,6 +65,24 @@ def test_bh12_interface_states_the_domestic_and_nearby_boundaries() -> None:
     assert "Total network loss" in html
     assert "No website can bridge distant users" in html
     assert "BDIX / cross-ISP field validation: <strong>NOT RUN</strong>" in html
+
+
+def test_lap07_local_mode_is_safe_specific_and_honest() -> None:
+    html = (STATIC / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC / "app.js").read_text(encoding="utf-8")
+
+    assert 'id="local-entry"' in html
+    assert "http://shongket.local:8787" in html
+    assert "ONE WI-FI • NO INTERNET REQUIRED" in html
+    assert "works in every browser" in html
+    assert "device support varies" in html
+    assert 'status.mode !== "local-access-point"' in javascript
+    assert 'url.protocol !== "http:"' in javascript
+    assert "nodes.friendlyLink.textContent = friendly" in javascript
+    assert "nodes.fallbackLink.textContent = fallback" in javascript
+    assert "status.entry.friendly_available === true" in javascript
+    assert "Talk nearby without Internet." in javascript
+    assert "innerHTML" not in javascript
 
 
 def test_bh11_deployment_is_loopback_tls_bounded_and_version_pinned() -> None:

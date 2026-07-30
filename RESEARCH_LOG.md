@@ -618,3 +618,110 @@ Date accessed: 2026-07-31.
 - Limitation: one SQLite hub is not a horizontally scalable or
   censorship-resistant service.
 - Tag: fact / conservative design decision.
+
+---
+
+## 8. Local-access-point friendly-link research
+
+Date accessed: 2026-07-31.
+
+### 8.1 Multicast DNS local host names
+
+- Title: RFC 6762 - Multicast DNS.
+- Organization: Internet Engineering Task Force.
+- URL: https://www.rfc-editor.org/rfc/rfc6762
+- Verified fact: mDNS provides DNS-like operations on a local link without a
+  conventional DNS server. A host may use a single-label name below the
+  special `.local.` domain, and queries for that name are sent to the
+  link-local multicast address on UDP port 5353.
+- Effect on Shongket: the laptop can advertise `shongket.local.` without an
+  Internet DNS service or router-specific DNS configuration.
+- Limitation: `.local.` is meaningful only on the originating link. Name
+  conflicts must be handled, and an access point may suppress multicast.
+- Tag: fact.
+
+### 8.2 DNS-Based Service Discovery
+
+- Title: RFC 6763 - DNS-Based Service Discovery.
+- Organization: Internet Engineering Task Force.
+- URL: https://www.rfc-editor.org/rfc/rfc6763
+- Verified fact: DNS-SD describes services with PTR, SRV and TXT records and,
+  when combined with mDNS, provides zero-configuration discovery on a local
+  link.
+- Effect on Shongket: advertise the HTTP endpoint as `_http._tcp.local.` with
+  a root-path TXT property while the human-facing address remains
+  `shongket.local`.
+- Limitation: browser navigation still depends on the client's `.local` host
+  resolver; service advertisement is not a cross-network routing mechanism.
+- Tag: fact.
+
+### 8.3 Python mDNS dependency
+
+- Title: `zeroconf` 0.150.0.
+- Organizations: python-zeroconf project / Python Package Index.
+- URLs:
+  - https://pypi.org/project/zeroconf/0.150.0/
+  - https://github.com/python-zeroconf/python-zeroconf
+- Purpose: standards-based local host and HTTP service advertisement, conflict
+  handling, interface selection and clean shutdown.
+- License: LGPL-2.1-or-later.
+- Maintenance status: production/stable on PyPI; released 2026-06-22; supports
+  Python 3.10 through 3.14.
+- Download size: CPython 3.14 Windows x86-64 wheel approximately 3.1 MB; source
+  archive approximately 213.6 kB.
+- Offline behavior: after installation it operates on local multicast and has
+  no cloud runtime.
+- Platform requirements: Windows, macOS and POSIX; Python >= 3.10.
+- Smaller alternative: a custom responder would duplicate standards-sensitive
+  packet, interface, conflict and lifecycle logic. Router-local DNS would not
+  be zero-configuration.
+- Tag: dependency decision.
+
+### 8.4 Interface enumeration dependency
+
+- Title: `ifaddr` 0.2.0.
+- Organization: Python Package Index / ifaddr maintainers.
+- URL: https://pypi.org/project/ifaddr/0.2.0/
+- Verified fact: `zeroconf` depends on `ifaddr>=0.1.7`; it enumerates local
+  Ethernet and IP addresses on Windows, macOS and POSIX.
+- License: MIT.
+- Maintenance status: version 0.2.0 released 2022-06-15; small stable package
+  with verified PyPI maintainers.
+- Download size: 12.3 kB universal wheel; 10.5 kB source archive.
+- Offline behavior: local interface enumeration only.
+- Smaller alternative: platform-specific enumeration would add separate
+  Windows and POSIX implementations for negligible size savings.
+- Tag: transitive dependency decision.
+
+### 8.5 Design assumptions requiring physical evidence
+
+- Assumption: the user's access point forwards mDNS multicast and peer TCP.
+- Assumption: the selected Android and iPad browsers resolve
+  `shongket.local.` through their platform resolver.
+- Assumption: the laptop firewall permits inbound TCP and UDP 5353 traffic on
+  the private network profile.
+- Validation: open the exact friendly URL on named Android and iPad devices,
+  publish in each direction, reload, and record the access point and OS/browser
+  versions. Retain the numeric URL as a fallback.
+- Tag: design assumption.
+
+### 8.6 First Windows/browser observation
+
+- Environment: Windows laptop, Python 3.14, `zeroconf==0.150.0`, Chromium,
+  Wi-Fi address changed during the exercise from `192.168.0.29` to
+  `10.67.33.247`.
+- Observation: the advertiser registered without a software exception, but a
+  second zeroconf browser did not discover the service on that interface and
+  Chromium navigation to `http://shongket.local:8787` completed at
+  `DNS_PROBE_FINISHED_NXDOMAIN`. Windows PowerShell also failed to resolve the
+  name.
+- Control result: Chromium loaded `http://10.67.33.247:8787`, displayed
+  `local-access-point` mode, published a capsule with an empty final outbox,
+  reloaded and retrieved the same capsule.
+- Effect on Shongket: the numeric Wi-Fi URL is the primary interoperable link.
+  The `.local` name remains optional and visibly labelled as device-dependent.
+  A DHCP reservation on the access point is required if the operator wants the
+  numeric URL to remain unchanged across reconnections.
+- Limitation: this is one laptop/network observation. It does not decide
+  Android or iPad `.local` behavior and is not a general mDNS conformance test.
+- Tag: observed field result / conservative product decision.
