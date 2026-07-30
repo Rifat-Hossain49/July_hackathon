@@ -357,6 +357,40 @@ background execution after the app closes, media transfer, production
 identity/encryption, a locked transport-selection claim or any later field
 milestone.
 
+### iOS local-Wi-Fi interoperability approval record
+
+- `IOS_LOCAL_WIFI_IMPLEMENTATION_STATUS: APPROVED_FOR_IOS_LOCAL_WIFI_INTEROPERABILITY`
+- `IOS_LOCAL_WIFI_SCOPE_FREEZE_COMMIT: 5d4bf187cfa7cc56a3db64567c2f53fbb77bd500`
+- `IOS_LOCAL_WIFI_SOFTWARE_ACCEPTANCE: IOS-LW-01_THROUGH_IOS-LW-10`
+- `IOS_LOCAL_WIFI_FIELD_VALIDATION_STATUS: FIELD_VALIDATION_NOT_APPROVED`
+
+The product owner explicitly requested iOS compatibility on 2026-07-30. That
+instruction authorizes the software implementation frozen in
+`IOS_LOCAL_WIFI_SCOPE.md`: a native iOS 16+ text-only client that uses Bonjour
+DNS-SD and bounded local TCP to interoperate with the existing Android app on
+the same Wi-Fi network or a user-enabled hotspot.
+
+This is a milestone-specific interoperability approval, not a global
+approval. It narrowly permits:
+
+- a transport-independent Swift codec for the frozen version-1 wire format;
+- a native Network framework adapter for `_shongket._tcp`;
+- a human-confirmed, text-only SwiftUI send/receive interface;
+- the local-network privacy declarations and foreground lifecycle required by
+  Apple platforms;
+- bounded schema, integrity, duplicate, timeout and denial handling;
+- shared Android/Swift golden interoperability vectors; and
+- macOS Swift tests and unsigned iOS Simulator build evidence for IOS-LW-01
+  through IOS-LW-10.
+
+It does not authorize marking the cross-platform physical-device gate
+passing. Android-to-iPhone discovery, bidirectional transfer, interruption,
+hotspot behavior and ten cold runs still require named physical devices and
+captured evidence. It also does not authorize media transfer, Bluetooth,
+Multipeer Connectivity, AWDL claims, background execution, production
+identity/encryption, production signing, TestFlight, App Store publication or
+handling Apple signing secrets in the repository.
+
 AT-38 through AT-78 are approved as the remaining acceptance
 specification. None is implemented or passing at this approval point.
 AT-38 through AT-46, AT-51 through AT-54, AT-58 through AT-60, AT-63,
