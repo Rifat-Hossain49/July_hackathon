@@ -11,7 +11,9 @@ WEB = ROOT / "web-demo"
 def test_web_demo_is_dependency_free_and_discloses_simulation() -> None:
     html = (WEB / "index.html").read_text(encoding="utf-8")
     assert "SIMULATED PEER TRANSPORT" in html
-    assert "Real radio and field validation are not included" in html
+    assert "physical-device validation is still pending" in html
+    assert "cannot discover another phone" in html
+    assert "v0.2.0-local-wifi.1" in html
     assert "বাংলা" in html
     assert "Optional image evidence" in html
     assert "text-only delivery is supported" in html
@@ -51,7 +53,7 @@ def test_web_demo_has_a_bounded_offline_app_shell() -> None:
     assert manifest["scope"] == "./"
     assert manifest["display"] == "standalone"
     assert manifest["icons"][0]["src"] == "icon.svg"
-    assert "shongket-offline-shell-v1" in service_worker
+    assert "shongket-offline-shell-v2" in service_worker
     assert '"./index.html"' in service_worker
     assert '"./app.js"' in service_worker
     assert '"./styles.css"' in service_worker

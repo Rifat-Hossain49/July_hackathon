@@ -36,4 +36,26 @@
     <string name="demo_received_verified">প্রাপ্ত তথ্য পুনর্গঠন ও SHA-256 দিয়ে যাচাই করা হয়েছে।</string>
     <string name="demo_error">প্রয়োজনীয় পদক্ষেপ: %1$s</string>
     <string name="demo_diagnostics_ready">সম্পাদিত ডায়াগনস্টিক প্রস্তুত (%1$d অক্ষর; বার্তা বা মিডিয়া নেই)।</string>
+    <string name="local_wifi_real_notice">বাস্তব লোকাল ওয়াই-ফাই • ইন্টারনেট বা ক্লাউড প্রয়োজন নেই</string>
+    <string name="local_wifi_setup">দুই ফোনেই একই ওয়াই-ফাই নেটওয়ার্কে যুক্ত হোন (অথবা একটি ফোনকে অন্য ফোনের হটস্পটে যুক্ত করুন), দুই ফোনে সংকেত খুলুন এবং কাছাকাছি ওয়াই-ফাই চালু করুন চাপুন। দুই অ্যাপই খোলা রাখুন।</string>
+    <string name="local_wifi_start">কাছাকাছি ওয়াই-ফাই চালু করুন</string>
+    <string name="local_wifi_stop">কাছাকাছি ওয়াই-ফাই বন্ধ করুন</string>
+    <string name="local_wifi_status">লোকাল ওয়াই-ফাই অবস্থা: %1$s</string>
+    <string name="local_wifi_listening">%1$s লোকাল পোর্ট %2$d-এ শুনছে।</string>
+    <string name="local_wifi_addresses">লোকাল ঠিকানা: %1$s</string>
+    <string name="local_wifi_compose_title">সংকট ক্যাপসুল তৈরি করুন</string>
+    <string name="local_wifi_urgency">জরুরিতা</string>
+    <string name="local_wifi_selected_visibility">নির্বাচিত দৃশ্যমানতা: %1$s</string>
+    <string name="local_wifi_peers">কাছাকাছি সংকেত ডিভাইস</string>
+    <string name="local_wifi_no_peers">এখনও কোনো ডিভাইস পাওয়া যায়নি। অন্য ফোনে কাছাকাছি ওয়াই-ফাই চালু করুন এবং দুই ফোন একই লোকাল নেটওয়ার্কে রাখুন।</string>
+    <string name="local_wifi_peer_available">%1$s নির্বাচন করুন (নাম যাচাইকৃত নয়)</string>
+    <string name="local_wifi_peer_selected">নির্বাচিত: %1$s (নাম যাচাইকৃত নয়)</string>
+    <string name="local_wifi_send">লোকাল ওয়াই-ফাই দিয়ে যাচাইকৃত ক্যাপসুল পাঠান</string>
+    <string name="local_wifi_security_warning">পরীক্ষামূলক পরিবহন: ক্যাপসুলের অখণ্ডতা SHA-256 দিয়ে যাচাই করা হয়, কিন্তু অপর ডিভাইসের পরিচয় যাচাইকৃত নয় এবং এই সংস্করণে প্রান্ত-থেকে-প্রান্ত এনক্রিপশন নেই। বিশ্বস্ত লোকাল নেটওয়ার্ক ব্যবহার করুন।</string>
+    <string name="local_wifi_result">পরিবহন ফলাফল: %1$s</string>
+    <string name="local_wifi_inbox">প্রাপ্ত ক্যাপসুল</string>
+    <string name="local_wifi_inbox_empty">এই অ্যাপ সেশনে কিছু পাওয়া যায়নি।</string>
+    <string name="local_wifi_received_header">%1$s থেকে • %2$s</string>
+    <string name="local_wifi_verified_id">যাচাইকৃত ক্যাপসুল: %1$s…</string>
+    <string name="local_wifi_unverified_identity">প্রেরকের লেবেলটি একটি সেশন শনাক্ত করে, যাচাইকৃত কোনো ব্যক্তিকে নয়।</string>
 </resources>

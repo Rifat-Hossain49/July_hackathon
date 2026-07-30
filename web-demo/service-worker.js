@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "shongket-offline-shell-v1";
+const CACHE_NAME = "shongket-offline-shell-v2";
 const APP_SHELL = [
   "./",
   "./index.html",

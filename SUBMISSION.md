@@ -1,4 +1,4 @@
-# Shongket 0.1.0 Demo Submission
+# Shongket 0.2.0 Local-Wi-Fi Demo Submission
 
 ## Project
 
@@ -16,9 +16,9 @@ Repository owner: [Rifat-Hossain49](https://github.com/Rifat-Hossain49)
 - Source repository:
   <https://github.com/Rifat-Hossain49/July_hackathon>
 - GitHub prerelease:
-  <https://github.com/Rifat-Hossain49/July_hackathon/releases/tag/v0.1.0-demo.1>
+  <https://github.com/Rifat-Hossain49/July_hackathon/releases/tag/v0.2.0-local-wifi.1>
 - Direct demo APK:
-  <https://github.com/Rifat-Hossain49/July_hackathon/releases/download/v0.1.0-demo.1/Shongket-0.1.0-demo.1-debug.apk>
+  <https://github.com/Rifat-Hossain49/July_hackathon/releases/download/v0.2.0-local-wifi.1/Shongket-0.2.0-local-wifi.1-debug.apk>
 
 ## Demonstration
 
@@ -37,7 +37,11 @@ Repository owner: [Rifat-Hossain49](https://github.com/Rifat-Hossain49)
    ignored, the reconstructed SHA-256 matches, and the receiver view appears.
 9. Export the content-free redacted diagnostics JSON.
 
-The same conceptual workflow is available in the Android demo application.
+The browser workflow above remains an in-device simulator. For actual nearby
+exchange, install the Android APK on two phones, join them to the same Wi-Fi
+network (or join one to the other phone's manually enabled hotspot), open the
+app on both, tap **Start nearby Wi-Fi**, select the discovered peer and send a
+human-confirmed text capsule. Internet service is not required.
 
 ## Functional scope
 
@@ -51,6 +55,8 @@ The same conceptual workflow is available in the Android demo application.
   source-byte equality verification.
 - Received-item display and redacted diagnostics export.
 - Browser-local state, no login, no analytics, and no silent network upload.
+- Experimental foreground Android DNS-SD/mDNS discovery and bounded local TCP
+  text-capsule exchange on a shared Wi-Fi network.
 
 ## Architecture
 
@@ -73,8 +79,9 @@ ignored, and received content was reconstructed with matching integrity.
 
 **SIMULATED PEER TRANSPORT**
 
-Demo mode uses simulated peer transport. Real radio and field validation are
-not included in this build.
+The web demo uses simulated peer transport. The Android APK contains the
+experimental local-Wi-Fi implementation, but physical-device and real-radio
+validation have not been run.
 
 - This is a functional software demo, not a production or field-validated
   emergency system.

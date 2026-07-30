@@ -36,4 +36,26 @@
     <string name="demo_received_verified">Received item reconstructed and SHA-256 verified.</string>
     <string name="demo_error">Action needed: %1$s</string>
     <string name="demo_diagnostics_ready">Redacted diagnostics ready (%1$d characters; no message or media content).</string>
+    <string name="local_wifi_real_notice">REAL LOCAL WI-FI • No internet or cloud required</string>
+    <string name="local_wifi_setup">On both phones, join the same Wi-Fi network (or connect one phone to the other phone’s hotspot), open Shongket, and tap Start nearby Wi-Fi. Keep both apps open.</string>
+    <string name="local_wifi_start">Start nearby Wi-Fi</string>
+    <string name="local_wifi_stop">Stop nearby Wi-Fi</string>
+    <string name="local_wifi_status">Local Wi-Fi status: %1$s</string>
+    <string name="local_wifi_listening">%1$s is listening on local port %2$d.</string>
+    <string name="local_wifi_addresses">Local address: %1$s</string>
+    <string name="local_wifi_compose_title">Create a crisis capsule</string>
+    <string name="local_wifi_urgency">Urgency</string>
+    <string name="local_wifi_selected_visibility">Selected visibility: %1$s</string>
+    <string name="local_wifi_peers">Nearby Shongket devices</string>
+    <string name="local_wifi_no_peers">No peer discovered yet. Start nearby Wi-Fi on the other phone and keep both phones on the same local network.</string>
+    <string name="local_wifi_peer_available">Select %1$s (unverified name)</string>
+    <string name="local_wifi_peer_selected">Selected: %1$s (unverified name)</string>
+    <string name="local_wifi_send">Send verified capsule over local Wi-Fi</string>
+    <string name="local_wifi_security_warning">Experimental transport: capsule integrity is SHA-256 verified, but peer identity is not authenticated and this version is not end-to-end encrypted. Use a trusted local network.</string>
+    <string name="local_wifi_result">Transport result: %1$s</string>
+    <string name="local_wifi_inbox">Received capsules</string>
+    <string name="local_wifi_inbox_empty">Nothing received during this app session.</string>
+    <string name="local_wifi_received_header">From %1$s • %2$s</string>
+    <string name="local_wifi_verified_id">Verified capsule: %1$s…</string>
+    <string name="local_wifi_unverified_identity">The sender label identifies a session, not a verified person.</string>
 </resources>

@@ -9,18 +9,19 @@ media completed from verified chunks collected across multiple peer
 encounters.
 
 **Status:** Milestone 0 is implemented in `app/simulator/`; Milestone 1
-is implemented in `shongket_core/`. The combined baseline is **367
-passing tests, 0 failed, 0 skipped**. `PRODUCT_DECISIONS.md` is the
-canonical authorisation source and currently reads
-`IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_1`. The M2–M9 scope is
-frozen in `REMAINING_SCOPE.md`. A separate descendant ledger authorizes
-the exact software/evidence-tooling subset while leaving device, radio
-and field validation unapproved.
+is implemented in `shongket_core/`; and an experimental Milestone 3
+Android local-Wi-Fi slice is implemented in `android/`. The top-level
+`IMPLEMENTATION_STATUS` remains `APPROVED_FOR_MILESTONE_1`; the exact
+local-Wi-Fi software authorization is recorded separately as
+`APPROVED_FOR_MILESTONE_3_LOCAL_WIFI_IMPLEMENTATION` in
+`PRODUCT_DECISIONS.md`. Physical-device, real-radio and field validation
+remain unapproved and unclaimed.
 
-**This repository contains a protocol simulator, not a deployable
-mobile application.** There is no Android app, no radio transport and
-no offline AI inference. See section 9 for the full boundary between
-what is done and what is not.
+The Android app exchanges human-confirmed text capsules between phones on
+the same Wi-Fi network or a user-enabled phone hotspot. Internet service is
+not required. It does not yet provide Bluetooth, Wi-Fi Direct, background
+relaying, media transfer, end-to-end encryption or offline AI inference.
+See [android/README.md](./android/README.md) for the two-phone instructions.
 
 > **Public tag discipline:** throughout this document, every
 > capability is labelled as
@@ -96,9 +97,10 @@ Shongket designs for that in-between state.
 
 ## 5. Architecture (high level)
 
-[SIMULATED — the M0 slice of this architecture is implemented in
-`app/simulator/`; the capture, semantic-engine and transport-adapter
-boxes remain PLANNED]
+[SIMULATED/EXPERIMENTAL — the M0 slice is implemented in
+`app/simulator/`; the Android text-capsule local-Wi-Fi adapter is
+implemented in `android/`; capture, offline semantics and progressive
+media remain PLANNED]
 
 ```
 Capture ── Semantic engine (offline) ── Human review ── Confirmed capsule
@@ -113,7 +115,7 @@ Capture ── Semantic engine (offline) ── Human review ── Confirmed ca
             Priority scheduler (signal plane first)
                               │
                               ▼
-        Transport adapter (peer-to-peer; transport TBD)
+     Transport adapter (experimental local Wi-Fi; future transports TBD)
                               │
                               ▼
                     Peer fragment inventory
@@ -160,7 +162,7 @@ left to M3+.
 | Milestone 1 deterministic protocol core | IMPLEMENTED |
 | Durable crash-safe persistence (in-process) | IMPLEMENTED |
 | Multi-peer simulator run | SIMULATED (deterministic simulated multi-peer completion) |
-| Android peer transfer | PLANNED |
+| Android text-capsule local-Wi-Fi transfer | IMPLEMENTED (experimental software; physical-device validation pending) |
 | Progressive real-media transfer | PLANNED |
 | Offline AI extraction | PLANNED |
 | Reed-Solomon / RaptorQ | RESEARCH ONLY |
@@ -221,21 +223,20 @@ scope:
 
 ### 9.2 What is NOT completed
 
-None of the following exists in this repository:
+None of the following is completed in this repository:
 
-- Android application;
-- user-facing mobile UI;
+- physical-device validation of the experimental local-Wi-Fi transport;
 - Bluetooth;
 - Wi-Fi Direct;
 - Nearby Connections;
-- any real radio transport;
+- automatic hotspot setup or communication between devices that share no
+  local network;
 - real camera or audio capture pipeline;
 - production encryption and cryptographic identity;
 - real offline model inference;
 - Bloom-filter inventory;
 - coded reconstruction (Reed-Solomon / fountain / RaptorQ);
-- field testing;
-- Milestone 2 or later implementation.
+- field testing.
 
 ### 9.3 Standing caveats
 
@@ -243,7 +244,8 @@ None of the following exists in this repository:
 - M0 timing is expressed in deterministic simulator ticks, not seconds.
   No bytes-per-second figure exists, because the simulator has no
   wall-clock time base.
-- No transport is locked.
+- The local-Wi-Fi text transport is experimental; no future multimedia or
+  store-and-forward transport is locked.
 - No model is locked.
 - No claim is made about Android vendor compatibility until M3.
 - No claim is made about battery performance until M3.
@@ -275,7 +277,9 @@ See [MILESTONES.md](./MILESTONES.md). Milestones:
   deterministic in-process core: no Android, radio, AI or production
   security. See [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md).
 - M2: local two-process transfer.
-- M3: Android direct peer transport (gated by the transport smoke-test gate).
+- M3: experimental Android text-capsule transfer on the same Wi-Fi or a
+  user-enabled hotspot is implemented in software; the two-phone real-radio
+  smoke-test gate remains pending.
 - M4: progressive media transfer on real devices.
 - M5: real-device multi-peer completion (ordinary verified chunks).
 - M6: offline semantic extraction.
@@ -325,9 +329,9 @@ per [MODEL_EVALUATION_PLAN.md](./MODEL_EVALUATION_PLAN.md).
 ## 14. Contribution
 
 Implementation is gated by the exact milestone/scope ledger in
-`PRODUCT_DECISIONS.md`. M0 and M1 are complete. M2–M9 software work is
-authorized only for the modules and acceptance IDs in the descendant
-ledger referencing scope-freeze commit `f85a7c5`. Physical-device,
+`PRODUCT_DECISIONS.md`. M0 and M1 are complete. Later software work is
+authorized only by its exact descendant ledger entry; the local-Wi-Fi slice
+uses `APPROVED_FOR_MILESTONE_3_LOCAL_WIFI_IMPLEMENTATION`. Physical-device,
 real-radio and field-validation success claims, production signing/trust
 decisions and public-store deployment remain unauthorized.
 
