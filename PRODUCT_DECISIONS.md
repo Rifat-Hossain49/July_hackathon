@@ -391,6 +391,44 @@ Multipeer Connectivity, AWDL claims, background execution, production
 identity/encryption, production signing, TestFlight, App Store publication or
 handling Apple signing secrets in the repository.
 
+### BDIX domestic hub software approval record
+
+- `BDIX_HUB_IMPLEMENTATION_STATUS: APPROVED_FOR_BDIX_DOMESTIC_HUB_SOFTWARE`
+- `BDIX_HUB_SCOPE_FREEZE_COMMIT: 3b77dfe367a0e5c1d5b2ca242d6496824e868384`
+- `BDIX_HUB_SOFTWARE_ACCEPTANCE: BH-01_THROUGH_BH-12`
+- `BDIX_HUB_FIELD_VALIDATION_STATUS: FIELD_VALIDATION_NOT_APPROVED`
+
+The product owner explicitly requested on 2026-07-31 that Shongket reproduce
+the Bangladesh domestic-server pattern used during the 2024 global Internet
+blackout: users on different Wi-Fi/ISP networks should exchange crisis
+information through a Bangladesh-hosted service while domestic ISP/BDIX
+routing remains available.
+
+That instruction authorizes the software implementation frozen in
+`BDIX_HUB_SCOPE.md`: a dependency-light, text-only, public crisis-capsule hub
+and same-origin progressive web client for laptops, Android phones and Apple
+mobile devices.
+
+This is a milestone-specific implementation approval, not a global approval.
+It narrowly permits:
+
+- a strict public-only capsule API behind a transport/application boundary;
+- durable SQLite persistence, expiry, idempotency and bounded resource
+  controls;
+- a human-confirmed browser interface with a retrying local outbox;
+- an HTTPS-installable application shell containing no global runtime
+  dependency;
+- the reviewed Gunicorn production process dependency and reverse-proxy
+  deployment examples; and
+- automated local software evidence for BH-01 through BH-12.
+
+It does not authorize private chat, accounts, media upload, factual
+verification, end-to-end encryption claims, cloud AI, cross-hub federation,
+Bluetooth or other new radio work. It also does not authorize marking
+cross-ISP/BDIX reachability as passing. A named Bangladesh host, two named
+ISPs, controlled loss of global reachability and captured evidence remain the
+separate field gate in `BDIX_HUB_SCOPE.md` §8.
+
 AT-38 through AT-78 are approved as the remaining acceptance
 specification. None is implemented or passing at this approval point.
 AT-38 through AT-46, AT-51 through AT-54, AT-58 through AT-60, AT-63,
