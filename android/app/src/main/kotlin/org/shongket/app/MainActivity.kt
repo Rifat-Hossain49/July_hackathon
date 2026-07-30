@@ -36,19 +36,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import java.net.InetAddress
 import org.shongket.data.transport.AndroidLocalWifiTransportAdapter
-import org.shongket.data.transport.DecodedLocalWifiCapsule
-import org.shongket.data.transport.LocalWifiCapsule
-import org.shongket.data.transport.LocalWifiCapsuleCodec
 import org.shongket.data.transport.LocalWifiFrameReceiver
 import org.shongket.data.transport.LocalWifiNodeListener
 import org.shongket.data.transport.LocalWifiNodeState
 import org.shongket.data.transport.LocalWifiNodeStatus
 import org.shongket.data.transport.LocalWifiPeerEndpoint
-import org.shongket.data.transport.LocalWifiProtocolException
 import org.shongket.data.transport.LocalWifiReceiveDecision
 import org.shongket.data.transport.LocalWifiSendResult
-import org.shongket.data.transport.LocalWifiUrgency
-import org.shongket.data.transport.LocalWifiVisibility
 
 data class ReceivedCapsuleUi(
     val decoded: DecodedLocalWifiCapsule,

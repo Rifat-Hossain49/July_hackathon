@@ -1,4 +1,4 @@
-package org.shongket.data.transport
+package org.shongket.app
 
 import java.net.InetAddress
 import org.junit.Assert.assertEquals

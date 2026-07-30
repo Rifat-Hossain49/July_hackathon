@@ -1,4 +1,4 @@
-package org.shongket.data.transport
+package org.shongket.app
 
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -8,9 +8,9 @@ import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import org.shongket.data.transport.LOCAL_WIFI_PROTOCOL_VERSION
+import org.shongket.data.transport.MAX_LOCAL_WIFI_FRAME_BYTES
 
-const val LOCAL_WIFI_PROTOCOL_VERSION: Int = 1
-const val MAX_LOCAL_WIFI_FRAME_BYTES: Int = 8_192
 const val MAX_CAPSULE_MESSAGE_BYTES: Int = 4_096
 const val MAX_CAPSULE_LOCATION_BYTES: Int = 1_024
 const val MAX_CAPSULE_SENDER_LABEL_BYTES: Int = 64

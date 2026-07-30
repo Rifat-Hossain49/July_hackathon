@@ -44,7 +44,8 @@ interface LocalWifiNodeListener {
 
 /**
  * Android platform adapter for foreground local-Wi-Fi discovery and raw frame
- * exchange. It performs no capsule admission, consent or expiry decision.
+ * exchange. It carries opaque bytes and delegates application decisions to
+ * the injected receiver.
  */
 @Suppress("DEPRECATION")
 class AndroidLocalWifiTransportAdapter(

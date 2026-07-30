@@ -2,9 +2,6 @@ package org.shongket.app
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.shongket.data.transport.LocalWifiCapsule
-import org.shongket.data.transport.LocalWifiUrgency
-import org.shongket.data.transport.LocalWifiVisibility
 
 class LocalWifiCapsuleAdmissionTest {
     @Test

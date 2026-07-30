@@ -1,8 +1,5 @@
 package org.shongket.app
 
-import org.shongket.data.transport.LocalWifiCapsule
-import org.shongket.data.transport.LocalWifiVisibility
-
 sealed interface LocalWifiAdmissionDecision {
     data object Allowed : LocalWifiAdmissionDecision
     data class Refused(val code: String) : LocalWifiAdmissionDecision

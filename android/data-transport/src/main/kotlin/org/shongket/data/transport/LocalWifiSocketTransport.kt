@@ -218,7 +218,7 @@ object LocalWifiSocketClient {
                     AckStatus.REFUSED -> LocalWifiSendResult.Refused("PEER_REFUSED")
                 }
             }
-        } catch (error: LocalWifiProtocolException) {
+        } catch (error: LocalWifiTransportException) {
             LocalWifiSendResult.Refused(error.code)
         } catch (_: SocketTimeoutException) {
             LocalWifiSendResult.Refused("SOCKET_TIMEOUT")
@@ -243,7 +243,7 @@ private object LocalWifiFraming {
 
     fun write(output: BufferedOutputStream, frame: ByteArray) {
         if (frame.isEmpty() || frame.size > MAX_LOCAL_WIFI_FRAME_BYTES) {
-            throw LocalWifiProtocolException("FRAME_SIZE_INVALID")
+            throw LocalWifiTransportException("FRAME_SIZE_INVALID")
         }
         val data = DataOutputStream(output)
         data.writeInt(frame.size)
@@ -256,10 +256,10 @@ private object LocalWifiFraming {
         val size = try {
             data.readInt()
         } catch (_: EOFException) {
-            throw LocalWifiProtocolException("FRAME_TRUNCATED")
+            throw LocalWifiTransportException("FRAME_TRUNCATED")
         }
         if (size !in 1..MAX_LOCAL_WIFI_FRAME_BYTES) {
-            throw LocalWifiProtocolException("FRAME_SIZE_INVALID")
+            throw LocalWifiTransportException("FRAME_SIZE_INVALID")
         }
         return ByteArray(size).also(data::readFully)
     }
@@ -281,22 +281,22 @@ private object LocalWifiFraming {
 
     fun readAck(input: BufferedInputStream, expectedFrameId: String): AckStatus {
         val data = DataInputStream(input)
-        if (data.readInt() != ACK_BYTES) throw LocalWifiProtocolException("ACK_SIZE_INVALID")
-        if (data.readInt() != ACK_MAGIC) throw LocalWifiProtocolException("ACK_MAGIC_INVALID")
+        if (data.readInt() != ACK_BYTES) throw LocalWifiTransportException("ACK_SIZE_INVALID")
+        if (data.readInt() != ACK_MAGIC) throw LocalWifiTransportException("ACK_MAGIC_INVALID")
         if (data.readUnsignedByte() != LOCAL_WIFI_PROTOCOL_VERSION) {
-            throw LocalWifiProtocolException("ACK_VERSION_UNSUPPORTED")
+            throw LocalWifiTransportException("ACK_VERSION_UNSUPPORTED")
         }
         val status = data.readUnsignedByte()
         val identifier = ByteArray(32).also(data::readFully).toHex()
-        if (identifier != expectedFrameId) throw LocalWifiProtocolException("ACK_ID_MISMATCH")
+        if (identifier != expectedFrameId) throw LocalWifiTransportException("ACK_ID_MISMATCH")
         return AckStatus.entries.singleOrNull { it.wireCode == status }
-            ?: throw LocalWifiProtocolException("ACK_STATUS_INVALID")
+            ?: throw LocalWifiTransportException("ACK_STATUS_INVALID")
     }
 }
 
 private fun String.hexToBytes(): ByteArray {
     if (length != 64 || any { it.digitToIntOrNull(16) == null }) {
-        throw LocalWifiProtocolException("IDENTIFIER_INVALID")
+        throw LocalWifiTransportException("IDENTIFIER_INVALID")
     }
     return ByteArray(32) { index ->
         substring(index * 2, index * 2 + 2).toInt(16).toByte()

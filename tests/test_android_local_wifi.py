@@ -52,12 +52,12 @@ def test_local_wifi_implementation_is_bounded_local_and_content_free_in_logs() -
         / "data"
         / "transport"
     )
-    protocol = (transport / "LocalWifiProtocol.kt").read_text(encoding="utf-8")
+    limits = (transport / "LocalWifiTransportLimits.kt").read_text(encoding="utf-8")
     sockets = (transport / "LocalWifiSocketTransport.kt").read_text(encoding="utf-8")
     discovery = (transport / "AndroidLocalWifiTransportAdapter.kt").read_text(
         encoding="utf-8"
     )
-    activity = (
+    app_source = (
         ANDROID
         / "app"
         / "src"
@@ -66,10 +66,11 @@ def test_local_wifi_implementation_is_bounded_local_and_content_free_in_logs() -
         / "org"
         / "shongket"
         / "app"
-        / "MainActivity.kt"
-    ).read_text(encoding="utf-8")
+    )
+    protocol = (app_source / "LocalWifiCapsuleProtocol.kt").read_text(encoding="utf-8")
+    activity = (app_source / "MainActivity.kt").read_text(encoding="utf-8")
 
-    assert "MAX_LOCAL_WIFI_FRAME_BYTES: Int = 8_192" in protocol
+    assert "MAX_LOCAL_WIFI_FRAME_BYTES: Int = 8_192" in limits
     assert "INTEGRITY_MISMATCH" in protocol
     assert "CodingErrorAction.REPORT" in protocol
     assert "NON_LOCAL_ADDRESS" in sockets

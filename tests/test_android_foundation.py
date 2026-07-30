@@ -26,9 +26,21 @@ def test_gradle_wrapper_and_distribution_are_pinned() -> None:
     ) in properties
 
 
-def test_android_manifest_declares_no_runtime_permissions() -> None:
+def test_android_manifest_declares_only_scoped_local_wifi_permissions() -> None:
     manifest = ElementTree.parse(ANDROID / "app" / "src" / "main" / "AndroidManifest.xml")
-    assert manifest.getroot().findall("uses-permission") == []
+    android_name = "{http://schemas.android.com/apk/res/android}name"
+    permissions = {
+        element.attrib[android_name]
+        for element in manifest.getroot().findall("uses-permission")
+    }
+
+    assert permissions == {
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.CHANGE_WIFI_MULTICAST_STATE",
+        "android.permission.NEARBY_WIFI_DEVICES",
+    }
 
 
 def test_app_private_persistence_is_bounded_and_rejection_only() -> None:

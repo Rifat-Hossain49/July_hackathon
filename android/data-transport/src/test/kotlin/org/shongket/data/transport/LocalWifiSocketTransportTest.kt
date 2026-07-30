@@ -21,7 +21,7 @@ class LocalWifiSocketTransportTest {
         }
         try {
             val port = server.start()
-            val frame = LocalWifiCapsuleCodec.encode(fixtureCapsule())
+            val frame = fixtureFrame()
             val result = LocalWifiSocketClient.send(loopbackEndpoint(port), frame)
 
             assertTrue(result is LocalWifiSendResult.Accepted)
@@ -41,7 +41,7 @@ class LocalWifiSocketTransportTest {
         }
         try {
             val port = server.start()
-            val frame = LocalWifiCapsuleCodec.encode(fixtureCapsule())
+            val frame = fixtureFrame()
             val first = LocalWifiSocketClient.send(loopbackEndpoint(port), frame)
             val second = LocalWifiSocketClient.send(loopbackEndpoint(port), frame)
 
@@ -62,7 +62,7 @@ class LocalWifiSocketTransportTest {
         }
         try {
             val port = server.start()
-            val frame = LocalWifiCapsuleCodec.encode(fixtureCapsule())
+            val frame = fixtureFrame()
             assertEquals(
                 LocalWifiSendResult.Refused("PEER_REFUSED"),
                 LocalWifiSocketClient.send(loopbackEndpoint(port), frame),
@@ -104,16 +104,6 @@ class LocalWifiSocketTransportTest {
             port = port,
         )
 
-    private fun fixtureCapsule(): LocalWifiCapsule =
-        LocalWifiCapsule(
-            senderLabel = "Shongket-test",
-            message = "water needed",
-            location = "east bank",
-            urgency = LocalWifiUrgency.IMPORTANT,
-            visibility = LocalWifiVisibility.PUBLIC,
-            humanConfirmed = true,
-            forwardingConsent = false,
-            createdAtEpochSeconds = 1_800_000_000,
-            expiresAtEpochSeconds = 1_800_086_400,
-        )
+    private fun fixtureFrame(): ByteArray =
+        ByteArray(128) { index -> (index % 251).toByte() }
 }
