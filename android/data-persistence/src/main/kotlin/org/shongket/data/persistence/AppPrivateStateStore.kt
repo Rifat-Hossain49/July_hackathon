@@ -2,6 +2,7 @@ package org.shongket.data.persistence
 
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.charset.CodingErrorAction
@@ -132,7 +133,7 @@ class AppPrivateStateStore(
         }
         val bytes = try {
             Files.newInputStream(path).use { input ->
-                input.readNBytes((maxDocumentBytes + 1).toInt())
+                readBounded(input)
             }
         } catch (error: IOException) {
             throw StatePersistenceException("could not read state document", error)
@@ -250,7 +251,7 @@ class AppPrivateStateStore(
 
     private fun quarantinePrimary() {
         val prefix = Files.newInputStream(primary).use { input ->
-            input.readNBytes((maxDocumentBytes + 1).toInt())
+            readBounded(input)
         }
         val digest = CanonicalJson.sha256Hex(prefix)
         var suffix = 0
@@ -262,6 +263,18 @@ class AppPrivateStateStore(
             }
             suffix++
         }
+    }
+
+    private fun readBounded(input: InputStream): ByteArray {
+        val bytes = ByteArray((maxDocumentBytes + 1).toInt())
+        var offset = 0
+        while (offset < bytes.size) {
+            val read = input.read(bytes, offset, bytes.size - offset)
+            if (read < 0) break
+            if (read == 0) continue
+            offset += read
+        }
+        return bytes.copyOf(offset)
     }
 
     private fun writeAndSync(path: Path, bytes: ByteArray) {
