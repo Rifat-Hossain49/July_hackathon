@@ -46,7 +46,7 @@ Taken from `MILESTONES.md` § Milestone 1, unchanged in meaning:
 
 - **Objective:** harden M0 into a production-quality core suitable for
   Android integration in later milestones.
-- **Deliverables:** stable schemas with explicit versioning; robus
+- **Deliverables:** stable schemas with explicit versioning; robust
   persistence (durable, crash-safe, schema-versioned); explicit failure
   handling; protocol conformance test suite.
 - **Acceptance criteria:** all M0 acceptance tests pass; additional M1
@@ -94,7 +94,7 @@ migration, or test coverage.
 ## 4. Contradictions and missing definitions
 
 All nine are now **RECONCILED** by the accepted decisions. The findings
-are retained below unchanged, as the record of what M0 actually lef
+are retained below unchanged, as the record of what M0 actually left
 open. Resolutions:
 
 | ID | Finding | Resolution | Encoded in |
@@ -163,7 +163,7 @@ document-level checksum (only per-fragment SHA-256), no file locking,
 and no migration path — the schema string is matched exactly, so any
 future version is simply rejected as `SNAPSHOT_INVALID`.
 
-### C-6 — AT-12 eviction remains spli
+### C-6 — AT-12 eviction remains split
 
 `ACCEPTANCE_TESTS.md` AT-12 expects "eviction policy engages" while
 scoping itself "M0 (rule), M5+ (effect)". M0 implements refusal only.
@@ -205,7 +205,7 @@ as a required manifest enum with
 values `"public" | "private"`, defaulting to `"public"` when absent, and
 retire the provisional boolean `private`.
 
-- Type: string enum. Malformed or unknown value → rejec
+- Type: string enum. Malformed or unknown value → reject
   `SCHEMA_INVALID` before scheduling (never silently treated as public).
 - Compatibility: M0 manifests carrying boolean `private` are accepted by
   a migration that maps `true → "private"`, `false → "public"`.
@@ -238,7 +238,7 @@ literal `true` granting it.
 content only**. It may receive, request, advertise and forward public
 content, and none of those operations for private content.
 
-- Accepted scope is **broader than originally proposed**. The draf
+- Accepted scope is **broader than originally proposed**. The draft
   restricted only *sending to* and *forwarding through* such a peer,
   leaving request, advertise and receive unconstrained; the accepted
   reading covers all four operations. A peer that declares it handles
@@ -246,8 +246,8 @@ content, and none of those operations for private content.
   private content either.
 - Enforcement point: before queueing and before transmission — the same
   boundary as expiry and consent, so nothing is scheduled or sent.
-- Interaction: a private object with valid consent is still **not** sen
-  to a `public_only` peer. Consent authorises forwarding in general; i
+- Interaction: a private object with valid consent is still **not** sent
+  to a `public_only` peer. Consent authorises forwarding in general; it
   does not override a peer's declared refusal.
 - Evidence: deterministic refusal naming the failing clause, error code
   `PEER_REFUSES_PRIVATE`.
@@ -284,7 +284,7 @@ rules:
 - **Minor** = additive only, and **compatibility must be explicitly
   registered**. The exact registered version is accepted. *Any* other
   minor — numerically lower or higher — is accepted only when the
-  receiver holds a registered compatibility entry for tha
+  receiver holds a registered compatibility entry for that
   `(object, major, minor)`; otherwise it is refused with
   `VERSION_UNSUPPORTED`.
 - **Ordering grants nothing.** An earlier draft of this decision said "a
@@ -294,7 +294,7 @@ rules:
   so treating "lower" as "safe" is inference from numeric ordering —
   precisely what this decision forbids. This wording previously
   contradicted `PROTOCOL_SPEC.md` §9.1; the two now agree.
-- Accepted rule is **stricter than originally proposed**. The draf
+- Accepted rule is **stricter than originally proposed**. The draft
   accepted any higher minor optimistically and ignored unknown fields.
   The accepted rule requires compatibility to be *declared, never
   inferred*, so a receiver cannot silently accept a payload shaped by a
@@ -335,7 +335,7 @@ Durable model:
   independently testable; the pre-migration file is retained until the
   migrated document is durably written.
 - **Corrupted state:** a failed document checksum quarantines the file
-  (renamed aside, never deleted) and recovery proceeds from the las
+  (renamed aside, never deleted) and recovery proceeds from the last
   good snapshot; fragments failing their own SHA-256 are dropped
   individually while intact fragments are preserved.
 - **Locking / concurrency:** M1 assumes **single-writer, multi-reader**
@@ -382,14 +382,14 @@ the M0 codes folded in.
 
 **ACCEPTED** — encoded in `SYSTEM_ARCHITECTURE.md` §3.4. M1 **stays
 Python**, adds a language-neutral protocol specification, canonical
-serialization rules, golden vectors and conformance tests, and does no
+serialization rules, golden vectors and conformance tests, and does not
 port the core to Kotlin in M1.
 
 - No canonical document requires a language at M1. M2 (two OS processes
   on a developer machine) is satisfied by Python. Only M3 introduces
   Android, and `MILESTONES.md` M3 says it "connects the M1 core to a
   real Android transport" — a boundary, not a rewrite mandate.
-- Proposed boundary: a platform-neutral `shongket_core` package tha
+- Proposed boundary: a platform-neutral `shongket_core` package that
   never imports an adapter, with the simulator demoted to
   `adapters/simulator`. See §6.
 - M0 compatibility is preserved by keeping the existing simulator
@@ -425,7 +425,7 @@ shongket_core/                 platform-neutral, standard library only
 
 adapters/
   simulator/    M0-compatible peers, encounters, scenarios, CLI
-  platform/     RESERVED — M3+; no M1 conten
+  platform/     RESERVED — M3+; no M1 content
 ```
 
 ### 6.2 Dependency direction
@@ -499,10 +499,10 @@ stateDiagram-v2
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Detec
-  Detect --> Current: version == curren
-  Detect --> Upgrade: version < curren
-  Detect --> Refuse: version > curren
+  [*] --> Detect
+  Detect --> Current: version == current
+  Detect --> Upgrade: version < current
+  Detect --> Refuse: version > current
   Upgrade --> Applying: migration chain resolved
   Applying --> Applying: step vN to vN+1
   Applying --> Staged: all steps applied
@@ -525,7 +525,7 @@ stateDiagram-v2
   Operation --> Terminal: terminal code
   Operation --> Retryable: retryable code
   Terminal --> Recorded: evidence emitted
-  Recorded --> [*]: never retried with identical inpu
+  Recorded --> [*]: never retried with identical input
   Retryable --> Recorded2: evidence emitted
   Recorded2 --> Operation: external state changed
   Retryable --> Exhausted: caller gives up
@@ -551,7 +551,7 @@ stateDiagram-v2
 | `ingress.py` | **Adapt** | Reuse as the scheduling boundary |
 | `peer.py`, `transfer.py`, `scenario.py`, `main.py` | **Move** → `adapters/simulator` | Behaviour preserved; AT-37 guards |
 
-Nothing in the table deletes M0 behaviour. Every M0 acceptance test mus
+Nothing in the table deletes M0 behaviour. Every M0 acceptance test must
 still pass unchanged.
 
 ---
@@ -606,7 +606,7 @@ indicated.
 - **Input:** a payload declaring a higher minor and carrying one unknown
   additional field.
 - **Steps:** submit to the validation boundary.
-- **Expected:** accepted; unknown field ignored, not persisted, no
+- **Expected:** accepted; unknown field ignored, not persisted, not
   echoed; no error raised; known fields validated normally.
 - **Automation:** harness. **Milestone:** M1. **Severity:** S2.
 - **Evidence:** acceptance log naming the ignored field.
@@ -645,7 +645,7 @@ indicated.
   after temp fsync, after replace, before directory fsync.
 - **Steps:** simulate interruption at each point; reopen.
 - **Expected:** the reader always sees either the complete previous
-  document or the complete new one, never a blend; no partial documen
+  document or the complete new one, never a blend; no partial document
   is ever loaded; temp artefacts are ignored and cleaned.
 - **Automation:** harness (fault injection, no real power loss).
 - **Milestone:** M1. **Severity:** S2.
@@ -813,7 +813,7 @@ indicated.
 
 ## 8. Approved implementation slices
 
-Each slice was one independently verifiable commit boundary and lef
+Each slice was one independently verifiable commit boundary and left
 the suite green. All five are complete.
 
 ### Slice 1 — Canonical serialization, schema registry, versioning
@@ -869,15 +869,15 @@ the suite green. All five are complete.
 - **Acceptance IDs:** AT-32, AT-33, AT-34, AT-35.
 - **Dependencies:** Slices 1–3; D-M1-01, D-M1-02, D-M1-03, D-M1-07.
 - **Risks:** hop/copy enforcement is genuinely *new* refusal behaviour —
-  it must be framed as completing a canonical §6.0 rule M0 lef
-  unimplemented, not as a new feature. Needs explicit confirmation a
+  it must be framed as completing a canonical §6.0 rule M0 left
+  unimplemented, not as a new feature. Needs explicit confirmation at
   approval.
 - **Rollback:** revert; M0 consent behaviour is unaffected.
 - **Verify:** full suite; AT-16 assertions re-run post-migration.
 
 ### Slice 5 — Conformance suite, adapter isolation, golden vectors
 
-- **Behaviours:** simulator moved under `adapters/simulator`; impor
+- **Behaviours:** simulator moved under `adapters/simulator`; import
   isolation enforced; golden test vectors published for a future port.
 - **Modules:** package restructure; no behaviour change.
 - **Acceptance IDs:** AT-37.
@@ -905,7 +905,7 @@ branch; `main` retains the complete, merged M0 evidence throughout.
 
 ---
 
-## 10. Approval checklis
+## 10. Approval checklist
 
 Milestone 1 implementation may begin only when **all** of these are true:
 

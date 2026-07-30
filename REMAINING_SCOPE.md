@@ -1,9 +1,11 @@
 # Shongket — Remaining Project Scope Freeze
 
-**Status:** SCOPE_FROZEN. This document freezes the remaining scope,
-decisions, architecture and acceptance catalogue. Implementation
-authorisation is a **separate descendant commit**; this document alone
-authorises nothing.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION BY
+DESCENDANT RECORD. This document freezes the remaining scope, decisions,
+architecture and acceptance catalogue. The separate descendant approval
+in `PRODUCT_DECISIONS.md` references this freeze as commit `f85a7c5` and
+authorizes only the software/evidence-tooling subset listed there.
+Field validation remains unapproved.
 
 Baseline this freeze was written against:
 
@@ -31,7 +33,7 @@ interface with a deterministic test double, privacy and consent flows,
 diagnostics, packaging, and every automated, emulator and two-process
 test.
 
-A software-complete build is a *candidate*. It asserts nothing abou
+A software-complete build is a *candidate*. It asserts nothing about
 real radios, real devices or real crises.
 
 ### B. FIELD-VALIDATED RELEASE
@@ -78,7 +80,7 @@ Exclusions, fallbacks and rollback boundaries remain exactly as written
 in `MILESTONES.md`; this freeze does not relax any of them. Coded
 delivery (Reed-Solomon, fountain, RaptorQ) remains outside M0–M9.
 
-### Software-completable subse
+### Software-completable subset
 
 **M2 fully**, and the software halves of **M3, M4, M6, M7, M9**. M5 and
 M8 are inherently field milestones and contribute no software-complete
@@ -100,8 +102,9 @@ work beyond what M4 and M7 already deliver.
 
 ## 4. Decisions resolved (D-RS-01 … D-RS-14)
 
-Resolved from canonical documents, accepted decisions, and safety-firs
-deterministic defaults. Each is **PROPOSED** until the approval commit.
+Resolved from canonical documents, accepted decisions, and safety-first
+deterministic defaults. Each is **ACCEPTED FOR THE AUTHORIZED SOFTWARE
+SUBSET** by the descendant approval record.
 
 ### D-RS-01 — Android implementation language: Kotlin
 - **Alternatives:** Kotlin; Java; Python-on-Android (Chaquopy/BeeWare).
@@ -119,7 +122,7 @@ deterministic defaults. Each is **PROPOSED** until the approval commit.
 - **Alternatives:** port and retire Python; keep Python canonical; dual
   canonical.
 - **Selected:** `shongket_core` (Python) remains the canonical
-  behavioural reference. The Kotlin core is an implementation that mus
+  behavioural reference. The Kotlin core is an implementation that must
   reproduce every committed golden vector byte-for-byte.
 - **Rationale:** the vectors already exist and are independently
   computed; conformance-by-vector is checkable, "we ported it carefully"
@@ -152,10 +155,10 @@ deterministic defaults. Each is **PROPOSED** until the approval commit.
 
 ### D-RS-05 — First real transport: Nearby Connections, provisional
 - **Selected:** Nearby Connections as the first adapter, **provisional**
-  until the 7-criterion smoke-test gate passes on hardware. Wi-Fi Direc
+  until the 7-criterion smoke-test gate passes on hardware. Wi-Fi Direct
   and local-hotspot adapters are written against the same interface as
   alternates.
-- **Rationale:** DR-ARCH-04 and `RESEARCH_LOG.md` already name i
+- **Rationale:** DR-ARCH-04 and `RESEARCH_LOG.md` already name it
   provisional. The gate is a real-device gate and cannot be pre-passed.
 - **Consequences:** software-complete status must **not** claim any
   transport is locked.
@@ -171,13 +174,13 @@ deterministic defaults. Each is **PROPOSED** until the approval commit.
 - **Rationale:** smallest structure that satisfies background transfer,
   lifecycle recovery and testability; state is deterministic and
   snapshot-testable.
-- **Affects:** M3–M9. **Rollback:** UI layer is replaceable withou
+- **Affects:** M3–M9. **Rollback:** UI layer is replaceable without
   touching the core.
 
 ### D-RS-07 — Persistence on Android: the canonical file envelope
 - **Alternatives:** Room/SQLite; DataStore; the existing snapshot file.
 - **Selected:** reuse the canonical snapshot envelope and its atomic
-  write discipline, stored in app-private storage. SQLite is no
+  write discipline, stored in app-private storage. SQLite is not
   introduced.
 - **Rationale:** the envelope, checksums, migration and rollback are
   already specified, implemented and tested. A second storage model
@@ -217,8 +220,8 @@ test. The app is fully usable with no model.
   **MANUAL_RELEASE_DECISION**.
 - **Rationale:** signature verification is a documented protocol
   behaviour (`SIGNATURE_INVALID`), but key ownership is irreversible and
-  the user's to decide.
-- **Consequences:** software-complete includes signing *mechanics*, no
+  for the user to decide.
+- **Consequences:** software-complete includes signing *mechanics*, not
   a production trust root.
 - **Affects:** M7, M9.
 
@@ -293,7 +296,7 @@ android/                  Kotlin (M3+)
   semantic/               SemanticExtractor: Unavailable | TestDouble | real
   security/               KeyStore abstraction, signing, consent gate
   ui/                     single activity, Compose, unidirectional state
-  diagnostics/            evidence expor
+  diagnostics/            evidence export
   app/                    assembly, permissions, foreground service
 ```
 
@@ -486,7 +489,7 @@ package. Hardware is never required to merge a software slice.
 - **Acceptance IDs:** AT-66 through AT-73; AT-65 remains device evidence.
 - **Prerequisite/order:** Slices 3 through 6; policy wiring before UI
   evidence and diagnostic export.
-- **Tests/evidence:** local/emulator refusal matrices, repository secre
+- **Tests/evidence:** local/emulator refusal matrices, repository secret
   scan, storage/backup inspection and field-level export scan.
 - **Commit:** `feat: integrate privacy security and redacted diagnostics`.
 - **Rollback:** revert the integration slice; never weaken a gate to
@@ -511,7 +514,7 @@ package. Hardware is never required to merge a software slice.
 - **Requirements/modules:** scripts, schemas and checklists for AT-47
   through AT-50, AT-55 through AT-57, AT-61, AT-62, AT-65, AT-74,
   AT-77 and AT-78.
-- **Prerequisite/order:** Slice 8. It may prepare evidence capture bu
+- **Prerequisite/order:** Slice 8. It may prepare evidence capture but
   cannot execute or mark a hardware test passing here.
 - **Tests/evidence:** validate script determinism and empty evidence
   schemas locally; physical execution remains manual.
@@ -527,7 +530,7 @@ and no secret, production key or private dataset is committed.
 
 ---
 
-## 10. Approval checklis
+## 10. Approval checklist
 
 - [x] Scope-freeze commit created before approval
 - [x] Remaining milestone scopes frozen (§2)
@@ -535,8 +538,9 @@ and no secret, production key or private dataset is committed.
 - [x] D-RS-01 … D-RS-14 frozen for approval (§4)
 - [x] MRD-01 … MRD-05 acknowledged as manual gates (§4)
 - [x] AT-38 … AT-78 added to `ACCEPTANCE_TESTS.md`
-- [ ] Per-milestone approval recorded for the software-complete subse
-- [ ] Field milestones remain unapproved for completion claims
+- [x] Per-milestone approval recorded for the software-complete subset
+- [x] Field milestones remain unapproved for completion claims
 
-Until the approval commit, no implementation beyond Milestone 1 is
-authorised.
+Implementation beyond Milestone 1 is authorized only within the exact
+per-milestone ledger in `PRODUCT_DECISIONS.md`. Device, radio and field
+success claims remain unauthorized.

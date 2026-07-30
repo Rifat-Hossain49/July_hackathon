@@ -6,7 +6,7 @@ must remain usable without a model.
 
 ---
 
-## 1. Responsibilities of the offline intelligence componen
+## 1. Responsibilities of the offline intelligence component
 
 The component's job is to **suggest** structured fields, never to
 declare truth. Per `PRODUCT_DECISIONS.md` D-003 and D-011:
@@ -65,7 +65,7 @@ For each category (filled at evaluation time, not now):
 
 ---
 
-## 3. Evaluation datase
+## 3. Evaluation dataset
 
 Synthetic + de-identified real samples (when permissions allow). Each
 example includes ground-truth fields and uncertainty markers.
@@ -163,7 +163,7 @@ AT-58 through AT-60 gate the extractor interface, offline/manual path,
 human confirmation and source preservation. They use only
 `Unavailable` and a deterministic `TestDouble`.
 
-AT-61 and AT-62 are physical-device research evidence. A model tha
+AT-61 and AT-62 are physical-device research evidence. A model that
 misses a resource or Bangla-quality threshold is rejected and the app
 selects the manual fallback; that negative measurement does not fail the
 protocol or invalidate the software-complete release candidate. No
@@ -204,7 +204,7 @@ automated test downloads a model.
 
 ### DR-MODEL-03 — Bangla support is a first-class criterion
 
-- Decision: Bangla + Bangla-English code-switching are scored, no
+- Decision: Bangla + Bangla-English code-switching are scored, not
   assumed.
 - Alternatives: assume English-only captions.
 - Recommended: Bangla scored.

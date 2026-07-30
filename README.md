@@ -1,4 +1,4 @@
-# Shongke
+# Shongket
 
 Shongket is a proposed semantic-first, disruption-tolerant multimedia
 distribution protocol for partial-connectivity crises.
@@ -13,8 +13,9 @@ is implemented in `shongket_core/`. The combined baseline is **367
 passing tests, 0 failed, 0 skipped**. `PRODUCT_DECISIONS.md` is the
 canonical authorisation source and currently reads
 `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_1`. The M2–M9 scope is
-frozen in `REMAINING_SCOPE.md`; this scope-freeze commit does not itself
-authorise implementation.
+frozen in `REMAINING_SCOPE.md`. A separate descendant ledger authorizes
+the exact software/evidence-tooling subset while leaving device, radio
+and field validation unapproved.
 
 **This repository contains a protocol simulator, not a deployable
 mobile application.** There is no Android app, no radio transport and
@@ -35,15 +36,15 @@ what is done and what is not.
 
 ## 1. One-sentence pitch
 
-Shongket is a proposed content-centric, peer-to-peer protocol tha
+Shongket is a proposed content-centric, peer-to-peer protocol that
 distributes human-confirmed semantic meaning first, progressive
-previews next, and original-quality media last, so that the mos
+previews next, and original-quality media last, so that the most
 actionable information arrives even when typical channels are
 disrupted.
 
 ---
 
-## 2. Crisis contex
+## 2. Crisis context
 
 The motivating scenario is a climate-induced disruption similar to
 the July 2024 Bangladesh event: voice / SMS remained partially
@@ -61,11 +62,11 @@ Shongket designs for that in-between state.
 
 ## 3. What existing offline-first approaches don't solve
 
-- Most offline messengers prioritise content equally and trea
+- Most offline messengers prioritise content equally and treat
   "delivery" as a binary.
 - Most P2P file-sharing tools do not preserve original media with
   predictable recovery.
-- Most broadcasting systems do not adapt to short, intermitten
+- Most broadcasting systems do not adapt to short, intermittent
   peer encounters.
 - Most AI pipelines assume cloud connectivity and a single trusted
   source.
@@ -80,7 +81,7 @@ Shongket designs for that in-between state.
 - **Progressive media.** Thumbnails and previews precede full media.
 - **Multi-peer reconstruction.** Missing fragments are pulled from
   whichever peer has them.
-- **Critical preemption.** A new critical capsule can interrup
+- **Critical preemption.** A new critical capsule can interrupt
   in-flight bulk transfers.
 - **Content addressing.** Objects are identified by their hash;
   duplicates are not re-stored.
@@ -133,7 +134,7 @@ is in [SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md).
 2. Confirms.
 3. The capsule is queued as critical.
 4. A photo of the same scene is attached as progressive media.
-5. As the volunteer moves, the capsule is exchanged with the nex
+5. As the volunteer moves, the capsule is exchanged with the next
    peer; the photo is incomplete.
 6. The next peer offers only a partial photo set.
 7. The receiver's planner combines the two sources.
@@ -254,7 +255,7 @@ None of the following exists in this repository:
 
 See [RESEARCH_LOG.md](./RESEARCH_LOG.md) for cited sources on
 transport, content-addressing, store-carry-forward, and coding. The
-log explicitly distinguishes what this plan borrows from prior ar
+log explicitly distinguishes what this plan borrows from prior art
 from what it is **proposing** (semantic-first priority, critical
 preemption, manual-form fallback for AI), and what remains an
 **unverified hypothesis** until measurements are produced.
@@ -297,7 +298,7 @@ pipeline, see [MEDIA_PIPELINE.md](./MEDIA_PIPELINE.md).
 
 ## 12. Ethical and privacy principles
 
-- Human in the loop. AI output is **never** published withou
+- Human in the loop. AI output is **never** published without
   human confirmation.
 - Source = trust. Signed publishers are trusted as identities,
   but signer ≠ truth; freshness and accuracy still require
@@ -324,10 +325,11 @@ per [MODEL_EVALUATION_PLAN.md](./MODEL_EVALUATION_PLAN.md).
 ## 14. Contribution
 
 Implementation is gated by the exact milestone/scope ledger in
-`PRODUCT_DECISIONS.md`. M0 and M1 are complete. M2–M9 implementation
-remains unauthorised in this scope-freeze commit; a separate approval
-commit must identify the exact frozen commit and exclusions before any
-remaining implementation begins.
+`PRODUCT_DECISIONS.md`. M0 and M1 are complete. M2–M9 software work is
+authorized only for the modules and acceptance IDs in the descendant
+ledger referencing scope-freeze commit `f85a7c5`. Physical-device,
+real-radio and field-validation success claims, production signing/trust
+decisions and public-store deployment remain unauthorized.
 
 Run the complete baseline with:
 

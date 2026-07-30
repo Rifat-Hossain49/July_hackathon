@@ -7,7 +7,7 @@ placeholder for the real-device smoke-test phase to fill in.
 
 ---
 
-## Forma
+## Format
 
 For each entry:
 
@@ -17,7 +17,7 @@ For each entry:
 - Publication date (if known)
 - Date accessed
 - Relevant claim
-- Effect on Shongke
+- Effect on Shongket
 - Limitations
 - Tag: fact / experiment / inference
 
@@ -59,10 +59,10 @@ For each entry:
 
 - Title: SoftAP on Android — Android Developers.
 - Organization: Google / Android Developers.
-- URL: https://developer.android.com/reference/android/net/wifi/WifiManager#startLocalOnlyHotspo
+- URL: https://developer.android.com/reference/android/net/wifi/WifiManager#startLocalOnlyHotspot
 - Date accessed: 2026-07-28.
 - Relevant claim (fact): `startLocalOnlyHotspot` provides a
-  network-restricted soft AP for nearby-device data exchange withou
+  network-restricted soft AP for nearby-device data exchange without
   internet; usable with raw sockets.
 - Effect on Shongket: fallback when Nearby / Wi-Fi Direct are
   unavailable.
@@ -76,7 +76,7 @@ For each entry:
 - Organization: Wi-Fi Alliance.
 - URL: https://www.wi-fi.org/discover-wi-fi/wi-fi-aware
 - Date accessed: 2026-07-28.
-- Relevant claim (fact): Wi-Fi Aware (NAN) enables discovery + direc
+- Relevant claim (fact): Wi-Fi Aware (NAN) enables discovery + direct
   data exchange without infrastructure.
 - Effect on Shongket: documented alt adapter; availability varies
   widely on consumer phones.
@@ -153,7 +153,7 @@ D-RS-05, D-RS-06, D-RS-11 and D-RS-12; none is device-success evidence.
 ### 1.9 Provisional Nearby dependency admission record
 
 No dependency is added by this documentation task. Before the Android
-slice adds `play-services-nearby`, the implementation commit mus
+slice adds `play-services-nearby`, the implementation commit must
 refresh and close every row.
 
 | Required item | Current record |
@@ -187,7 +187,7 @@ Recommendation:
 
 ---
 
-## 3. Content-centric and delay-tolerant networking — prior ar
+## 3. Content-centric and delay-tolerant networking — prior art
 
 This section credits prior work; Shongket does not invent these
 concepts.
@@ -223,7 +223,7 @@ concepts.
 
 ### 3.3 Licklider Transmission Protocol (LTP) — RFC 5326
 
-- Title: Licklider Transmission Protocol for Delay-Toleran
+- Title: Licklider Transmission Protocol for Delay-Tolerant
   Networking.
 - Organization: IETF.
 - URL: https://www.rfc-editor.org/rfc/rfc5326

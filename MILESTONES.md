@@ -1,11 +1,12 @@
 # Shongket — Milestones (Draft 1)
 
-Implementation approval status is **tracked per milestone**. M0 was
-approved first, as this plan requires, and M1 was approved separately
-after its scope was frozen, reviewed and merged. Milestone 2 and every
-later milestone remain unapproved.
+Implementation approval status is **tracked per milestone and completion
+level**. M0 and M1 are complete. Scope-freeze commit `f85a7c5` was
+reviewed before the separate software authorization for M2 through M9.
 
 Per `PRODUCT_DECISIONS.md`: `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_1`.
+The remaining-scope ledger separately records exact software and
+evidence-tooling authorization.
 
 Approval is never cumulative by implication: approval for one milestone
 does not authorise any later milestone's work.
@@ -182,7 +183,7 @@ Automation vocabulary is defined in `ACCEPTANCE_TESTS.md`:
 
 ## Milestone 2 — Local two-process transfer
 
-**Status:** SCOPE_FROZEN; IMPLEMENTATION_NOT_APPROVED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION.
 **Classification:** software-testable.
 
 - **Objective:** run the completed M1 core across two real OS processes
@@ -191,7 +192,7 @@ Automation vocabulary is defined in `ACCEPTANCE_TESTS.md`:
 - **Deliverables:** a 4-byte big-endian `FrameCodec`; stdio and TCP
   loopback endpoints; deterministic process fixtures; interruption,
   crash, restart and resume evidence.
-- **Exclusions:** Android, radio APIs, device claims, shared concurren
+- **Exclusions:** Android, radio APIs, device claims, shared concurrent
   writers and any change to M1 protocol behaviour.
 - **Implementation boundary:** `adapters/process/` and
   `adapters/transport_sim/`; both import the core, never the reverse.
@@ -206,9 +207,10 @@ Automation vocabulary is defined in `ACCEPTANCE_TESTS.md`:
 
 ---
 
-## Milestone 3 — Android foundation and direct peer transpor
+## Milestone 3 — Android foundation and direct peer transport
 
-**Status:** SCOPE_FROZEN; IMPLEMENTATION_NOT_APPROVED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION;
+FIELD_VALIDATION_NOT_APPROVED.
 **Classification:** mixed (software/emulator plus real radio).
 
 - **Objective:** create the Android/Kotlin application foundation,
@@ -244,7 +246,8 @@ Automation vocabulary is defined in `ACCEPTANCE_TESTS.md`:
 
 ## Milestone 4 — Progressive media transfer
 
-**Status:** SCOPE_FROZEN; IMPLEMENTATION_NOT_APPROVED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION;
+FIELD_VALIDATION_NOT_APPROVED.
 **Classification:** mixed (software/emulator plus real radio).
 
 - **Objective:** implement source-preserving progressive
@@ -276,7 +279,8 @@ Automation vocabulary is defined in `ACCEPTANCE_TESTS.md`:
 
 ## Milestone 5 — Real-device multi-peer completion
 
-**Status:** SCOPE_FROZEN; FIELD_VALIDATION_NOT_APPROVED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_EVIDENCE_TOOLING_ONLY;
+FIELD_VALIDATION_NOT_APPROVED.
 **Classification:** physical-device-dependent and real-radio-dependent.
 
 - **Objective:** validate ordinary missing-chunk completion from a
@@ -311,7 +315,8 @@ dependency review, acceptance catalogue and implementation approval.
 
 ## Milestone 6 — Offline semantic extraction
 
-**Status:** SCOPE_FROZEN; IMPLEMENTATION_NOT_APPROVED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION;
+FIELD_VALIDATION_NOT_APPROVED.
 **Classification:** mixed (software fallback plus optional device model).
 
 - **Objective:** provide an optional offline `SemanticExtractor` while
@@ -341,7 +346,8 @@ dependency review, acceptance catalogue and implementation approval.
 
 ## Milestone 7 — Integration, resilience and privacy controls
 
-**Status:** SCOPE_FROZEN; IMPLEMENTATION_NOT_APPROVED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION;
+FIELD_VALIDATION_NOT_APPROVED.
 **Classification:** mixed (software/emulator plus device evidence).
 
 - **Objective:** integrate M2, the M3/M4 software, and the M6 manual
@@ -370,14 +376,15 @@ dependency review, acceptance catalogue and implementation approval.
   AT-63, AT-64 and AT-66 through AT-73 pass. AT-65 separately gates the
   low-battery device claim.
 - **Rollback boundary:** revert the failing integration slice and keep
-  the last passing M4/M6 software assembly; verified content is no
+  the last passing M4/M6 software assembly; verified content is not
   discarded to make rollback succeed.
 
 ---
 
 ## Milestone 8 — Device benchmarking
 
-**Status:** SCOPE_FROZEN; FIELD_VALIDATION_NOT_APPROVED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_EVIDENCE_TOOLING_ONLY;
+FIELD_VALIDATION_NOT_APPROVED.
 **Classification:** physical-device-dependent.
 
 - **Objective:** replace `UNMEASURED` device cells with reproducible
@@ -393,7 +400,7 @@ dependency review, acceptance catalogue and implementation approval.
 - **Acceptance ID:** AT-74.
 - **Tests:** runner/schema validation is `AUTOMATED_LOCAL`; acceptance
   evidence is `PHYSICAL_DEVICE`.
-- **Evidence:** raw run records, confidence interval or explici
+- **Evidence:** raw run records, confidence interval or explicit
   failure note, device/OS/build metadata and reproducible aggregation.
 - **Completion gate:** AT-74 is executed on the named devices; a failed
   target is recorded as a result, not rewritten as success.
@@ -404,7 +411,8 @@ dependency review, acceptance catalogue and implementation approval.
 
 ## Milestone 9 — Packaging, demo and public release
 
-**Status:** SCOPE_FROZEN; IMPLEMENTATION_NOT_APPROVED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION;
+FIELD_VALIDATION_NOT_APPROVED.
 **Classification:** mixed (software packaging plus radio/field gates).
 
 - **Objective:** produce an honest, reproducible software release
@@ -414,7 +422,7 @@ dependency review, acceptance catalogue and implementation approval.
 - **Deliverables:** reproducible local build; install/upgrade fixtures;
   demo script; device/field checklists; public status documentation.
 - **Exclusions:** embedded production keys, automatic store
-  publication, claims exceeding evidence and any field trial withou
+  publication, claims exceeding evidence and any field trial without
   explicit consent/authorisation.
 - **Implementation boundary:** build/packaging, migration fixtures and
   documentation. Production signing and publication remain manual.

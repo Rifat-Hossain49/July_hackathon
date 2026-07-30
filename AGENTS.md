@@ -21,9 +21,17 @@ The allowed implementation statuses are:
 - `NOT_APPROVED`
 - `APPROVED_FOR_MILESTONE_0`
 - `APPROVED_FOR_MILESTONE_1`
-- milestone-specific approvals added later
+- `APPROVED_FOR_SOFTWARE_IMPLEMENTATION` in the remaining-scope ledger
+- `APPROVED_FOR_EVIDENCE_TOOLING_ONLY` in the remaining-scope ledger
+- `FIELD_VALIDATION_NOT_APPROVED` in the remaining-scope ledger
 
 `APPROVED` by itself is not a valid status.
+
+The top-level `IMPLEMENTATION_STATUS` records the last approved completed
+milestone and remains `APPROVED_FOR_MILESTONE_1`. Milestones 2 through 9
+are governed only by the per-milestone remaining-scope ledger in
+`PRODUCT_DECISIONS.md`. That ledger is valid only when it identifies the
+reviewed scope-freeze commit.
 
 When the status is `NOT_APPROVED`:
 
@@ -40,10 +48,26 @@ When the status is `APPROVED_FOR_MILESTONE_0`:
 Approval for one milestone must never be interpreted as approval for later
 milestones.
 
+`APPROVED_FOR_SOFTWARE_IMPLEMENTATION` authorizes only the software-testable
+requirements and acceptance IDs named in that milestone's ledger row.
+`APPROVED_FOR_EVIDENCE_TOOLING_ONLY` authorizes harnesses, export tooling and
+evidence-package preparation, but not a device, radio or field-success claim.
+`FIELD_VALIDATION_NOT_APPROVED` prohibits treating physical-device, real-radio
+or field-only gates as complete.
+
 ## Workflow verification
 
-Before implementation, verify that PRODUCT_DECISIONS.md contains the exact
-milestone-specific approval required for the requested work.
+Before implementation:
+
+1. verify that `PRODUCT_DECISIONS.md` contains the exact milestone-specific
+   approval required for the requested work;
+2. verify that the approval ledger references scope-freeze commit `f85a7c5`;
+3. verify that the requested modules and acceptance IDs are inside the ledger
+   row and that none of its exclusions apply.
+
+Remaining-scope authorization is not cumulative. Approval for a software
+portion does not authorize its device, radio, field, production-key,
+production-trust, public-store or legal/participant gates.
 
 ## Required working process
 

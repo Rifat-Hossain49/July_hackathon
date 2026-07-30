@@ -20,7 +20,7 @@ The pipeline must:
 Pipeline ordering per modality:
 
 ```
-Inpu
+Input
   → metadata extraction
   → semantic extraction (suggestion-only, uncertainty-flagged)
   → human correction / confirmation
@@ -44,7 +44,7 @@ For M4 wire manifests the canonical representation IDs are `thumb`,
 profiles that map into those four IDs; they are not additional wire IDs
 unless a future schema change is separately approved.
 
-### 2.1 Tex
+### 2.1 Text
 
 - Input: typed note or transcribed short message.
 - Metadata: language tag (bn / en / bn-en-mix), length.
@@ -59,7 +59,7 @@ unless a future schema change is separately approved.
 
 - Input: audio recording.
 - Metadata: duration, sample rate, language hint.
-- Semantic extraction: STT → structured fields (model-evaluated, no
+- Semantic extraction: STT → structured fields (model-evaluated, not
   selected in M0).
 - Representations:
   - `transcript` (text);
@@ -95,7 +95,7 @@ unless a future schema change is separately approved.
   later research option behind `FragmentationStrategy`.
 - Validation: hash; assembly must yield identical bytes.
 
-### 2.5 Documen
+### 2.5 Document
 
 - Input: PDF or document file.
 - Representations:
@@ -210,7 +210,7 @@ M4 software scope:
 - Alternatives: CDC, keyframe-aligned, container-aware.
 - Recommended: fixed-size in M0; alternatives behind the same
   interface for later research.
-- Reason: simplest correct boundary; minimal assumptions abou
+- Reason: simplest correct boundary; minimal assumptions about
   runtime parsers.
 - Evidence required: AT-10, AT-21, AT-51 and AT-54.
 - Trade-offs: weaker dedup across edits than CDC.
@@ -228,7 +228,7 @@ M4 software scope:
   not assume.
 - Evidence required: AT-51, AT-52, AT-53 and AT-55.
 - Trade-offs: more representations to maintain; small metadata cost.
-- Risks: if no runtime encoder is available at M3, the "preview" mus
+- Risks: if no runtime encoder is available at M3, the "preview" must
   fall back to "thumbnail only."
 - Validation: explicit status table row in README.
 - Revisit condition: once a license-clean SVC candidate is evaluated

@@ -4,8 +4,10 @@
 
 IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_1
 
-Implementation must not begin until this value is changed to the
-milestone-scoped approval covering the work in question.
+This top-level value records the last approved completed milestone. M0 and
+M1 work is governed by it. M2 through M9 work is governed by the exact
+per-milestone software authorization ledger below, which references the
+reviewed scope-freeze commit.
 
 ### Milestone 1 approval record
 
@@ -45,8 +47,8 @@ skipped) across the 18 M0-blocking acceptance IDs. Evidence is recorded
 in `ACCEPTANCE_TESTS.md` and `EXPERIMENT_PLAN.md`.
 
 Milestone 1 was subsequently approved and completed. The current status
-records that M1 approval; Milestone 2 and later implementation remains
-unauthorised in the scope-freeze commit.
+records that M1 approval. The separate descendant approval record below
+governs the software-testable portions of Milestones 2 through 9.
 
 ## Implementation approval policy
 
@@ -59,8 +61,12 @@ Valid approval values include:
 - `NOT_APPROVED`
 - `APPROVED_FOR_MILESTONE_0`
 - `APPROVED_FOR_MILESTONE_1`
+- per-milestone `APPROVED_FOR_SOFTWARE_IMPLEMENTATION`
+- per-milestone `APPROVED_FOR_EVIDENCE_TOOLING_ONLY`
+- per-milestone `FIELD_VALIDATION_NOT_APPROVED`
 
-Approval for Milestone 0 does not authorize Milestone 1 or later work.
+Approval for one milestone or completion level does not authorize any
+other milestone or completion level.
 
 ## Milestone 0 approval boundary
 
@@ -95,7 +101,7 @@ It does not authorize:
 
 ## Product thesis
 
-Shongket is a semantic-first, content-centric and disruption-toleran
+Shongket is a semantic-first, content-centric and disruption-tolerant
 multimedia distribution protocol for partial-connectivity crises.
 
 It immediately distributes a compact, human-confirmed semantic capsule,
@@ -260,7 +266,7 @@ divergence (D-M1-A1, §9.2) and unenforced `hop_limit` / `copy_budget`
 ### Historical decisions carried from Milestone 0
 
 The following surfaced during Milestone 0 and are retained as history.
-The first three are resolved by accepted M1 decisions; the transpor
+The first three are resolved by accepted M1 decisions; the transport
 choice is frozen only as a provisional remaining-scope decision:
 
 - **Canonical private/consent field names — RESOLVED by D-M1-01/02.**
@@ -282,12 +288,14 @@ choice is frozen only as a provisional remaining-scope decision:
   is first to implement behind the adapter, but remains unlocked until
   AT-47 through AT-50 pass on hardware.
 
-## Remaining-scope design ledger — FROZEN, NOT YET AUTHORISED
+## Remaining-scope design ledger — FROZEN AND SOFTWARE-AUTHORISED
 
-`REMAINING_SCOPE.md` freezes the following design decisions agains
-baseline `80b5fe8`. Recording a design decision here does not authorise
-implementation; authorisation requires the separate descendant approval
-record.
+`REMAINING_SCOPE.md` and scope-freeze commit
+`f85a7c5e1f400b53c8f348284140b488ae677958` freeze the
+following design decisions against baseline `80b5fe8`. This section is
+the separate descendant approval record. It authorizes only the
+software-testable modules and acceptance IDs in the authorization table
+below.
 
 | ID | Frozen decision | Scope-freeze status |
 |---|---|---|
@@ -312,8 +320,34 @@ personal-data retention, and field-trial participants/consent. They are
 not delegated to an implementation agent and do not block the
 software-complete candidate.
 
-The approved acceptance specification, if separately authorised, is
-AT-38 through AT-78. AT-38 through AT-46, AT-51 through AT-54, AT-58
-through AT-60, AT-63, AT-64, AT-66 through AT-73, AT-75 and AT-76 are
-the 28 software-complete blockers. Device, radio, benchmark and field
-definitions remain outside automatic completion claims.
+### Remaining software implementation authorization
+
+- `SOFTWARE_SCOPE_STATUS: APPROVED_FOR_SOFTWARE_IMPLEMENTATION`
+- `SOFTWARE_SCOPE_FREEZE_COMMIT: f85a7c5e1f400b53c8f348284140b488ae677958`
+- `SOFTWARE_TARGET: SOFTWARE_COMPLETE_RELEASE_CANDIDATE`
+- `FIELD_VALIDATION_STATUS: FIELD_VALIDATION_NOT_APPROVED`
+
+AT-38 through AT-78 are approved as the remaining acceptance
+specification. None is implemented or passing at this approval point.
+AT-38 through AT-46, AT-51 through AT-54, AT-58 through AT-60, AT-63,
+AT-64, AT-66 through AT-73, AT-75 and AT-76 are the 28
+software-complete blockers.
+
+| Milestone | Exact authorization | Authorized acceptance IDs | Explicit exclusions |
+|---|---|---|---|
+| M2 | `APPROVED_FOR_SOFTWARE_IMPLEMENTATION` | AT-38–AT-41 | No Android, radio or field claim |
+| M3 | `APPROVED_FOR_SOFTWARE_IMPLEMENTATION`; `FIELD_VALIDATION_NOT_APPROVED` | AT-39, AT-42–AT-46 | AT-47–AT-50; Nearby or other radio-selection claim |
+| M4 | `APPROVED_FOR_SOFTWARE_IMPLEMENTATION`; `FIELD_VALIDATION_NOT_APPROVED` | AT-51–AT-54 | AT-55–AT-57; real-device progressive-transfer claim |
+| M5 | `APPROVED_FOR_EVIDENCE_TOOLING_ONLY`; `FIELD_VALIDATION_NOT_APPROVED` | Harness/evidence preparation for AT-55–AT-57 | Passing AT-55–AT-57; real-device or real-radio completion claim |
+| M6 | `APPROVED_FOR_SOFTWARE_IMPLEMENTATION`; `FIELD_VALIDATION_NOT_APPROVED` | AT-58–AT-60 | Passing AT-61–AT-62; bundling a production model without a separate dependency decision |
+| M7 | `APPROVED_FOR_SOFTWARE_IMPLEMENTATION`; `FIELD_VALIDATION_NOT_APPROVED` | AT-63–AT-64, AT-66–AT-73 | Passing AT-65; production keys or trust-root decisions |
+| M8 | `APPROVED_FOR_EVIDENCE_TOOLING_ONLY`; `FIELD_VALIDATION_NOT_APPROVED` | Benchmark harness and evidence schema for AT-74 | Measured device results or a passing AT-74 claim |
+| M9 | `APPROVED_FOR_SOFTWARE_IMPLEMENTATION`; `FIELD_VALIDATION_NOT_APPROVED` | AT-75–AT-76 plus evidence-package assembly | Passing AT-77–AT-78; public-store deployment, production signing, or field-trial approval |
+
+This authorization permits the nine implementation slices in
+`REMAINING_SCOPE.md` only to the extent covered by the table. Physical
+device, real-radio and field-only success evidence remains a manual
+completion level. Production key custody, production trust roots,
+public-store deployment, personal-data retention policy, and field-trial
+participants/consent remain MRD-01 through MRD-05 and are not delegated
+to an implementation agent.

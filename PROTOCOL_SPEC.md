@@ -1,9 +1,11 @@
 # Shongket — Protocol Specification
 
 **Status:** M0 and M1 deterministic behaviour implemented. M2 through
-M9 protocol extensions are scope-frozen but not implemented. Signature
-mechanics, radio behaviour and field results are not claimed by the
-completed baseline.
+M9 protocol extensions are scope-frozen and their software-testable
+subset is authorized by the descendant ledger referencing `f85a7c5`,
+but none is implemented at this approval point. Signature mechanics,
+radio behaviour and field results are not claimed by the completed
+baseline.
 
 ## 1. Terms
 
@@ -52,7 +54,7 @@ Coded reconstruction is not implemented in Milestone 0.
 ## 2. Object lifecycle
 
 ```
-Draf
+Draft
   → AI-assisted extraction (uncertainty flagged)
   → Human review & correction
   → Confirmed object (capsule linked to source media)
@@ -115,7 +117,7 @@ limits are frozen in §9.3.
 - Validation: `schema` must match supported version; size bounded;
   signatures verified on receipt.
 
-### 3.2 ContentManifes
+### 3.2 ContentManifest
 
 ```json
 {
@@ -163,7 +165,7 @@ schema:
 
 #### Forwarding state [IMPLEMENTED — M1, D-M1-A3]
 
-`hop_limit` and `copy_budget` were carried and type-validated in M0 bu
+`hop_limit` and `copy_budget` were carried and type-validated in M0 but
 never enforced, and no field supplied the hop count the §6.0 policy
 requires. M1 adds two **forwarding-state** fields:
 
@@ -176,7 +178,7 @@ These are **mutable transport state, not content identity**. They are
 excluded from the canonical bytes over which `object_id` and
 `manifest_id` are computed, so forwarding an object never changes its
 identity, never invalidates a verified fragment, and never causes
-re-fragmentation. Two copies of the same object with differen
+re-fragmentation. Two copies of the same object with different
 `hop_count` values remain the same object.
 
 - Purpose: authoritative description of what an object contains.
@@ -187,7 +189,7 @@ re-fragmentation. Two copies of the same object with differen
   serialization; signatures valid; `expires_at` parseable; per-field
   limits respected.
 
-### 3.3 RepresentationManifes
+### 3.3 RepresentationManifest
 
 Subset of `ContentManifest` for one representation, used when a peer
 requests a specific representation without the full object listing.
@@ -252,7 +254,7 @@ requests a specific representation without the full object listing.
 
 - Comparison of inventory encodings is in §6.
 
-### 3.7 FragmentReques
+### 3.7 FragmentRequest
 
 ```json
 {
@@ -277,7 +279,7 @@ requests a specific representation without the full object listing.
 }
 ```
 
-### 3.9 TransferReceip
+### 3.9 TransferReceipt
 
 ```json
 {
@@ -409,7 +411,7 @@ Ten-step flow (no implementation proposed here):
 M0 uses a **deterministic explicit per-object fragment-ID list**
 (or a dense bitmap when applicable) as its sole inventory encoding.
 Both options sit behind an `InventoryIndex` interface so other
-encodings (including Bloom, when promoted by an approved experimen
+encodings (including Bloom, when promoted by an approved experiment
 plan) can replace it without changing the wire schema. See DR-SPEC-03
 for the policy on why Bloom is not an M0 acceptance-tested default.
 
@@ -434,7 +436,7 @@ Candidate rules, all input to a deterministic policy:
 1. **Life-safety priority** overrides everything else.
 2. **Semantic-layer ordering**: capsule → manifest → thumbnail →
    preview → standard → original for the same object.
-3. **Usefulness** of the marginal chunk (e.g. the next chunk tha
+3. **Usefulness** of the marginal chunk (e.g. the next chunk that
    completes a representation).
 4. **Time-to-contact**: prefer fragments that can complete during the
    current encounter window.
@@ -471,7 +473,7 @@ M0 policy (deterministic and auditable):
 
 #### M1 admission rule [IMPLEMENTED — M1]
 
-M0 implemented only the expiry clause. M1 completes the rule. An objec
+M0 implemented only the expiry clause. M1 completes the rule. An object
 is admitted to the forwarding queue **iff all** of the following hold,
 evaluated before queueing and before any transmission:
 
@@ -491,7 +493,7 @@ storage unchanged.
 
 #### `PeerCapabilities.public_only` [IMPLEMENTED — M1, D-M1-03]
 
-`public_only: true` declares that the peer deals in **public conten
+`public_only: true` declares that the peer deals in **public content
 only**: it may receive, request, advertise and forward public objects,
 and none of those operations for private ones.
 
@@ -573,8 +575,8 @@ shongket.<object>.v<MAJOR>.<MINOR>
 - **Additive minor changes** may only add optional fields. Unknown
   fields on a registered-compatible minor are ignored, not persisted and
   not echoed back.
-- **Deprecation.** A major remains supported for at least one subsequen
-  major release, and its removal is announced in this document before i
+- **Deprecation.** A major remains supported for at least one subsequent
+  major release, and its removal is announced in this document before it
   takes effect.
 - **Migration direction.** Persisted data migrates forward on read. Wire
   payloads are never migrated: they are accepted or rejected.
@@ -591,7 +593,7 @@ For v1.0 the canonical time fields are `created_at_unix` and
 This supersedes the earlier RFC3339 string form shown in §3.2. Integer
 seconds are canonical because they admit exactly one serialization,
 which RFC3339 does not: timezone offsets, fractional-second precision
-and letter casing all produce competing encodings of the same instan
+and letter casing all produce competing encodings of the same instant
 and would break byte-stable serialization (AT-22).
 
 Expiry comparison is inclusive: an object is expired when
@@ -610,7 +612,7 @@ decided at M1". They are now frozen at their M0-verified values:
 | FragmentDescriptor | 512 | canonical serialized **descriptor** |
 | Transport frame | 1048576 | raw frame bytes (`max_payload`) |
 
-The fragment limit bounds the descriptor, never the chunk payload i
+The fragment limit bounds the descriptor, never the chunk payload it
 describes; payload bytes are bounded by the transport frame limit and by
 the storage budget. Exceeding any limit raises `PAYLOAD_TOO_LARGE`
 before parsing, per §8.
@@ -633,10 +635,10 @@ body_length bytes of canonical UTF-8 JSON
   bytes are refused with `SCHEMA_INVALID`.
 - A refused frame causes no decode beyond the failing boundary, no
   scheduling, no transmission acknowledgement and no persistence.
-- Stdio and TCP loopback carry identical frame bytes. Neither endpoin
+- Stdio and TCP loopback carry identical frame bytes. Neither endpoint
   may add timestamps, paths or environment data to canonical evidence.
 
-This frame is an M2 process-boundary contract, not a radio wire-forma
+This frame is an M2 process-boundary contract, not a radio wire-format
 claim. A radio adapter may add transport-specific envelopes outside the
 canonical frame but must deliver the exact canonical body to the core.
 
@@ -667,7 +669,7 @@ into an accepted transfer or invent a trust decision.
   custody and the signer allow-list are manual release gates.
 - A valid signature proves control of a configured key, not the factual
   truth of the report.
-- Replay resistance composes expiry, content identity, exact fragmen
+- Replay resistance composes expiry, content identity, exact fragment
   deduplication and configurable deterministic per-peer in-flight frame
   and pending-byte caps. Tests inject small caps; production values
   require device evidence rather than invention here.
@@ -681,11 +683,11 @@ into an accepted transfer or invent a trust decision.
 
 ## 10. State machines
 
-### 10.1 Content objec
+### 10.1 Content object
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Draf
+  [*] --> Draft
   Draft --> Extracting: AI assisted
   Extracting --> AwaitingReview: DraftCapsule
   AwaitingReview --> Confirmed: human_confirm
@@ -714,10 +716,10 @@ stateDiagram-v2
   InventoryExchanged --> Negotiating
   Negotiating --> Transferring
   Transferring --> Transferring: chunk ok
-  Transferring --> Disconnected: peer lef
-  Disconnected --> CapabilitiesExchanged: reconnec
+  Transferring --> Disconnected: peer left
+  Disconnected --> CapabilitiesExchanged: reconnect
   Transferring --> Idle: queue empty
-  Idle --> Discovered: peer lef
+  Idle --> Discovered: peer left
 ```
 
 ### 10.3 Transfer session
@@ -726,7 +728,7 @@ stateDiagram-v2
 stateDiagram-v2
   [*] --> Requested
   Requested --> Offered
-  Offered --> InFligh
+  Offered --> InFlight
   InFlight --> InFlight: chunk ok
   InFlight --> Paused: critical preemption
   Paused --> InFlight: signal drained, resume
@@ -744,9 +746,9 @@ stateDiagram-v2
   DiscoveringSources --> Partial
   Partial --> RequestingMissing
   RequestingMissing --> Partial: chunk ok
-  Partial --> Complete: all hashes presen
+  Partial --> Complete: all hashes present
   Complete --> HashVerifying
-  HashVerifying --> Accepted: matches manifes
+  HashVerifying --> Accepted: matches manifest
   HashVerifying --> Rejected: mismatch
   Accepted --> [*]
   Rejected --> DiscoveringSources

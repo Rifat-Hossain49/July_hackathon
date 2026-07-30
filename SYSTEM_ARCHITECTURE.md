@@ -15,7 +15,7 @@ flowchart LR
     SE[Semantic Engine\n(offline, suggestion-only)]
     HR[Human Review Interface]
   end
-  subgraph Conten
+  subgraph Content
     MP[Media Pipeline]
     CAS[Content-Addressed Object Store]
     IV[Integrity Verifier]
@@ -173,7 +173,7 @@ per `PROTOCOL_SPEC.md` §9.1.
 **Integrity, two levels.** Each fragment keeps its SHA-256, and the
 document gains a checksum over its canonical bytes excluding the
 checksum field itself. Fragment-level integrity localises damage; the
-document checksum detects truncation and tampering that per-fragmen
+document checksum detects truncation and tampering that per-fragment
 hashes alone would miss.
 
 **Atomic write, in order:**
@@ -220,7 +220,7 @@ original source representation must never be evicted.
 ### 3.3 Schema migration [IMPLEMENTED — M1, D-M1-06]
 
 Migrations are pure functions `vN -> vN+1`, applied in order, each
-independently testable. Migration is deterministic: identical inpu
+independently testable. Migration is deterministic: identical input
 bytes produce identical migrated bytes.
 
 The pre-migration document is retained until the migrated document is
@@ -232,7 +232,7 @@ ever visible. Re-opening an already-current store performs no migration.
 
 The deterministic core stays **Python and standard-library only** for
 M1. A language-neutral protocol specification, canonical serialization
-rules, golden vectors and conformance tests accompany it so a later por
+rules, golden vectors and conformance tests accompany it so a later port
 can be validated against the same evidence. **No Kotlin port in M1.**
 
 ```
@@ -240,7 +240,7 @@ shongket_core/     platform-neutral: errors, schema, codec, validate,
                    policy, media, store, persist, migrate, evidence
 adapters/
   simulator/       M0-compatible peers, encounters, scenarios, CLI
-  platform/        RESERVED for M3+; no M1 conten
+  platform/        RESERVED for M3+; no M1 content
 ```
 
 `shongket_core` must never import from `adapters/`, and must not depend
@@ -262,7 +262,7 @@ flowchart LR
     SE[Semantic Engine\n(offline, suggestion-only)]
     HR[Human Review Interface]
   end
-  subgraph Conten
+  subgraph Content
     MP[Media Pipeline]
     CAS[Content-Addressed Object Store]
     IV[Integrity Verifier]
@@ -328,7 +328,7 @@ sequenceDiagram
   HR-->>MP: ConfirmedCapsule linked to RawMediaItem
   MP->>MP: build representations + chunks + SHA-256
   MP->>CAS: store content (capsule, manifest, fragments)
-  CAS-->>U: object ready for advertisemen
+  CAS-->>U: object ready for advertisement
 ```
 
 ### 4.3 Peer synchronization flow
@@ -340,7 +340,7 @@ sequenceDiagram
   A->>B: discovery (broadcast)
   B-->>A: presence + PeerCapabilities
   A->>B: compact InventorySummary
-  B->>B: compute missing-fragment interes
+  B->>B: compute missing-fragment interest
   B-->>A: FragmentRequest (set of (content_id, chunk_index))
   A->>B: TransferOffer (ordered by scheduler policy)
   B-->>A: per-fragment TransferReceipt (ack)
@@ -423,8 +423,8 @@ adapters planned per milestone:
   pipe with deterministic loss / reorder / drop profiles. Used by
   the M0 simulator and by the M1 conformance suite.
 - `LocalProcessTransportAdapter` — **Milestone 2**. Two processes on
-  the same host exchanging bytes over a local socket. Verifies tha
-  the protocol survives real OS process boundaries and real socke
+  the same host exchanging bytes over a local socket. Verifies that
+  the protocol survives real OS process boundaries and real socket
   failure modes without committing to any radio.
 - `AndroidTransportAdapter` — **Milestone 3, provisional**. Wraps
   Android radios. The specific radio (Nearby Connections,
@@ -449,6 +449,11 @@ delivery".
 
 ### 6.3 Remaining software architecture freeze
 
+The descendant approval record referencing scope-freeze commit
+`f85a7c5` authorizes implementation of the software-testable boundaries
+below. It does not authorize physical-device, real-radio or field-success
+claims.
+
 ```tex
 shongket_core/              canonical Python behaviour and vectors
 app/simulator/              completed M0 harness; frozen
@@ -458,11 +463,11 @@ android/core-conformance/   Kotlin vector-conformant codec
 android/data-persistence/   app-private canonical envelope
 android/data-transport/     simulated and provisional radio adapters
 android/media/              capture, representations and playback state
-android/semantic/           manual path and optional extractor por
+android/semantic/           manual path and optional extractor port
 android/security/           key-store, signing and consent adapters
 android/ui/                 single-activity Compose UI state
 android/app/                assembly, permissions and background work
-android/diagnostics/        explicit content-free evidence expor
+android/diagnostics/        explicit content-free evidence export
 ```
 
 The dependency direction is one-way: adapters and applications consume
@@ -479,7 +484,7 @@ that store. No Android service is assumed immortal.
 
 Every network boundary validates the 1,048,576-byte frame limit before
 parse, canonical schema limits before mutation, and fragment integrity
-before storage. Test doubles implement the same interfaces and may no
+before storage. Test doubles implement the same interfaces and may not
 relax those checks.
 
 ---
@@ -525,7 +530,7 @@ relax those checks.
   completion only.
 - Alternatives: include erasure / rateless coding in M0.
 - Recommended: ordinary chunks in M0; coded path is later research.
-- Reason: keep M0 scope honest; do not describe behavior that isn'
+- Reason: keep M0 scope honest; do not describe behavior that isn't
   implemented.
 - Evidence required: M0 success criterion 5.
 - Trade-offs: lower robustness to peer disappearance in M0.

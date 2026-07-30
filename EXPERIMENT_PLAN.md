@@ -66,7 +66,7 @@ A hypothesis marked "later" in the above list is **not** M0-scored.
 
 ### 3.2 Real device (M3+)
 
-- The same scenarios on actual phones, gated by the transpor
+- The same scenarios on actual phones, gated by the transport
   smoke-test gate in `RESEARCH_LOG.md` §Transport.
 
 ### 3.3 Vendor-specific transport experiments (M3)
@@ -107,7 +107,7 @@ Result source:
 - `[REAL_RADIO]` — named handsets communicating over the named radio.
 - `[FIELD_ONLY]` — consented partial-connectivity field setting.
 
-### 3.6 M0 measurement cavea
+### 3.6 M0 measurement caveat
 
 These results are simulator outputs. They do not represent real
 wireless throughput, Android battery use, device compatibility or
@@ -286,7 +286,7 @@ empty evidence templates. Only the declared runtime boundary may replace
 | AT-77 repeated demonstration | `[REAL_RADIO]` | UNMEASURED |
 | AT-78 field trial | `[FIELD_ONLY]` | UNMEASURED |
 
-AT-74 passes when every required metric has a reproducible measuremen
+AT-74 passes when every required metric has a reproducible measurement
 with run metadata and uncertainty, or an explicit failure note. It does
 not require a favourable number and never converts simulator ticks into
 device seconds.
@@ -322,7 +322,7 @@ Each target is one of:
 
 ## 7. Decision records
 
-### DR-EXP-01 — Empty result tables are hones
+### DR-EXP-01 — Empty result tables are honest
 
 - Decision: result tables are empty in M0 and are filled by the
   harness's logs only.
@@ -336,7 +336,7 @@ Each target is one of:
   measurements pending M0 harness run."
 - Revisit condition: M0 harness run.
 
-### DR-EXP-02 — Coded reconstruction is a later experimen
+### DR-EXP-02 — Coded reconstruction is a later experiment
 
 - Decision: B6 (coded reconstruction) is not in M0.
 - Alternatives: include in M0.
@@ -345,11 +345,11 @@ Each target is one of:
 - Evidence required: M5+ implementation.
 - Trade-offs: M0 cannot claim coding benefits.
 - Risks: evaluators may confuse multi-peer ordinary with coded.
-- Validation: README, MILESTONES, PROTOCOL_SPEC all use distinc
+- Validation: README, MILESTONES, PROTOCOL_SPEC all use distinct
   language.
 - Revisit condition: M5+.
 
-### DR-EXP-03 — Utility-based forwarding is a later experimen
+### DR-EXP-03 — Utility-based forwarding is a later experiment
 
 - Decision: B7 (utility forwarding) is not in M0.
 - Alternatives: include in M0.

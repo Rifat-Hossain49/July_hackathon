@@ -1,6 +1,6 @@
 # Shongket — Acceptance Tests (Draft 1)
 
-Canonical acceptance specification and evidence catalogue. Each tes
+Canonical acceptance specification and evidence catalogue. Each test
 defines preconditions, input, steps, expected result, automation level,
 milestone, evidence and failure severity.
 
@@ -133,7 +133,7 @@ Severity scale:
 - Evidence required: refusal log.
 - Severity: S1.
 
-## AT-12 Storage budget enforcemen
+## AT-12 Storage budget enforcement
 
 - Preconditions: low storage marker.
 - Input: new content.
@@ -339,7 +339,7 @@ S1 rows (AT-30, AT-37) additionally protect M0 evidence already earned.
 - Input: a save interrupted at each stage — after temp write, after temp
   fsync, after replace, before parent-directory fsync.
 - Steps: inject the interruption at each point; reopen the store.
-- Expected: the reader always sees either the complete previous documen
+- Expected: the reader always sees either the complete previous document
   or the complete new one, never a blend; no partial document is loaded;
   temp artefacts are ignored and cleaned.
 - Automation: harness (fault injection; no real power loss).
@@ -368,7 +368,7 @@ S1 rows (AT-30, AT-37) additionally protect M0 evidence already earned.
   corrupted while the document checksum remains valid.
 - Steps: open the store for each case.
 - Expected: (a) the file is quarantined — renamed aside, **never
-  deleted** — and the last good snapshot loads; (b) only the corrup
+  deleted** — and the last good snapshot loads; (b) only the corrupt
   fragment is dropped, every intact fragment is preserved, and the loss
   is logged.
 - Automation: harness.
@@ -398,7 +398,7 @@ S1 rows (AT-30, AT-37) additionally protect M0 evidence already earned.
 - Input: every recovery path — restart, partial write, corrupted
   document, failed migration, refused over-budget write.
 - Steps: run each path; enumerate surviving fragments.
-- Expected: every fragment verified before the event is presen
+- Expected: every fragment verified before the event is present
   afterwards with its original SHA-256, except one whose own bytes were
   deliberately corrupted; byte accounting matches a recomputed sum in
   every case.
@@ -456,10 +456,10 @@ S1 rows (AT-30, AT-37) additionally protect M0 evidence already earned.
 
 - Preconditions: `visibility` and `forwarding_consent` frozen per
   `PROTOCOL_SPEC.md` §3.2.
-- Input: a legacy manifest using boolean `private`; a v1.0 manifes
+- Input: a legacy manifest using boolean `private`; a v1.0 manifest
   using `visibility`; malformed values of each.
 - Steps: migrate the legacy shape; validate all; attempt forwarding.
-- Expected: `private: true → visibility "private"`; `false` or absen
+- Expected: `private: true → visibility "private"`; `false` or absent
   `→ "public"`; malformed `visibility` → `SCHEMA_INVALID`; non-boolean
   `forwarding_consent` → `CONSENT_REQUIRED`; every AT-16 assertion still
   holds after migration.
@@ -576,7 +576,7 @@ Preserved M0 evidence, re-verified by AT-37: CLI
 
 ### Implementation notes
 
-`shongket_core` is standard-library only. An AST scan in AT-37 proves i
+`shongket_core` is standard-library only. An AST scan in AT-37 proves it
 imports nothing from `app/`, `adapters/` or any third-party package, and
 `git diff` confirms `app/simulator/` was not modified by any M1 slice.
 
@@ -615,9 +615,11 @@ tests as follows. No clause is left untested:
 
 # Remaining-project acceptance tests (AT-38 … AT-78)
 
-**Status: PROPOSED. None of these is implemented and none is passing.**
-They define the remaining software and field scope frozen in
-`REMAINING_SCOPE.md`.
+**Status: APPROVED SPECIFICATION. None of these is implemented and none
+is passing.** The descendant approval record authorizes only the
+software/evidence-tooling portions named in `PRODUCT_DECISIONS.md`.
+Physical-device, real-radio and field definitions are gates, not
+authorization or success claims.
 
 Automation levels used below:
 
@@ -750,7 +752,7 @@ or emulator run.
 - Evidence: per-permission screen state and the reason string.
 - Runtime boundary: `android/app`.
 
-## AT-47 Real-radio discovery and session establishmen
+## AT-47 Real-radio discovery and session establishment
 
 - Requirement: the provisional transport discovers and connects on real hardware (smoke-test gate 1, 2).
 - Preconditions: two physical handsets, radios enabled, no internet.
@@ -802,7 +804,7 @@ or emulator run.
 - Evidence: ten timestamped run records.
 - Runtime boundary: `android/data-transport`.
 
-## AT-51 Media capture produces the canonical representation se
+## AT-51 Media capture produces the canonical representation set
 
 - Requirement: `MEDIA_PIPELINE.md` representations from a real source.
 - Preconditions: a capture source or a committed synthetic fixture.
@@ -1049,7 +1051,7 @@ or emulator run.
 - Evidence: storage listing, manifest flag and scan output.
 - Runtime boundary: `android/security`.
 
-## AT-70 Diagnostic export contains no sensitive conten
+## AT-70 Diagnostic export contains no sensitive content
 
 - Requirement: D-RS-13; AGENTS.md logging rule.
 - Preconditions: a session with capsules, media and peers.
@@ -1153,7 +1155,7 @@ or emulator run.
 - Evidence: ten timestamped run records.
 - Runtime boundary: whole system.
 
-## AT-78 Field trial in a partial-connectivity environmen
+## AT-78 Field trial in a partial-connectivity environment
 
 - Requirement: the field-validated release level; the product thesis.
 - Preconditions: a real partial-connectivity setting, real participants, informed consent, and a completed manual release decision on trial conduct.
@@ -1193,7 +1195,7 @@ or field boundary and cannot be satisfied by a simulator or emulator.
 **Non-blocking research and benchmark evidence (3):** AT-61, AT-62 and
 AT-74 must be executed before making the corresponding model-resource,
 Bangla-quality or device-benchmark claim. A negative measurement selects
-the manual fallback or records an explicit limitation; it does no
+the manual fallback or records an explicit limitation; it does not
 invalidate protocol correctness or block the software-complete build.
 
 ### Legacy identifier mapping
@@ -1289,7 +1291,7 @@ These qualify the rows above and are not resolved by this run:
 - **AT-16** was run against the provisional manifest fields `private`
   and `forwarding_consent`. Those names have since been frozen for M1 as
   `visibility` (a `"public" | "private"` enum) and a strictly-boolean
-  `forwarding_consent` — see `PROTOCOL_SPEC.md` §3.2. The M0 resul
+  `forwarding_consent` — see `PROTOCOL_SPEC.md` §3.2. The M0 result
   above stands as recorded; AT-34 is the M1 test that the migration
   preserves every AT-16 assertion.
 - **AT-18** reports timing in deterministic simulator ticks and marks

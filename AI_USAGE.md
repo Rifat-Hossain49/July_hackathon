@@ -11,7 +11,7 @@ remaining milestones. M0/M1 implementation evidence is recorded in
 
 Drafting and review of repository documentation and implementation was assisted
 by Claude Opus 4.8 (Anthropic), used as a planning-aid tool under
-human direction. The human product owner / principal architec
+human direction. The human product owner / principal architect
 remains responsible for every claim, every architectural decision,
 and every boundary stated in this plan.
 
@@ -37,7 +37,7 @@ did not write or modify application code.
   [MODEL_EVALUATION_PLAN.md](./MODEL_EVALUATION_PLAN.md));
 - determining real-world Bangla performance (this requires M6+
   measurements and is currently an **unverified hypothesis**);
-- fabricating device support or library capabilities that have no
+- fabricating device support or library capabilities that have not
   been verified (see [RESEARCH_LOG.md](./RESEARCH_LOG.md)).
 
 ## Determinism rule
@@ -45,7 +45,7 @@ did not write or modify application code.
 Deterministic protocol logic (priority ordering, fragmentation
 indexing, content hashing, expiry handling, duplicate detection,
 restart recovery) is **not** delegated to an AI. Where this plan
-describes such logic, it is specified by the protocol owner, no
+describes such logic, it is specified by the protocol owner, not
 inferred from a model.
 
 ## Acceptance
@@ -53,5 +53,5 @@ inferred from a model.
 The human owner has reviewed each planning document and accepts
 responsibility for the boundary between AI-assisted drafting and
 human-authored product decisions. See
-[PRODUCT_DECISIONS.md](./PRODUCT_DECISIONS.md) for the curren
+[PRODUCT_DECISIONS.md](./PRODUCT_DECISIONS.md) for the current
 approval status.
