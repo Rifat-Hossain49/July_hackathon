@@ -6,6 +6,10 @@
   <meta name="theme-color" content="#081610">
   <meta name="description" content="Shongket offline crisis-media distribution demo using simulated peer transport.">
   <title>Shongket — Functional Offline Demo</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
@@ -16,7 +20,7 @@
       <span>SHONGKET</span>
     </a>
     <div class="header-actions">
-      <span class="system-pill"><span class="pulse"></span> Browser-local</span>
+      <span class="system-pill" id="offline-status"><span class="pulse"></span> Preparing offline mode</span>
       <a class="ghost-link" href="https://github.com/Rifat-Hossain49/July_hackathon" target="_blank" rel="noreferrer">GitHub ↗</a>
     </div>
   </header>
@@ -26,11 +30,13 @@
       <div class="hero-copy">
         <p class="eyebrow">DISRUPTION-TOLERANT • SEMANTIC-FIRST</p>
         <h1>Useful information<br><em>before</em> the full file.</h1>
-        <p class="hero-lede">Shongket prioritizes a human-confirmed crisis capsule, then progressively moves verified media chunks across short peer encounters.</p>
+        <p class="hero-lede">Shongket sends a human-confirmed crisis message first. An image is optional and, when attached, moves in verified resumable chunks.</p>
         <div class="hero-actions">
           <a class="button primary" href="#demo">Run the local demo <span>↓</span></a>
+          <button class="button secondary" id="install-app" type="button">Install offline app</button>
           <a class="button secondary" href="https://github.com/Rifat-Hossain49/July_hackathon/releases/download/v0.1.0-demo.1/Shongket-0.1.0-demo.1-debug.apk">Get Android demo</a>
         </div>
+        <p class="offline-note" id="install-help">After the first online load, this browser demo is cached and works offline.</p>
       </div>
       <div class="signal-card" aria-label="Protocol sequence">
         <div class="signal-grid"></div>
@@ -98,19 +104,20 @@
 
           <div class="media-box">
             <div>
-              <strong>Source evidence</strong>
-              <p id="media-summary">No media selected</p>
+              <strong>Optional image evidence</strong>
+              <p id="media-summary">No image selected — text-only delivery is supported</p>
             </div>
             <div class="media-actions">
               <input id="media-input" type="file" accept="image/*" hidden>
               <button class="mini-button" id="choose-media" type="button">Choose image</button>
               <button class="mini-button accent" id="use-fixture" type="button">Use safe fixture</button>
+              <button class="mini-button danger hidden" id="remove-media" type="button">Remove image</button>
             </div>
           </div>
 
           <label class="confirm-row">
             <input id="human-confirmed" type="checkbox">
-            <span>I reviewed this capsule against the source evidence.</span>
+            <span>I reviewed this message and any optional source evidence.</span>
           </label>
           <button class="button primary full" id="confirm-capsule" type="submit">Confirm capsule</button>
           <p class="form-error" id="form-error" role="alert" aria-live="polite"></p>
@@ -141,7 +148,7 @@
             <div class="queue-head"><span>Delivery queue</span><span id="queue-count">0 / 0</span></div>
             <div class="queue-item"><i class="queue-state" data-queue="capsule"></i><span><b>01</b> Semantic capsule</span><small>signal first</small></div>
             <div class="queue-item"><i class="queue-state" data-queue="manifest"></i><span><b>02</b> Integrity manifest</span><small>hashes</small></div>
-            <div class="queue-item"><i class="queue-state" data-queue="media"></i><span><b>03</b> Source chunks</span><small id="chunk-count">0 chunks</small></div>
+            <div class="queue-item"><i class="queue-state" data-queue="media"></i><span><b>03</b> Optional attachment</span><small id="chunk-count">Text only</small></div>
           </div>
 
           <div class="progress-wrap">
@@ -154,6 +161,7 @@
             <button class="button warning" id="interrupt-transfer" type="button">Interrupt</button>
             <button class="button secondary" id="resume-transfer" type="button">Resume missing chunks</button>
           </div>
+          <p class="transfer-guidance" id="transfer-guidance" aria-live="polite">Confirm a capsule, then select a simulated peer.</p>
           <p class="transfer-error" id="transfer-error" role="alert" aria-live="polite"></p>
 
           <div class="event-log">
@@ -166,17 +174,17 @@
 
     <section class="received-section" id="received" hidden>
       <div class="section-heading">
-        <div><p class="eyebrow">RECEIVER VIEW</p><h2>Reconstructed & verified</h2></div>
-        <span class="verified-badge">✓ SHA-256 MATCH</span>
+        <div><p class="eyebrow">RECEIVER VIEW</p><h2>Received & verified</h2></div>
+        <span class="verified-badge" id="verified-badge">✓ VERIFIED</span>
       </div>
-      <div class="received-grid">
-        <div class="preview-frame"><img id="received-preview" alt="Reconstructed source preview"></div>
+      <div class="received-grid" id="received-grid">
+        <div class="preview-frame" id="received-preview-frame"><img id="received-preview" alt="Reconstructed source preview"></div>
         <article class="received-copy">
           <span class="visibility-badge" id="received-visibility">PUBLIC</span>
           <h3 id="received-message"></h3>
           <p id="received-location"></p>
           <dl>
-            <div><dt>Source hash</dt><dd id="received-hash"></dd></div>
+            <div><dt id="hash-label">Evidence hash</dt><dd id="received-hash"></dd></div>
             <div><dt>Duplicates ignored</dt><dd id="duplicate-count">0</dd></div>
             <div><dt>Transport</dt><dd>SIMULATED PEER TRANSPORT</dd></div>
           </dl>
