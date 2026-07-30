@@ -1,3 +1,12 @@
+# Shongket — System Architecture
+
+**Status:** M0 and M1 architecture implemented; M2 through M9 scope
+frozen for a separately approved software-complete implementation.
+Physical-device, real-radio and field behaviour remains unvalidated.
+
+## 1. Architecture summary
+
+```mermaid
 flowchart LR
   subgraph Capture
     CI[Capture Interface]
@@ -6,7 +15,7 @@ flowchart LR
     SE[Semantic Engine\n(offline, suggestion-only)]
     HR[Human Review Interface]
   end
-  subgraph Content
+  subgraph Conten
     MP[Media Pipeline]
     CAS[Content-Addressed Object Store]
     IV[Integrity Verifier]
@@ -23,7 +32,7 @@ flowchart LR
   end
   subgraph Radio
     TA[Transport Adapter]
-    R1[Radio (M0: simulated; later: real radio)]  
+    R1[Radio (M0: simulated; later: real radio)]
   end
   CI --> MP
   CI --> SE
@@ -52,8 +61,9 @@ flowchart LR
   OBS -.-> SC
   OBS -.-> TA
   OBS -.-> RE
+```
 
-### 1.6 Explicit non-goals
+### 1.1 Explicit non-goals
 
 Per `PRODUCT_DECISIONS.md` D-006 and `HACKATHON_BRIEF.md`:
 
@@ -150,7 +160,7 @@ Note on "Insufficient storage": the eviction row above describes the
 scoped "M0 rule, M5+ effect"). Through M1 the behaviour is
 **rejection-only** — see §3.2.
 
-### 3.1 Durable persistence [PROPOSED — M1, D-M1-06]
+### 3.1 Durable persistence [IMPLEMENTED — M1, D-M1-06]
 
 M0 used an in-memory store with a JSON snapshot. §2 records the
 Persistence Layer as "durable (**or in-memory for M0**)"; M1 owes the
@@ -163,7 +173,7 @@ per `PROTOCOL_SPEC.md` §9.1.
 **Integrity, two levels.** Each fragment keeps its SHA-256, and the
 document gains a checksum over its canonical bytes excluding the
 checksum field itself. Fragment-level integrity localises damage; the
-document checksum detects truncation and tampering that per-fragment
+document checksum detects truncation and tampering that per-fragmen
 hashes alone would miss.
 
 **Atomic write, in order:**
@@ -196,7 +206,7 @@ until M2 defines it.
 A verified fragment is never lost by any recovery path except when its
 own bytes are corrupt.
 
-### 3.2 Storage pressure [PROPOSED — M1, D-M1-04]
+### 3.2 Storage pressure [IMPLEMENTED — M1, D-M1-04]
 
 M1 is **rejection-only**. A write that does not fit the byte budget is
 refused with `OUT_OF_BUDGET` (retryable) before any mutation; existing
@@ -207,10 +217,10 @@ Recorded for the M5+ eviction design, not implemented now: human-confirmed
 capsules, manifests for objects holding any verified fragment, and the
 original source representation must never be evicted.
 
-### 3.3 Schema migration [PROPOSED — M1, D-M1-06]
+### 3.3 Schema migration [IMPLEMENTED — M1, D-M1-06]
 
 Migrations are pure functions `vN -> vN+1`, applied in order, each
-independently testable. Migration is deterministic: identical input
+independently testable. Migration is deterministic: identical inpu
 bytes produce identical migrated bytes.
 
 The pre-migration document is retained until the migrated document is
@@ -218,11 +228,11 @@ durably written. If any step or the final write fails, the original
 remains readable and byte-identical — no partially migrated state is
 ever visible. Re-opening an already-current store performs no migration.
 
-### 3.4 Core and adapter boundary [PROPOSED — M1, D-M1-08]
+### 3.4 Core and adapter boundary [IMPLEMENTED — M1, D-M1-08]
 
 The deterministic core stays **Python and standard-library only** for
 M1. A language-neutral protocol specification, canonical serialization
-rules, golden vectors and conformance tests accompany it so a later port
+rules, golden vectors and conformance tests accompany it so a later por
 can be validated against the same evidence. **No Kotlin port in M1.**
 
 ```
@@ -230,7 +240,7 @@ shongket_core/     platform-neutral: errors, schema, codec, validate,
                    policy, media, store, persist, migrate, evidence
 adapters/
   simulator/       M0-compatible peers, encounters, scenarios, CLI
-  platform/        RESERVED for M3+; no M1 content
+  platform/        RESERVED for M3+; no M1 conten
 ```
 
 `shongket_core` must never import from `adapters/`, and must not depend
@@ -252,7 +262,7 @@ flowchart LR
     SE[Semantic Engine\n(offline, suggestion-only)]
     HR[Human Review Interface]
   end
-  subgraph Content
+  subgraph Conten
     MP[Media Pipeline]
     CAS[Content-Addressed Object Store]
     IV[Integrity Verifier]
@@ -269,7 +279,7 @@ flowchart LR
   end
   subgraph Radio
     TA[Transport Adapter]
-    R1[Radio (M0: simulated; later: real radio)]  
+    R1[Radio (M0: simulated; later: real radio)]
   end
   CI --> MP
   CI --> SE
@@ -318,7 +328,7 @@ sequenceDiagram
   HR-->>MP: ConfirmedCapsule linked to RawMediaItem
   MP->>MP: build representations + chunks + SHA-256
   MP->>CAS: store content (capsule, manifest, fragments)
-  CAS-->>U: object ready for advertisement
+  CAS-->>U: object ready for advertisemen
 ```
 
 ### 4.3 Peer synchronization flow
@@ -330,7 +340,7 @@ sequenceDiagram
   A->>B: discovery (broadcast)
   B-->>A: presence + PeerCapabilities
   A->>B: compact InventorySummary
-  B->>B: compute missing-fragment interest
+  B->>B: compute missing-fragment interes
   B-->>A: FragmentRequest (set of (content_id, chunk_index))
   A->>B: TransferOffer (ordered by scheduler policy)
   B-->>A: per-fragment TransferReceipt (ack)
@@ -384,17 +394,24 @@ milestones:
 
 ---
 
-## 6. Boundary interfaces (declared, not implemented)
+## 6. Boundary interfaces
 
-These interfaces exist in **planning form** so downstream docs can
-reference them. They are not code.
+M0/M1 implement the deterministic bindings named below. The remaining
+bindings are frozen contracts for M2 through M9; an interface entry does
+not claim that its Android or radio binding exists.
 
-| Interface | Purpose | M0 binding |
+| Interface | Purpose | Current/frozen binding |
 |---|---|---|
 | `TransportAdapter` | Send/receive bytes, surface peer events | simulated adapter |
 | `FragmentationStrategy` | Split / recombine a representation | fixed-size chunker |
-| `Persistence` | Store and retrieve keyed objects | in-memory or lightweight local |
-| `SemanticExtractor` | Produce `DraftCapsule` | deterministic mock |
+| `Persistence` | Store and retrieve keyed objects | M1 canonical snapshot envelope |
+| `SemanticExtractor` | Produce `DraftCapsule` | manual/unavailable default; deterministic test double |
+| `MediaPipeline` | Build representations from `RawMediaItem` | synthetic now; platform adapter frozen |
+| `IntegrityVerifier` | Hash/signature verification | SHA-256; signing behind key-store port |
+| `IdentityProvider` | Sign/verify signed manifests | development-only fixtures until manual release gate |
+| `Scheduler` | Decide next transfer | deterministic M1 policy |
+| `InventoryIndex` | Per-object fragment tracking | exact fragment map |
+| `Observability` | Emit metrics and content-free evidence | deterministic evidence log |
 
 ### 6.1 Transport adapter tree
 
@@ -406,8 +423,8 @@ adapters planned per milestone:
   pipe with deterministic loss / reorder / drop profiles. Used by
   the M0 simulator and by the M1 conformance suite.
 - `LocalProcessTransportAdapter` — **Milestone 2**. Two processes on
-  the same host exchanging bytes over a local socket. Verifies that
-  the protocol survives real OS process boundaries and real socket
+  the same host exchanging bytes over a local socket. Verifies tha
+  the protocol survives real OS process boundaries and real socke
   failure modes without committing to any radio.
 - `AndroidTransportAdapter` — **Milestone 3, provisional**. Wraps
   Android radios. The specific radio (Nearby Connections,
@@ -429,12 +446,41 @@ M0 capability. It is a later research extension behind
 `FragmentationStrategy` and is tracked in
 [MILESTONES.md](./MILESTONES.md) §"Later research extension — Coded
 delivery".
-| `MediaPipeline` | Build representations from `RawMediaItem` | synthetic pipeline |
-| `IntegrityVerifier` | Hash / signature verification | SHA-256 |
-| `IdentityProvider` | Sign / verify signed manifests | key pair per device (test keys for M0) |
-| `Scheduler` | Decide next transfer | deterministic policy |
-| `InventoryIndex` | Per-object fragment tracking | in-memory map |
-| `Observability` | Emit metrics and logs | harness collector |
+
+### 6.3 Remaining software architecture freeze
+
+```tex
+shongket_core/              canonical Python behaviour and vectors
+app/simulator/              completed M0 harness; frozen
+adapters/process/           M2 frame codec and stdio/loopback endpoints
+adapters/transport_sim/     deterministic adapter conformance binding
+android/core-conformance/   Kotlin vector-conformant codec
+android/data-persistence/   app-private canonical envelope
+android/data-transport/     simulated and provisional radio adapters
+android/media/              capture, representations and playback state
+android/semantic/           manual path and optional extractor por
+android/security/           key-store, signing and consent adapters
+android/ui/                 single-activity Compose UI state
+android/app/                assembly, permissions and background work
+android/diagnostics/        explicit content-free evidence expor
+```
+
+The dependency direction is one-way: adapters and applications consume
+the protocol/domain contracts; the core imports no Android, adapter,
+model or transport runtime. Deterministic admission, capability
+negotiation outcomes, fragment integrity, scheduling and storage
+accounting are never delegated to an LLM or a radio adapter.
+
+Application persistence stores durable domain state. `SavedStateHandle`
+or equivalent lifecycle state stores only small UI identifiers needed
+to recreate a screen; it is not a substitute for the canonical store.
+The background-work port must tolerate process death and resume from
+that store. No Android service is assumed immortal.
+
+Every network boundary validates the 1,048,576-byte frame limit before
+parse, canonical schema limits before mutation, and fragment integrity
+before storage. Test doubles implement the same interfaces and may no
+relax those checks.
 
 ---
 
@@ -452,7 +498,7 @@ delivery".
 - Trade-offs: two framing stacks to maintain.
 - Risks: framing bugs causing media-plane delivery to starve signal plane
   — mitigated by scheduler priority and explicit queue inspection in tests.
-- Validation: AC-PREEMPTION-1, AC-SCHED-1 in `ACCEPTANCE_TESTS.md`.
+- Validation: AT-01, AT-04 and AT-05 in `ACCEPTANCE_TESTS.md`.
 - Revisit condition: if M0 cannot demonstrate measurable preemption
   latency improvement over single-plane baseline.
 
@@ -479,7 +525,7 @@ delivery".
   completion only.
 - Alternatives: include erasure / rateless coding in M0.
 - Recommended: ordinary chunks in M0; coded path is later research.
-- Reason: keep M0 scope honest; do not describe behavior that isn't
+- Reason: keep M0 scope honest; do not describe behavior that isn'
   implemented.
 - Evidence required: M0 success criterion 5.
 - Trade-offs: lower robustness to peer disappearance in M0.

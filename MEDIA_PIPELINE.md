@@ -1,15 +1,15 @@
-Input
-  → metadata extraction
-  → semantic extraction (suggestion-only, uncertainty-flagged)
-  → human correction / confirmation
-  → progressive representations
-  → chunking (FixedSize SHA-256 in M0)
-  → hashing (per chunk and per representation)
-  → storage (content-addressed)
-  → transfer (signal first, media second per priority)
-  → reconstruction (multi-peer missing-chunk completion in M0)
-  → validation (hash check)
-  → playback or display
+# Shongket — Media Pipeline
+
+**Status:** synthetic M0 media behaviour is implemented. The
+source-preserving platform pipeline is scope-frozen for M4; real codec,
+device and radio behaviour remains unvalidated.
+
+## 1. Principles
+
+The pipeline must:
+
+1. Preserve the original source bytes and content hash. Derived
+   representations and semantic suggestions never replace the source.
 2. Be **resumable** across short, interrupted encounters.
 3. **Deduplicate** so the same fragment is not stored twice.
 4. Be **interruption-tolerant** at any stage.
@@ -20,7 +20,7 @@ Input
 Pipeline ordering per modality:
 
 ```
-Input
+Inpu
   → metadata extraction
   → semantic extraction (suggestion-only, uncertainty-flagged)
   → human correction / confirmation
@@ -38,7 +38,13 @@ Input
 
 ## 2. Per-modality flow
 
-### 2.1 Text
+For M4 wire manifests the canonical representation IDs are `thumb`,
+`preview`, `standard` and `original`. Names such as `transcript`,
+`audio_low`, `poster` and `keyframe_set` below describe modality
+profiles that map into those four IDs; they are not additional wire IDs
+unless a future schema change is separately approved.
+
+### 2.1 Tex
 
 - Input: typed note or transcribed short message.
 - Metadata: language tag (bn / en / bn-en-mix), length.
@@ -53,7 +59,7 @@ Input
 
 - Input: audio recording.
 - Metadata: duration, sample rate, language hint.
-- Semantic extraction: STT → structured fields (model-evaluated, not
+- Semantic extraction: STT → structured fields (model-evaluated, no
   selected in M0).
 - Representations:
   - `transcript` (text);
@@ -89,7 +95,7 @@ Input
   later research option behind `FragmentationStrategy`.
 - Validation: hash; assembly must yield identical bytes.
 
-### 2.5 Document
+### 2.5 Documen
 
 - Input: PDF or document file.
 - Representations:
@@ -154,7 +160,7 @@ small chunks for text. Per-representation SHA-256 final check.
 
 ---
 
-## 6. MVP (M0 / M1) media pipeline
+## 6. Implemented baseline and remaining media scope
 
 In M0:
 
@@ -166,13 +172,21 @@ In M0:
 - Reconstruction: ordinary missing-chunk completion across peers.
 - No SVC. No partial-file playback.
 
-In M1:
+M1 hardened canonical chunk, identity, persistence and policy behaviour;
+it did **not** add Android codecs or new media functionality.
 
-- Add per-modality `MediaPipeline` implementations with explicit test
-  coverage for each modality using synthetic inputs.
-- Begin transition from synthetic pipelines toward lightweight
-  implementation using only `android.media` / equivalent neutrally
-  referenced APIs (no APK-level commitment in this plan).
+M4 software scope:
+
+- Source adapters for photo, short video, audio, text and document.
+- A `MediaPipeline` platform port with deterministic synthetic fixtures.
+- Canonical availability metadata for `thumb`, `preview`, `standard`
+  and `original`; unsupported representations are explicit.
+- Platform encoding is separate from fixed-size chunking, SHA-256,
+  identity, ordering and transport.
+- Preview/playback state never presents an incomplete representation as
+  complete.
+- Local/emulator proof is AT-51 through AT-54. Real-radio proof is
+  AT-55 and cannot be claimed from an emulator.
 
 ---
 
@@ -196,9 +210,9 @@ In M1:
 - Alternatives: CDC, keyframe-aligned, container-aware.
 - Recommended: fixed-size in M0; alternatives behind the same
   interface for later research.
-- Reason: simplest correct boundary; minimal assumptions about
+- Reason: simplest correct boundary; minimal assumptions abou
   runtime parsers.
-- Evidence required: AC-INT-1..AC-INT-3 in `ACCEPTANCE_TESTS.md`.
+- Evidence required: AT-10, AT-21, AT-51 and AT-54.
 - Trade-offs: weaker dedup across edits than CDC.
 - Risks: re-chunking on small edits → revisit at M5+.
 - Validation: `EXPERIMENT_PLAN.md` H-MEDIA-1.
@@ -212,9 +226,9 @@ In M1:
   deferred.
 - Reason: SVC requires specific codec availability that this plan does
   not assume.
-- Evidence required: AC-PROG-1..AC-PROG-3.
+- Evidence required: AT-51, AT-52, AT-53 and AT-55.
 - Trade-offs: more representations to maintain; small metadata cost.
-- Risks: if no runtime encoder is available at M3, the "preview" must
+- Risks: if no runtime encoder is available at M3, the "preview" mus
   fall back to "thumbnail only."
 - Validation: explicit status table row in README.
 - Revisit condition: once a license-clean SVC candidate is evaluated
@@ -238,7 +252,7 @@ In M1:
 - Alternatives: "summary only" mode.
 - Recommended: source media preserved and linked to capsule.
 - Reason: D-004 + auditability + falsifiability.
-- Evidence required: AC-CAP-5.
+- Evidence required: AT-21, AT-54 and AT-60.
 - Trade-offs: storage cost.
 - Risks: storage pressure on low-end devices → eviction policy.
 - Validation: explicit status table row in README.

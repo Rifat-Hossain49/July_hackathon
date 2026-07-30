@@ -1,4 +1,4 @@
-# Shongket
+# Shongke
 
 Shongket is a proposed semantic-first, disruption-tolerant multimedia
 distribution protocol for partial-connectivity crises.
@@ -8,11 +8,13 @@ followed by progressive previews and, eventually, original-quality
 media completed from verified chunks collected across multiple peer
 encounters.
 
-**Status:** The Milestone 0 deterministic protocol simulator is
-implemented in `app/simulator/`. Decisions live in
-`PRODUCT_DECISIONS.md`, which is the canonical status source and
-currently reads `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_0`.
-Milestone 1 and later work remains unapproved and unimplemented.
+**Status:** Milestone 0 is implemented in `app/simulator/`; Milestone 1
+is implemented in `shongket_core/`. The combined baseline is **367
+passing tests, 0 failed, 0 skipped**. `PRODUCT_DECISIONS.md` is the
+canonical authorisation source and currently reads
+`IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_1`. The M2–M9 scope is
+frozen in `REMAINING_SCOPE.md`; this scope-freeze commit does not itself
+authorise implementation.
 
 **This repository contains a protocol simulator, not a deployable
 mobile application.** There is no Android app, no radio transport and
@@ -23,9 +25,8 @@ what is done and what is not.
 > capability is labelled as
 
 > [IMPLEMENTED] / [SIMULATED] / [PLANNED].
-> **The M0 harness has now run: 125 automated tests pass (0 failed,**
-> **0 skipped) covering the 18 M0-blocking acceptance IDs, with**
-> **byte-identical output across repeated runs.**
+> **The complete baseline has run: 367 automated tests pass (0 failed,**
+> **0 skipped): 125 M0 tests plus 242 M1 tests.**
 > **Every M0 number in this repository is a simulator measurement in**
 > **deterministic ticks, never a wall-clock or real-device figure;**
 > **real-device measurements come from later milestones.**
@@ -34,15 +35,15 @@ what is done and what is not.
 
 ## 1. One-sentence pitch
 
-Shongket is a proposed content-centric, peer-to-peer protocol that
+Shongket is a proposed content-centric, peer-to-peer protocol tha
 distributes human-confirmed semantic meaning first, progressive
-previews next, and original-quality media last, so that the most
+previews next, and original-quality media last, so that the mos
 actionable information arrives even when typical channels are
 disrupted.
 
 ---
 
-## 2. Crisis context
+## 2. Crisis contex
 
 The motivating scenario is a climate-induced disruption similar to
 the July 2024 Bangladesh event: voice / SMS remained partially
@@ -60,11 +61,11 @@ Shongket designs for that in-between state.
 
 ## 3. What existing offline-first approaches don't solve
 
-- Most offline messengers prioritise content equally and treat
+- Most offline messengers prioritise content equally and trea
   "delivery" as a binary.
 - Most P2P file-sharing tools do not preserve original media with
   predictable recovery.
-- Most broadcasting systems do not adapt to short, intermittent
+- Most broadcasting systems do not adapt to short, intermitten
   peer encounters.
 - Most AI pipelines assume cloud connectivity and a single trusted
   source.
@@ -79,7 +80,7 @@ Shongket designs for that in-between state.
 - **Progressive media.** Thumbnails and previews precede full media.
 - **Multi-peer reconstruction.** Missing fragments are pulled from
   whichever peer has them.
-- **Critical preemption.** A new critical capsule can interrupt
+- **Critical preemption.** A new critical capsule can interrup
   in-flight bulk transfers.
 - **Content addressing.** Objects are identified by their hash;
   duplicates are not re-stored.
@@ -132,7 +133,7 @@ is in [SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md).
 2. Confirms.
 3. The capsule is queued as critical.
 4. A photo of the same scene is attached as progressive media.
-5. As the volunteer moves, the capsule is exchanged with the next
+5. As the volunteer moves, the capsule is exchanged with the nex
    peer; the photo is incomplete.
 6. The next peer offers only a partial photo set.
 7. The receiver's planner combines the two sources.
@@ -186,7 +187,7 @@ Shongket does not currently claim:
 
 ## 9. Limitations
 
-### 9.1 What is completed (Milestone 0 simulator)
+### 9.1 What is completed
 
 All of the following are implemented in `app/simulator/` and covered by
 passing automated tests. Every one is **simulated protocol behaviour**
@@ -207,6 +208,16 @@ between in-process peers:
 - deterministic metrics generation;
 - all 18 M0-blocking acceptance IDs.
 
+The platform-neutral `shongket_core/` also implements the complete M1
+scope:
+
+- canonical serialization, schema registry and explicit versions;
+- durable checksummed snapshots, crash recovery and advisory locking;
+- deterministic migration and rollback;
+- canonical errors and the six-clause forwarding policy;
+- language-neutral golden vectors;
+- all 16 M1-blocking acceptance IDs.
+
 ### 9.2 What is NOT completed
 
 None of the following exists in this repository:
@@ -223,7 +234,7 @@ None of the following exists in this repository:
 - Bloom-filter inventory;
 - coded reconstruction (Reed-Solomon / fountain / RaptorQ);
 - field testing;
-- Milestone 1 or later implementation.
+- Milestone 2 or later implementation.
 
 ### 9.3 Standing caveats
 
@@ -243,7 +254,7 @@ None of the following exists in this repository:
 
 See [RESEARCH_LOG.md](./RESEARCH_LOG.md) for cited sources on
 transport, content-addressing, store-carry-forward, and coding. The
-log explicitly distinguishes what this plan borrows from prior art
+log explicitly distinguishes what this plan borrows from prior ar
 from what it is **proposing** (semantic-first priority, critical
 preemption, manual-form fallback for AI), and what remains an
 **unverified hypothesis** until measurements are produced.
@@ -271,6 +282,11 @@ See [MILESTONES.md](./MILESTONES.md). Milestones:
 - M8: benchmarking.
 - M9: demo and public release.
 
+The remaining roadmap distinguishes a software-complete release
+candidate from a field-validated release. Software, JVM/emulator and
+two-process evidence cannot be used to claim physical-device,
+real-radio or field success.
+
 For experiments, see [EXPERIMENT_PLAN.md](./EXPERIMENT_PLAN.md). For
 test definitions, see [ACCEPTANCE_TESTS.md](./ACCEPTANCE_TESTS.md).
 For risks, see [RISK_REGISTER.md](./RISK_REGISTER.md). For protocol
@@ -281,7 +297,7 @@ pipeline, see [MEDIA_PIPELINE.md](./MEDIA_PIPELINE.md).
 
 ## 12. Ethical and privacy principles
 
-- Human in the loop. AI output is **never** published without
+- Human in the loop. AI output is **never** published withou
   human confirmation.
 - Source = trust. Signed publishers are trusted as identities,
   but signer ≠ truth; freshness and accuracy still require
@@ -299,25 +315,24 @@ These are stated in [PRODUCT_DECISIONS.md](./PRODUCT_DECISIONS.md)
 ## 13. AI assistance disclosure
 
 Per [HACKATHON_BRIEF.md](./HACKATHON_BRIEF.md) and
-[AI_USAGE.md](./AI_USAGE.md), AI assistance was used for planning
-drafts. No model has been chosen; model selection is benchmark-driven
+[AI_USAGE.md](./AI_USAGE.md), AI assistance was used for planning and
+implementation support. No model has been chosen; model selection is benchmark-driven
 per [MODEL_EVALUATION_PLAN.md](./MODEL_EVALUATION_PLAN.md).
 
 ---
 
 ## 14. Contribution
 
-Implementation is gated per milestone on `PRODUCT_DECISIONS.md`
-approval. Milestone 0 is approved and implemented, so contributions to
-`app/simulator/` are accepted against the M0 acceptance tests. Milestone
-1 and later work remains unapproved: contributions beyond the M0
-boundary are review-only against the planning documents until the
-status changes.
+Implementation is gated by the exact milestone/scope ledger in
+`PRODUCT_DECISIONS.md`. M0 and M1 are complete. M2–M9 implementation
+remains unauthorised in this scope-freeze commit; a separate approval
+commit must identify the exact frozen commit and exclusions before any
+remaining implementation begins.
 
-Run the M0 test suite with:
+Run the complete baseline with:
 
 ```
-python -m pytest app/simulator/tests -q
+python -m pytest -q
 ```
 
 ---

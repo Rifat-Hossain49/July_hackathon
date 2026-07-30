@@ -19,9 +19,9 @@ Probabilities and impacts are coarse (L/M/H).
 | R-10 | False urgency (model inflates priority) | M | H | medium | human-confirm required (D-003); uncertainty flagging | default to lower priority until confirmed | Product lead | M6 | yes |
 | R-11 | Private content spreading without consent | L | H | low | explicit consent gate per object class | revoke + log | Product lead | M5, M7 | yes |
 | R-12 | Malicious payloads from peer | M | H | high | schema validation; size limits; signature checks | reject + counter signal | Security lead | M1+ | no |
-| R-13 | Fragment flooding / resource exhaustion | M | M | high | per-peer caps; rate limits; object caps | per-peer block list | Protocol lead | M1, M3 | no |
+| R-13 | Fragment flooding / resource exhaustion | M | M | high | deterministic per-peer in-flight frame and pending-byte caps; size limits; dedup | refuse excess input and retain bounded state | Protocol lead | M2, M7 | no |
 | R-14 | Battery drain during transfers | M | M | medium | battery-aware scheduler; tier profile | default to lower rate under threshold | Android lead | M7 | no |
-| R-15 | Storage exhaustion on low-end devices | H | M | high | eviction policy; storage caps | evict routine priority first | Product lead | M3, M7 | no |
+| R-15 | Storage exhaustion on low-end devices | H | M | high | rejection-only budget; explicit unavailable/storage UX; device measurement | refuse before mutation; user frees space | Product lead | M3, M7 | no |
 | R-16 | Video transcode latency too high on Tier A | M | M | high | modular transcode; allow skipping preview | preview unavailable, show clear status | Media lead | M4, M6 | no |
 | R-17 | Failed multi-peer reconstruction | M | H | medium | sufficient peer count assumed; multi-peer telemetry | fall back to single-peer; surface error | Protocol lead | M5 | yes |
 | R-18 | Demo-device incompatibility | M | H | medium | smoke-test gate; backup devices | use backup devices | Demo lead | M9 | yes |
@@ -31,18 +31,27 @@ Probabilities and impacts are coarse (L/M/H).
 | R-22 | Replay / out-of-order fragments | M | M | medium | sequence numbers; expiry; per-object monotonic IDs | reject + counter | Protocol lead | M1+ | no |
 | R-23 | Manifest poisoning (signed by an untrusted signer) | M | H | medium | signature verification; trust anchor list | reject; flag signer | Security lead | M1+ | no |
 | R-24 | Manifest / schema mismatch across versions | M | M | high | explicit versioning; clear errors | reject; surface error | Protocol lead | M1+ | no |
-| R-25 | Bloom filter false-positive rate too high | M | M | high | M0 inventory profiling; tunable params | switch to explicit-list fallback | Protocol lead | M0, M5 | no |
+| R-25 | A future probabilistic inventory produces harmful false positives | M | M | high | exact inventory remains canonical; separate experiment and approval required | keep exact-list/bitmap implementation | Protocol lead | Later research | no |
 | R-26 | Demo flakiness on first attempt | H | H | medium | repeated demo reliability test | rehearse + scripted fallback | Demo lead | M9 | yes |
 | R-27 | Over-trust of AI by reviewers / users | M | M | medium | explicit "AI is suggestion" language | human-confirm gate | Responsible-AI lead | M6, M9 | no |
 | R-28 | Ethical risk: misuse for disinformation | L | H | low | signer identity ≠ fact distinction; expiry | revocation + log | Responsible-AI lead | M7, M9 | no |
 | R-29 | Storage of private media on shared infrastructure | L | H | low | no cloud by default; local-only | explicit deletion | Product lead | M1+ | no |
-| R-30 | Compromised test keys used outside M0 | L | M | low | clear test/prod separation | rotate keys before release | Security lead | M0, M1 | no |
+| R-30 | Development test keys used outside tests | L | H | high | unmistakable fixtures, release scan and separate key-store port | block release and generate a new production trust root manually | Security lead | M7, M9 | yes |
 | R-31 | M1 refactor silently breaks M0 evidence | M | H | high | AT-37 gates on all 125 M0 tests unchanged plus recorded CLI/metrics hashes | revert slice; `main` retains merged M0 | Protocol lead | M1 | yes |
 | R-32 | Migration corrupts in-progress transfer state | L | H | medium | retain pre-migration document until migrated one is durable; AT-25, AT-29 | original document still loads unchanged | Protocol lead | M1 | yes |
 | R-33 | Version-format change alters serialized bytes | M | M | high | `…v1` read as `…v1.0`; compare CLI hash each slice (AT-22) | revert versioning slice | Protocol lead | M1 | yes |
 | R-34 | Platform-divergent fsync / rename semantics | M | M | medium | test on target platform; document POSIX vs Windows differences; AT-26 | retain M0 write path | Protocol lead | M1, M2 | no |
 | R-35 | M1 scope creep into M2+ behaviour | M | H | high | every slice maps to a canonical requirement; hop/copy enforcement explicitly confirmed as completing PROTOCOL_SPEC §6.0 | revert slice; re-scope | Product lead | M1 | yes |
-| R-APPROVAL-01 | Misreading a global "APPROVED" or out-of-scope milestone approval as permission for code work | M | H | medium | `IMPLEMENTATION_STATUS` only accepts `NOT_APPROVED`, `APPROVED_FOR_MILESTONE_0`, `APPROVED_FOR_MILESTONE_1`, etc.; AGENTS.md "Workflow verification" requires per-milestone approval match | revert any unauthorized code; re-confirm milestone boundary; notify product owner | Product owner / Principal architect | All | yes |
+| R-36 | Kotlin behaviour drifts from the canonical Python core | M | H | high | committed language-neutral vectors; AT-39 on every build | reject the Kotlin change; Python remains canonical | Protocol lead | M3+ | yes |
+| R-37 | Android background restriction silently abandons a transfer | M | H | medium | platform-permitted coordinator, durable state and restart tests | resume on next launch; never claim uninterrupted survival | Android lead | M3, M7 | yes |
+| R-38 | Emulator result is presented as device or radio evidence | M | H | high | six explicit automation levels and separate A/B gates | retract claim; rerun on the required boundary | Product lead | M3–M9 | yes |
+| R-39 | Backup or device-transfer path exposes private local state | L | H | medium | app-private storage, backup/data-extraction exclusions and target-device inspection | block release; clear affected state and revise rules | Security lead | M7, M9 | yes |
+| R-40 | Diagnostic export contains capsule, media, peer or key material | L | H | high | allow-list schema, content-free evidence and field-level scan | disable export and block release | Security lead | M7, M9 | yes |
+| R-41 | Build requires unavailable network dependencies during crisis use | M | M | high | pinned dependency inventory and offline runtime test; no runtime cloud dependency | ship manual/core subset only | Release lead | M3, M9 | yes |
+| R-42 | Production signing or trust-root choice is embedded prematurely | L | H | high | manual release decision; no production material in repository | revoke material and block publication | Product owner | M9 | yes |
+| R-43 | Field trial proceeds without site, participant or privacy approval | L | H | high | MRD-05 and AT-78 informed-consent gate | cancel trial; retain lab/software evidence only | Product owner | M9 | yes |
+| R-44 | Optional offline model blocks app usability | M | H | high | `Unavailable` default and manual form; AT-59 | remove model package and use manual path | Model lead | M6 | yes |
+| R-APPROVAL-01 | Misreading a global or out-of-scope approval as permission for code work | M | H | medium | exact per-milestone software ledger plus preserved `IMPLEMENTATION_STATUS`; AGENTS.md verification requires both scope and exclusions | revert unauthorized code; re-confirm ledger boundary; notify product owner | Product owner / Principal architect | All | yes |
 
 ---
 

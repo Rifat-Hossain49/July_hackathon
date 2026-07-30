@@ -1,10 +1,12 @@
 # Shongket — Model Evaluation Plan (Draft 1)
 
-Planning-only. No model is selected in this document.
+Evaluation specification. No model is selected, bundled or approved by
+this document. The software-complete app defaults to the manual path and
+must remain usable without a model.
 
 ---
 
-## 1. Responsibilities of the offline intelligence component
+## 1. Responsibilities of the offline intelligence componen
 
 The component's job is to **suggest** structured fields, never to
 declare truth. Per `PRODUCT_DECISIONS.md` D-003 and D-011:
@@ -63,7 +65,7 @@ For each category (filled at evaluation time, not now):
 
 ---
 
-## 3. Evaluation dataset
+## 3. Evaluation datase
 
 Synthetic + de-identified real samples (when permissions allow). Each
 example includes ground-truth fields and uncertainty markers.
@@ -155,6 +157,18 @@ sees a **compact structured manual form** that captures the same
 fields. The form is the default path in M0; AI is later layered on
 top.
 
+### 5.5 Separation from protocol and software correctness
+
+AT-58 through AT-60 gate the extractor interface, offline/manual path,
+human confirmation and source preservation. They use only
+`Unavailable` and a deterministic `TestDouble`.
+
+AT-61 and AT-62 are physical-device research evidence. A model tha
+misses a resource or Bangla-quality threshold is rejected and the app
+selects the manual fallback; that negative measurement does not fail the
+protocol or invalidate the software-complete release candidate. No
+automated test downloads a model.
+
 ---
 
 ## 6. Decision records
@@ -180,16 +194,17 @@ top.
 - Recommended: manual form in M0.
 - Reason: removes AI runtime as a blocker for M0; honest default per
   D-011.
-- Evidence required: AC-AI-1 in `ACCEPTANCE_TESTS.md`.
+- Evidence required: AT-15, AT-58 and AT-59 in
+  `ACCEPTANCE_TESTS.md`.
 - Trade-offs: less demo glamor.
 - Risks: users may leave fields blank → mitigated by required-field
   validation in UI.
-- Validation: AC-AI-1; status table in README.
+- Validation: AT-15 and AT-59; status table in README.
 - Revisit condition: when an M6 benchmark selects a viable model.
 
 ### DR-MODEL-03 — Bangla support is a first-class criterion
 
-- Decision: Bangla + Bangla-English code-switching are scored, not
+- Decision: Bangla + Bangla-English code-switching are scored, no
   assumed.
 - Alternatives: assume English-only captions.
 - Recommended: Bangla scored.
