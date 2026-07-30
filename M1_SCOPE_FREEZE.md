@@ -556,14 +556,14 @@ still pass unchanged.
 
 ---
 
-## 7. Proposed acceptance catalogue (AT-22 … AT-37)
+## 7. Accepted acceptance catalogue (AT-22 … AT-37)
 
 **ID availability verified:** `ACCEPTANCE_TESTS.md` defines AT-01 … AT-21
 and no higher ID appears anywhere in the repository. AT-22 onward are
 free. No existing ID is reused for new behaviour.
 
-These are **not** added to `ACCEPTANCE_TESTS.md` by this document. They
-are added only after the user approves this scope.
+These definitions were added to `ACCEPTANCE_TESTS.md` after scope
+approval and now have complete passing evidence.
 
 Severity: **S1** blocks M0-style release gates; per the existing scale,
 **S2 blocks M1 approval**. M1-blocking rows below are marked S2 or S1 as
@@ -811,10 +811,10 @@ indicated.
 
 ---
 
-## 8. Proposed implementation slices
+## 8. Approved implementation slices
 
-Each slice is one commit boundary, independently verifiable, and leaves
-the suite green. **None may begin before M1 approval.**
+Each slice was one independently verifiable commit boundary and left
+the suite green. All five are complete.
 
 ### Slice 1 — Canonical serialization, schema registry, versioning
 
@@ -930,6 +930,6 @@ Milestone 1 implementation may begin only when **all** of these are true:
 All fifteen items are complete. The final two were the user's approval
 acts, taken only after the frozen scope had been reviewed and merged.
 
-Milestone 1 implementation is now authorised **within this scope only**.
-It has not begun: no M1 code exists and no M1 acceptance result is
-recorded. The first authorised unit of work is Slice 1 (§8).
+Milestone 1 implementation was authorised **within this scope only**.
+It is now complete: all five slices and AT-22 through AT-37 have passing
+evidence. This approval still does not authorise M2 or later work.

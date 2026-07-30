@@ -1,6 +1,8 @@
 # Shongket — Experiment Plan (Draft 1)
 
-Planning-only. No invented benchmark numbers.
+Experiment specification and recorded M0/M1 evidence. No device,
+radio, model or field number is inferred from the simulator, and no
+unmeasured cell is filled with zero.
 
 ---
 
@@ -18,7 +20,7 @@ Each hypothesis is falsifiable. "Unverified" means no measurement yet.
 | H-COR-1 | Corrupted chunks (hash mismatch) are rejected without blocking later valid chunks of the same object. |
 | H-SCHED-1 | The deterministic scheduler outperforms a full-file baseline on time-to-first-actionable-meaning. |
 | H-SCHED-2 | Preempted bulk transfer resumes without re-sending already-acked chunks. |
-| H-INV-1 | Bloom-filter inventory with placeholder parameters produces ≤ FPR% false positives on the M0 synthetic corpus. |
+| H-INV-1 (later research) | A separately approved probabilistic inventory may be compared with the exact inventory; no Bloom implementation or M0 result exists. |
 | H-MEDIA-1 | Smaller fixed-size chunks reduce unused bytes at end of encounter but increase metadata overhead; the optimum is in the 32 KB–256 KB band. |
 | H-FWD-1 | Deterministic forwarding policy achieves ≥ X% of the utility-based policy on reach, on the M0 corpus (utility-based is a **later experiment**, not M0). |
 | H-RESTART-1 | After a simulated restart, an in-progress transfer's verified state is intact. |
@@ -100,7 +102,10 @@ Result source:
 
 - `[SIMULATION]` — M0/M1 simulator runs.
 - `[LOCAL_PROCESS]` — M2 two-process harness runs.
-- `[REAL_DEVICE]` — M3+ on real hardware.
+- `[JVM_OR_EMULATOR]` — Android JVM/emulator with no radio claim.
+- `[PHYSICAL_DEVICE]` — real handset measurement without a radio claim.
+- `[REAL_RADIO]` — named handsets communicating over the named radio.
+- `[FIELD_ONLY]` — consented partial-connectivity field setting.
 
 ### 3.6 M0 measurement caveat
 
@@ -224,11 +229,6 @@ comparing the output byte-for-byte.
 
 ### 5.5a Milestone 1 conformance evidence
 
-M1 adds a conformance suite (AT-22 … AT-37). **Slice 1 is implemented**;
-its three tests have run and their evidence is recorded below. Every
-other row remains empty because that code does not exist — filling any
-of them before the harness runs would violate DR-EXP-01.
-
 Complete M1 run: **367 passed, 0 failed, 0 skipped** (242 M1 tests plus
 the 125 M0 regression tests). All sixteen M1-blocking IDs implemented.
 
@@ -268,6 +268,29 @@ Four metrics from §4 are deliberately absent rather than estimated:
 | Energy use (Joules) | Requires device measurement; measured from M3+. |
 | AI inference latency (ms) | M0 uses the manual form and runs no model (AT-15); measured only when M6 is enabled, as §4 already states. |
 
+### 5.7 Remaining device and field result table
+
+The software-complete implementation may commit runners, schemas and
+empty evidence templates. Only the declared runtime boundary may replace
+`UNMEASURED`.
+
+| Acceptance/evidence | Required source | Current result |
+|---|---|---|
+| AT-47 through AT-50 transport gate | `[REAL_RADIO]` | UNMEASURED |
+| AT-55 progressive radio delivery | `[REAL_RADIO]` | UNMEASURED |
+| AT-56, AT-57 multi-peer completion | `[REAL_RADIO]`, ≥3 devices | UNMEASURED |
+| AT-61 model resource limits | `[PHYSICAL_DEVICE]` | UNMEASURED — optional-model evidence |
+| AT-62 Bangla quality | `[PHYSICAL_DEVICE]` | UNMEASURED — optional-model evidence |
+| AT-65 low-battery behaviour | `[PHYSICAL_DEVICE]` | UNMEASURED |
+| AT-74 benchmark suite | `[PHYSICAL_DEVICE]` and `[REAL_RADIO]` where applicable | UNMEASURED |
+| AT-77 repeated demonstration | `[REAL_RADIO]` | UNMEASURED |
+| AT-78 field trial | `[FIELD_ONLY]` | UNMEASURED |
+
+AT-74 passes when every required metric has a reproducible measurement
+with run metadata and uncertainty, or an explicit failure note. It does
+not require a favourable number and never converts simulator ticks into
+device seconds.
+
 ---
 
 ## 6. Targets (clearly labeled)
@@ -289,7 +312,7 @@ Each target is one of:
 | Corrupted chunks rejected without halting | requirement | H-COR-1 |
 | Reconstructed hash equals manifest hash | requirement | M0 success criterion 8 |
 | Expired content not forwarded | requirement | M0 success criterion 9 |
-| Bloom FPR ≤ 1% at 1000 objects | hypothesis | H-INV-1 |
+| Bloom FPR ≤ 1% at 1000 objects | later research only | H-INV-1; no M0–M9 implementation claim |
 | Time-to-first-meaning improvement over B1 | hypothesis | requires B1 timing |
 | Energy per inference on Tier B | unresolved | M0 uses manual form |
 | Throughput on real devices | unresolved | requires M3+ |

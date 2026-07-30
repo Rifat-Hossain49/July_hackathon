@@ -8,11 +8,14 @@ followed by progressive previews and, eventually, original-quality
 media completed from verified chunks collected across multiple peer
 encounters.
 
-**Status:** The Milestone 0 deterministic protocol simulator is
-implemented in `app/simulator/`. Decisions live in
-`PRODUCT_DECISIONS.md`, which is the canonical status source and
-currently reads `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_0`.
-Milestone 1 and later work remains unapproved and unimplemented.
+**Status:** Milestone 0 is implemented in `app/simulator/`; Milestone 1
+is implemented in `shongket_core/`. The combined baseline is **367
+passing tests, 0 failed, 0 skipped**. `PRODUCT_DECISIONS.md` is the
+canonical authorisation source and currently reads
+`IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_1`. The M2–M9 scope is
+frozen in `REMAINING_SCOPE.md`. A separate descendant ledger authorizes
+the exact software/evidence-tooling subset while leaving device, radio
+and field validation unapproved.
 
 **This repository contains a protocol simulator, not a deployable
 mobile application.** There is no Android app, no radio transport and
@@ -23,9 +26,8 @@ what is done and what is not.
 > capability is labelled as
 
 > [IMPLEMENTED] / [SIMULATED] / [PLANNED].
-> **The M0 harness has now run: 125 automated tests pass (0 failed,**
-> **0 skipped) covering the 18 M0-blocking acceptance IDs, with**
-> **byte-identical output across repeated runs.**
+> **The complete baseline has run: 367 automated tests pass (0 failed,**
+> **0 skipped): 125 M0 tests plus 242 M1 tests.**
 > **Every M0 number in this repository is a simulator measurement in**
 > **deterministic ticks, never a wall-clock or real-device figure;**
 > **real-device measurements come from later milestones.**
@@ -186,7 +188,7 @@ Shongket does not currently claim:
 
 ## 9. Limitations
 
-### 9.1 What is completed (Milestone 0 simulator)
+### 9.1 What is completed
 
 All of the following are implemented in `app/simulator/` and covered by
 passing automated tests. Every one is **simulated protocol behaviour**
@@ -207,6 +209,16 @@ between in-process peers:
 - deterministic metrics generation;
 - all 18 M0-blocking acceptance IDs.
 
+The platform-neutral `shongket_core/` also implements the complete M1
+scope:
+
+- canonical serialization, schema registry and explicit versions;
+- durable checksummed snapshots, crash recovery and advisory locking;
+- deterministic migration and rollback;
+- canonical errors and the six-clause forwarding policy;
+- language-neutral golden vectors;
+- all 16 M1-blocking acceptance IDs.
+
 ### 9.2 What is NOT completed
 
 None of the following exists in this repository:
@@ -223,7 +235,7 @@ None of the following exists in this repository:
 - Bloom-filter inventory;
 - coded reconstruction (Reed-Solomon / fountain / RaptorQ);
 - field testing;
-- Milestone 1 or later implementation.
+- Milestone 2 or later implementation.
 
 ### 9.3 Standing caveats
 
@@ -271,6 +283,11 @@ See [MILESTONES.md](./MILESTONES.md). Milestones:
 - M8: benchmarking.
 - M9: demo and public release.
 
+The remaining roadmap distinguishes a software-complete release
+candidate from a field-validated release. Software, JVM/emulator and
+two-process evidence cannot be used to claim physical-device,
+real-radio or field success.
+
 For experiments, see [EXPERIMENT_PLAN.md](./EXPERIMENT_PLAN.md). For
 test definitions, see [ACCEPTANCE_TESTS.md](./ACCEPTANCE_TESTS.md).
 For risks, see [RISK_REGISTER.md](./RISK_REGISTER.md). For protocol
@@ -299,25 +316,25 @@ These are stated in [PRODUCT_DECISIONS.md](./PRODUCT_DECISIONS.md)
 ## 13. AI assistance disclosure
 
 Per [HACKATHON_BRIEF.md](./HACKATHON_BRIEF.md) and
-[AI_USAGE.md](./AI_USAGE.md), AI assistance was used for planning
-drafts. No model has been chosen; model selection is benchmark-driven
+[AI_USAGE.md](./AI_USAGE.md), AI assistance was used for planning and
+implementation support. No model has been chosen; model selection is benchmark-driven
 per [MODEL_EVALUATION_PLAN.md](./MODEL_EVALUATION_PLAN.md).
 
 ---
 
 ## 14. Contribution
 
-Implementation is gated per milestone on `PRODUCT_DECISIONS.md`
-approval. Milestone 0 is approved and implemented, so contributions to
-`app/simulator/` are accepted against the M0 acceptance tests. Milestone
-1 and later work remains unapproved: contributions beyond the M0
-boundary are review-only against the planning documents until the
-status changes.
+Implementation is gated by the exact milestone/scope ledger in
+`PRODUCT_DECISIONS.md`. M0 and M1 are complete. M2–M9 software work is
+authorized only for the modules and acceptance IDs in the descendant
+ledger referencing scope-freeze commit `f85a7c5`. Physical-device,
+real-radio and field-validation success claims, production signing/trust
+decisions and public-store deployment remain unauthorized.
 
-Run the M0 test suite with:
+Run the complete baseline with:
 
 ```
-python -m pytest app/simulator/tests -q
+python -m pytest -q
 ```
 
 ---

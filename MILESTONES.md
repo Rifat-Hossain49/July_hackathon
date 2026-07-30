@@ -1,11 +1,12 @@
 # Shongket — Milestones (Draft 1)
 
-Implementation approval status is **tracked per milestone**. M0 was
-approved first, as this plan requires, and M1 was approved separately
-after its scope was frozen, reviewed and merged. Milestone 2 and every
-later milestone remain unapproved.
+Implementation approval status is **tracked per milestone and completion
+level**. M0 and M1 are complete. Scope-freeze commit `f85a7c5` was
+reviewed before the separate software authorization for M2 through M9.
 
 Per `PRODUCT_DECISIONS.md`: `IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_1`.
+The remaining-scope ledger separately records exact software and
+evidence-tooling authorization.
 
 Approval is never cumulative by implication: approval for one milestone
 does not authorise any later milestone's work.
@@ -38,11 +39,11 @@ This milestone does not implement coded reconstruction.
   `MEDIA_PIPELINE.md`, `EXPERIMENT_PLAN.md`, `ACCEPTANCE_TESTS.md`
   approved.
 - **Deliverables:**
-  - executable simulator harness (single-process multi-agent or two-process)
+  - executable simulator harness with single-process simulated peers
   - fixed-size fragmentation strategy implementation
   - SHA-256 per chunk + per representation
   - deterministic scheduler
-  - Bloom inventory encoding
+  - deterministic explicit fragment inventory
   - empty result tables fed by harness logs
 - **Acceptance criteria (all required):**
   1. Semantic capsule always scheduled before bulk media for the same
@@ -82,8 +83,7 @@ This milestone does not implement coded reconstruction.
 
 ## Milestone 1 — Production-quality deterministic core
 
-**Status:** APPROVED_FOR_MILESTONE_1. Implementation is authorised
-strictly within the frozen M1 scope; nothing is implemented yet.
+**Status:** APPROVED_FOR_MILESTONE_1 and COMPLETE.
 
 Stabilize the protocol proven in Milestone 0.
 
@@ -159,224 +159,283 @@ interfaces, but does not add Android transport or coded delivery.
   `hop_count` and `remaining_copy_budget` that never alter `object_id`.
 - **Approval gate:** cleared. The design was frozen and reviewed first,
   then approved separately; `IMPLEMENTATION_STATUS` is now
-  `APPROVED_FOR_MILESTONE_1`. Work may proceed only within the frozen
-  scope above, beginning with Slice 1 (canonical serialization, schema
-  registry, protocol version handling and compatibility tests).
+  `APPROVED_FOR_MILESTONE_1`. All five authorised slices are complete;
+  this approval does not extend to M2 or later work.
+
+---
+
+## Remaining milestone completion model
+
+M2 through M9 use two distinct gates:
+
+- **SOFTWARE-COMPLETE RELEASE CANDIDATE:** locally implementable code,
+  Android/JVM or emulator evidence, two-process evidence, packaging and
+  checklists. It makes no device, radio or field claim.
+- **FIELD-VALIDATED RELEASE:** the software candidate plus physical
+  devices, real radios, repeated runs, device measurements, production
+  release decisions and field evidence.
+
+Automation vocabulary is defined in `ACCEPTANCE_TESTS.md`:
+`AUTOMATED_LOCAL`, `TWO_PROCESS`, `JVM_OR_EMULATOR`,
+`PHYSICAL_DEVICE`, `REAL_RADIO` and `FIELD_ONLY`.
 
 ---
 
 ## Milestone 2 — Local two-process transfer
 
-**Status:** PROPOSED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION.
+**Classification:** software-testable.
 
-Two local processes exchange protocol objects through a local test
-transport.
-
-No Android, Nearby Connections, Wi-Fi Direct or OEM compatibility
-testing belongs to this milestone.
-
-- **Objective:** run the M1 core across two real OS processes on a
-  developer machine.
-- **Why:** validates scheduler / IPC boundary before Android.
-- **Dependencies:** M1 acceptance.
-- **Deliverables:** two processes cooperating over loopback /
-  stdin-stdout for testing.
-- **Acceptance criteria:** M1 acceptance tests pass on two-process
-  harness.
-- **Tests:** same suite, two-process mode.
-- **Explicitly excluded:** Android, real radios.
-- **Fallback:** if IPC fails, narrow to single-process before M3.
-- **Rollback condition:** revert to M1 harness.
-- **Estimated complexity:** S.
-- **Primary risks:** IPC bottlenecks.
-- **Implementation approval status:** PROPOSED.
+- **Objective:** run the completed M1 core across two real OS processes
+  on one developer machine.
+- **Prerequisite milestones:** M1 COMPLETE.
+- **Deliverables:** a 4-byte big-endian `FrameCodec`; stdio and TCP
+  loopback endpoints; deterministic process fixtures; interruption,
+  crash, restart and resume evidence.
+- **Exclusions:** Android, radio APIs, device claims, shared concurrent
+  writers and any change to M1 protocol behaviour.
+- **Implementation boundary:** `adapters/process/` and
+  `adapters/transport_sim/`; both import the core, never the reverse.
+- **Acceptance IDs:** AT-38, AT-39, AT-40, AT-41.
+- **Evidence and tests:** `TWO_PROCESS` transcripts, canonical-vector
+  hashes, missing-chunk request lists, process-exit evidence and the
+  unchanged 367-test baseline. No emulator or hardware test is needed.
+- **Completion gate:** all four IDs pass in two fresh OS processes and
+  M0/M1 evidence remains byte-identical.
+- **Rollback boundary:** revert the M2 adapter slice; the in-process M1
+  core remains the working baseline.
 
 ---
 
-## Milestone 3 — Android direct peer transport
+## Milestone 3 — Android foundation and direct peer transport
 
-**Status:** PROPOSED; gated by the **transport smoke-test gate**.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION;
+FIELD_VALIDATION_NOT_APPROVED.
+**Classification:** mixed (software/emulator plus real radio).
 
-This milestone contains:
-
-- Nearby Connections smoke testing;
-- Wi-Fi Direct evaluation;
-- local-hotspot evaluation;
-- Android permission behavior;
-- vendor compatibility;
-- interruption and reconnection testing;
-- real-device throughput measurements;
-- repeated demo-device reliability testing.
-
-The transport remains provisional until the smoke-test gate passes.
-
-- **Objective:** connect the M1 core to a real Android transport.
-- **Why:** tests the `TransportAdapter` boundary in practice.
-- **Dependencies:** M2; smoke-test gate result (see
-  `RESEARCH_LOG.md` §Transport).
-- **Deliverables:** an APK-shaped artifact (no `app/` change in this
-  plan) running the M1 core on real hardware.
-- **Acceptance criteria:** smoke-test gate criteria all pass;
-  short-encounter scenario passes on real devices.
-- **Tests:** real-device transport tests in `ACCEPTANCE_TESTS.md`.
-- **Explicitly excluded:** production hardening; offline AI runtime.
-- **Fallback:** if no transport passes the gate, M3 is blocked; use
-  the simulated heap until a transport passes.
-- **Rollback condition:** keep M1 core; do not abandon `app/`
-  scaffolding.
-- **Estimated complexity:** L.
-- **Primary risks:** Android vendor fragmentation; permission
-  complexity; Play Services dependency.
-- **Implementation approval status:** PROPOSED.
+- **Objective:** create the Android/Kotlin application foundation,
+  prove Kotlin conformance, and place direct peer transport behind the
+  frozen adapter boundary.
+- **Prerequisite milestones:** M2 software gate.
+- **Deliverables:** Android Gradle project; Kotlin conformance codec;
+  app-private persistence adapter; single-activity Compose shell;
+  lifecycle-safe UI state; permission UX; simulated transport; a
+  provisional Nearby Connections adapter and documented alternates.
+- **Exclusions:** locked transport claims, OEM support claims, offline
+  model inference, field completion, public-store publication and
+  production keys.
+- **Implementation boundary:** new `android/` modules only, plus the
+  transport interfaces frozen in `REMAINING_SCOPE.md`; the Python core
+  and M0 simulator are not rewritten for Android.
+- **Acceptance IDs:** AT-39, AT-42 through AT-50.
+- **Automated/local tests:** AT-39 and the simulated portions of AT-42
+  through AT-44.
+- **Emulator tests:** AT-39 and AT-42 through AT-46.
+- **Physical/real-radio tests:** AT-47 through AT-50; these are manual
+  field-validation gates and cannot block software implementation.
+- **Evidence:** vector hash parity, adapter event sequences, lifecycle
+  and denied-permission state, then device/session logs and ten cold
+  real-radio runs.
+- **Completion gate:** software half passes AT-39 and AT-42 through
+  AT-46; field half separately passes AT-47 through AT-50 on the named
+  devices. Until then the transport remains provisional.
+- **Rollback boundary:** remove or swap Android adapters; M2 and the
+  canonical Python core remain intact.
 
 ---
 
 ## Milestone 4 — Progressive media transfer
 
-**Status:** PROPOSED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION;
+FIELD_VALIDATION_NOT_APPROVED.
+**Classification:** mixed (software/emulator plus real radio).
 
-- **Objective:** demonstrate the D-007 progressive delivery order in
-  real transfers.
-- **Why:** supports the central thesis; non-trivial real-device
-  validation.
-- **Dependencies:** M3.
-- **Deliverables:** progressive representations + ordering on real
-  devices.
-- **Acceptance criteria:** AT-PROG-1..AT-PROG-3 pass.
-- **Tests:** `ACCEPTANCE_TESTS.md` progressive media group.
-- **Explicitly excluded:** SVC; partial-file playback.
-- **Fallback:** if a representation can't be produced at runtime, the
-  UI shows a clear "this representation unavailable" status.
-- **Rollback condition:** fall back to thumbnail-only delivery.
-- **Estimated complexity:** M.
-- **Primary risks:** codec availability; storage pressure.
-- **Implementation approval status:** PROPOSED.
+- **Objective:** implement source-preserving progressive
+  representations and D-007 delivery ordering.
+- **Prerequisite milestones:** M3 software gate; real-radio validation
+  is required only for the M4 field gate.
+- **Deliverables:** capture/load ports for photo, short video, audio,
+  text and document; `thumb`, `preview`, `standard`, `original`
+  availability metadata; platform codec adapter; fixed-size chunking,
+  hashes, preview/playback state and reconstruction.
+- **Exclusions:** SVC, partial-file playback, content-defined chunking,
+  keyframe-aligned chunking and any claim of universal codec support.
+- **Implementation boundary:** `android/media/` performs platform
+  encoding; deterministic chunking, identity, ordering and integrity
+  stay transport-neutral.
+- **Acceptance IDs:** AT-51 through AT-55.
+- **Automated/local tests:** AT-51, AT-52, AT-54 with deterministic
+  fixtures; **emulator tests:** AT-51 through AT-54; **real-radio
+  test:** AT-55.
+- **Evidence:** representation manifests, availability states,
+  before/after source hashes, arrival-order logs and the final
+  reconstruction hash.
+- **Completion gate:** AT-51 through AT-54 gate software completion;
+  AT-55 gates the M4 field claim.
+- **Rollback boundary:** fall back to thumbnail-only representation
+  while retaining the original and explicit unavailable states.
 
 ---
 
 ## Milestone 5 — Real-device multi-peer completion
 
-**Status:** PROPOSED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_EVIDENCE_TOOLING_ONLY;
+FIELD_VALIDATION_NOT_APPROVED.
+**Classification:** physical-device-dependent and real-radio-dependent.
 
-Complete original media using ordinary verified chunks collected from
-multiple physical peers.
-
-This is not coded reconstruction.
-
-- **Objective:** validate multi-peer missing-chunk completion on real
-  devices.
-- **Why:** central to the product thesis.
-- **Dependencies:** M4.
-- **Deliverables:** ≥ 3 devices demonstrating multi-peer
-  reconstruction.
-- **Acceptance criteria:** AT-MP-1..AT-MP-5 pass.
-- **Tests:** `ACCEPTANCE_TESTS.md` multi-peer group.
-- **Explicitly excluded:** erasure / rateless coding (deferred to a
-  later research milestone).
-- **Fallback:** if real devices fail, fall back to M1+simulation.
-- **Rollback condition:** none — multi-peer is a core claim.
-- **Estimated complexity:** L.
-- **Primary risks:** real-device reliability.
-- **Implementation approval status:** PROPOSED.
+- **Objective:** validate ordinary missing-chunk completion from a
+  least three physical peers.
+- **Prerequisite milestones:** M4 software and real-radio gates.
+- **Deliverables:** device-run script, inventory seed fixtures,
+  fragment-source report and reconstruction-hash report.
+- **Exclusions:** Reed-Solomon, fountain codes, RaptorQ, simulated
+  evidence presented as device evidence, and guaranteed delivery.
+- **Implementation boundary:** no new protocol algorithm; M5 executes
+  the M4/M1 implementation on real devices.
+- **Acceptance IDs:** AT-56 and AT-57.
+- **Tests:** `REAL_RADIO` only; local/emulator fixtures may rehearse the
+  script but cannot satisfy either ID.
+- **Evidence:** named device/OS matrix, contributing peer IDs,
+  missing-only requests and matching representation hashes.
+- **Completion gate:** both IDs pass on at least three real devices.
+- **Rollback boundary:** retain the software-complete M4 candidate and
+  report M5 as unvalidated; never replace failed evidence with a
+  simulation claim.
 
 ---
 
 ## Later research extension — Coded delivery
 
-**Status:** NOT PART OF M0–M5.
+**Status:** OUTSIDE_M0_THROUGH_M9.
 
-Possible later strategies:
-
-- Reed-Solomon;
-- fountain codes;
-- RaptorQ.
-
-This extension requires separate approval and is not part of M0–M5
-unless explicitly added later.
+Reed-Solomon, fountain codes and RaptorQ require a separate scope,
+dependency review, acceptance catalogue and implementation approval.
 
 ---
 
 ## Milestone 6 — Offline semantic extraction
 
-**Status:** PROPOSED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION;
+FIELD_VALIDATION_NOT_APPROVED.
+**Classification:** mixed (software fallback plus optional device model).
 
-- **Objective:** integrate a benchmark-selected offline model
-  (per `MODEL_EVALUATION_PLAN.md`).
-- **Why:** automate the suggestion step; preserve manual form as
-  fallback.
-- **Dependencies:** M5; benchmark result on M6 device profiles.
-- **Deliverables:** offline model selector + manual form fallback.
-- **Acceptance criteria:** metrics in `MODEL_EVALUATION_PLAN.md` meet
-  declared thresholds; Bangla support meets threshold.
-- **Tests:** benchmark corpus + AT-AI-1..AT-AI-4.
-- **Explicitly excluded:** cloud AI; replacing original media.
-- **Fallback:** manual form (D-011).
-- **Rollback condition:** revert to M5 product shape.
-- **Estimated complexity:** L.
-- **Primary risks:** model size, Bangla support, energy use.
-- **Implementation approval status:** PROPOSED.
-
----
-
-## Milestone 7 — Integration and resilience
-
-**Status:** PROPOSED.
-
-- **Objective:** full integration of M1–M6 with restart, interruption,
-  low-storage, low-battery, denied-permissions handling.
-- **Why:** real-world resilience.
-- **Dependencies:** M6.
-- **Deliverables:** integrated app; resilience test results.
-- **Acceptance criteria:** `ACCEPTANCE_TESTS.md` resilience group.
-- **Tests:** `ACCEPTANCE_TESTS.md` resilience group.
-- **Explicitly excluded:** production hardening (out of hackathon).
-- **Fallback:** narrower resilience subset on lower tiers.
-- **Rollback condition:** M5+M6 stable build.
-- **Estimated complexity:** M.
-- **Primary risks:** low-end device behavior.
-- **Implementation approval status:** PROPOSED.
+- **Objective:** provide an optional offline `SemanticExtractor` while
+  preserving the complete manual capsule path.
+- **Prerequisite milestones:** M4 software gate. M5 field evidence is
+  not required to implement or verify the model-independent software.
+- **Deliverables:** `Unavailable`, deterministic `TestDouble` and
+  pluggable real-runtime interfaces; manual form; human review and
+  confirmation; model package/resource evaluation hooks.
+- **Exclusions:** cloud inference, mandatory model downloads, model
+  output as truth, autonomous publication and source replacement.
+- **Implementation boundary:** `android/semantic/` is independent from
+  networking; protocol acceptance uses only deterministic doubles.
+- **Acceptance IDs:** AT-58 through AT-62.
+- **Automated/local and emulator tests:** AT-58 through AT-60.
+- **Physical-device evidence:** AT-61 and AT-62 are non-blocking
+  research evidence; a negative result selects `Unavailable` and the
+  manual fallback.
+- **Evidence:** deterministic paired outputs, offline/no-download
+  assertion, source linkage, resource measurements and Bangla scores.
+- **Completion gate:** AT-58 through AT-60 gate software completion.
+  Model claims additionally require AT-61 and AT-62 evidence.
+- **Rollback boundary:** select `Unavailable`; the app remains usable
+  through the manual form.
 
 ---
 
-## Milestone 8 — Benchmarking
+## Milestone 7 — Integration, resilience and privacy controls
 
-**Status:** PROPOSED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION;
+FIELD_VALIDATION_NOT_APPROVED.
+**Classification:** mixed (software/emulator plus device evidence).
 
-- **Objective:** fill the empty result tables with measured numbers
-  from M7.
-- **Why:** replaces simulations with measured numbers.
-- **Dependencies:** M7.
-- **Deliverables:** filled `EXPERIMENT_PLAN.md` tables; per-tier
-  results.
-- **Acceptance criteria:** every "hypothesis" target has a measured
-  number with confidence interval or explicit failure note.
-- **Tests:** all metrics in `EXPERIMENT_PLAN.md`.
-- **Explicitly excluded:** marketing claims.
-- **Fallback:** fall back to M7 simulation-only results.
-- **Rollback condition:** keep M7 as the baseline.
-- **Estimated complexity:** M.
-- **Primary risks:** measurement bias.
-- **Implementation approval status:** PROPOSED.
+- **Objective:** integrate M2, the M3/M4 software, and the M6 manual
+  path with lifecycle, storage, permission, security and diagnostic
+  controls.
+- **Prerequisite milestones:** M2 and the software gates of M3, M4 and
+  M6.
+- **Deliverables:** restart recovery; rejection-only storage-pressure
+  UX; permission degradation; consent UX; malformed-input and
+  replay/flood limits; platform key-storage abstraction; redacted,
+  opt-in diagnostics.
+- **Exclusions:** bespoke encryption, production trust roots,
+  production keys, silent telemetry, cloud services and claims of a
+  security audit.
+- **Implementation boundary:** `android/app`, `android/ui`,
+  `android/security`, `android/diagnostics` and adapters over unchanged
+  deterministic core contracts.
+- **Acceptance IDs:** AT-63 through AT-73.
+- **Automated/local tests:** AT-64, AT-67 and AT-69 through AT-73;
+  **emulator tests:** AT-63, AT-64 and AT-66 through AT-70;
+  **physical-device test:** AT-65.
+- **Evidence:** restart inventories, quota and permission transcripts,
+  refusal records, repository secret scan, storage/backup inspection
+  and field-level diagnostic scan.
+- **Completion gate:** all applicable software/emulator assertions in
+  AT-63, AT-64 and AT-66 through AT-73 pass. AT-65 separately gates the
+  low-battery device claim.
+- **Rollback boundary:** revert the failing integration slice and keep
+  the last passing M4/M6 software assembly; verified content is not
+  discarded to make rollback succeed.
 
 ---
 
-## Milestone 9 — Demo and public release
+## Milestone 8 — Device benchmarking
 
-**Status:** PROPOSED.
+**Status:** SCOPE_FROZEN; APPROVED_FOR_EVIDENCE_TOOLING_ONLY;
+FIELD_VALIDATION_NOT_APPROVED.
+**Classification:** physical-device-dependent.
 
-- **Objective:** honest, reproducible demonstration + public release.
-- **Why:** rubric weights impact + presentation + public engagement.
-- **Dependencies:** M8.
-- **Deliverables:** demo script, public README, public release.
-- **Acceptance criteria:** demo runs the smoke-test gate 10× in a row.
-- **Tests:** repeated demo reliability test.
-- **Explicitly excluded:** claims exceeding measurements.
-- **Fallback:** if repeated run fails, demo runs with documented
-  countermeasure.
-- **Rollback condition:** none.
-- **Estimated complexity:** S.
-- **Primary risks:** demo flakiness; overclaim.
-- **Implementation approval status:** PROPOSED.
+- **Objective:** replace `UNMEASURED` device cells with reproducible
+  observations from the integrated build.
+- **Prerequisite milestones:** M7 software gate and required device
+  setup.
+- **Deliverables:** committed benchmark runner/checklist, device/run
+  metadata schema and filled `EXPERIMENT_PLAN.md` result tables.
+- **Exclusions:** invented numbers, simulator values labelled as device
+  values, performance marketing claims and hidden failed runs.
+- **Implementation boundary:** evidence tooling may be prepared
+  locally; actual measurements require physical devices.
+- **Acceptance ID:** AT-74.
+- **Tests:** runner/schema validation is `AUTOMATED_LOCAL`; acceptance
+  evidence is `PHYSICAL_DEVICE`.
+- **Evidence:** raw run records, confidence interval or explicit
+  failure note, device/OS/build metadata and reproducible aggregation.
+- **Completion gate:** AT-74 is executed on the named devices; a failed
+  target is recorded as a result, not rewritten as success.
+- **Rollback boundary:** preserve M7 and leave cells `UNMEASURED`;
+  never substitute fabricated values.
+
+---
+
+## Milestone 9 — Packaging, demo and public release
+
+**Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION;
+FIELD_VALIDATION_NOT_APPROVED.
+**Classification:** mixed (software packaging plus radio/field gates).
+
+- **Objective:** produce an honest, reproducible software release
+  candidate and a separately field-validated demonstration package.
+- **Prerequisite milestones:** M7 software gate for packaging; M8
+  evidence and the required manual release decisions for public claims.
+- **Deliverables:** reproducible local build; install/upgrade fixtures;
+  demo script; device/field checklists; public status documentation.
+- **Exclusions:** embedded production keys, automatic store
+  publication, claims exceeding evidence and any field trial without
+  explicit consent/authorisation.
+- **Implementation boundary:** build/packaging, migration fixtures and
+  documentation. Production signing and publication remain manual.
+- **Acceptance IDs:** AT-75 through AT-78.
+- **Automated/local test:** AT-75; **emulator test:** AT-76;
+  **real-radio test:** AT-77; **field-only test:** AT-78.
+- **Evidence:** independent build hashes, install/upgrade inventories,
+  ten cold demo records and consented field logs.
+- **Completion gate:** AT-75 and AT-76 produce the software-complete
+  candidate. AT-77, AT-78 and all manual release gates are required
+  before any field-validated or public-release claim.
+- **Rollback boundary:** publish no claim or artifact; retain the
+  software candidate and document the failed gate.
 
 ---
 

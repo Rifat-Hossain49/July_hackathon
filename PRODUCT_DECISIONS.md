@@ -4,8 +4,10 @@
 
 IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_1
 
-Implementation must not begin until this value is changed to the
-milestone-scoped approval covering the work in question.
+This top-level value records the last approved completed milestone. M0 and
+M1 work is governed by it. M2 through M9 work is governed by the exact
+per-milestone software authorization ledger below, which references the
+reviewed scope-freeze commit.
 
 ### Milestone 1 approval record
 
@@ -44,8 +46,9 @@ Milestone 0 work authorised by the boundary below is implemented in
 skipped) across the 18 M0-blocking acceptance IDs. Evidence is recorded
 in `ACCEPTANCE_TESTS.md` and `EXPERIMENT_PLAN.md`.
 
-This status value is unchanged by that work. Milestone 1 and later work
-remains unauthorised, and no later-milestone status has been granted.
+Milestone 1 was subsequently approved and completed. The current status
+records that M1 approval. The separate descendant approval record below
+governs the software-testable portions of Milestones 2 through 9.
 
 ## Implementation approval policy
 
@@ -58,8 +61,12 @@ Valid approval values include:
 - `NOT_APPROVED`
 - `APPROVED_FOR_MILESTONE_0`
 - `APPROVED_FOR_MILESTONE_1`
+- per-milestone `APPROVED_FOR_SOFTWARE_IMPLEMENTATION`
+- per-milestone `APPROVED_FOR_EVIDENCE_TOOLING_ONLY`
+- per-milestone `FIELD_VALIDATION_NOT_APPROVED`
 
-Approval for Milestone 0 does not authorize Milestone 1 or later work.
+Approval for one milestone or completion level does not authorize any
+other milestone or completion level.
 
 ## Milestone 0 approval boundary
 
@@ -211,25 +218,23 @@ Every feature must be classified as:
 
 Simulated behavior must never be presented as real networking behavior.
 
-## Open decisions
+## Remaining open or manual decisions
 
-- Android transport for the first prototype
-- Initial chunk size
-- Erasure/fountain coding implementation
-- Content inventory representation
-- Offline model and runtime
-- Video keyframe extraction approach
-- Private versus public content encryption
-- Device compatibility target
-- Measurable throughput target
+- Production signing-key ownership and custody.
+- Production signer allow-list / trust root.
+- Public app-store publication.
+- Final privacy/legal review and any data-retention policy.
+- Field-trial site, participants and informed consent.
+- Benchmark-selected optional offline model and measured thresholds.
+- Device compatibility and performance claims, which require evidence.
+- Any future coded-delivery or probabilistic-inventory experiment,
+  which requires a separate scope and approval.
 
 ### Milestone 1 design decisions — ACCEPTED
 
 These eight decisions are **ACCEPTED** as the design basis for Milestone
-1. Acceptance settles the design; it does **not** authorise
-implementation. `IMPLEMENTATION_STATUS` above remains
-`APPROVED_FOR_MILESTONE_0`, and M1 stays PROPOSED in `MILESTONES.md`.
-Full rationale and trade-offs are in
+1. They were later approved and implemented; all M1 acceptance evidence
+is complete. Full rationale and trade-offs are in
 [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md) §5.
 
 | ID | Decision | Status |
@@ -258,24 +263,91 @@ the version format (D-M1-05, `PROTOCOL_SPEC.md` §9.1), the timestamp
 divergence (D-M1-A1, §9.2) and unenforced `hop_limit` / `copy_budget`
 (D-M1-A3, §6). See `M1_SCOPE_FREEZE.md` §4 for the record of each.
 
-### Open decisions carried from Milestone 0
+### Historical decisions carried from Milestone 0
 
-The following surfaced during Milestone 0 implementation and are
-recorded here as open, not resolved:
+The following surfaced during Milestone 0 and are retained as history.
+The first three are resolved by accepted M1 decisions; the transport
+choice is frozen only as a provisional remaining-scope decision:
 
-- **Canonical private/consent field names.** `PROTOCOL_SPEC.md` §8
+- **Canonical private/consent field names — RESOLVED by D-M1-01/02.**
+  `PROTOCOL_SPEC.md` §8
   requires explicit consent before forwarding private content, and
   AT-16 assumes a "private marker", but no §3 schema names the fields
   that carry either. The M0 simulator uses provisional manifest fields
   `private` and `forwarding_consent`; the names need freezing in the
   schema before M1.
-- **`PeerCapabilities.public_only` interaction.** §3.5 declares this
+- **`PeerCapabilities.public_only` interaction — RESOLVED by D-M1-03.**
+  §3.5 declares this
   peer property, but no document defines how it composes with an
   object's private marker and consent. M0 implements the object-side
   gate only and leaves the interaction unspecified.
-- **Device-side storage eviction.** AT-12 splits into an M0 rule and an
-  M5+ effect. M0 implements refusal with the canonical `out_of_budget`
-  status; which content is evicted under real device pressure, and in
-  what order, is undecided.
-- **Later Android transport choices.** Unchanged and still open; M0
-  asserts nothing about any radio transport.
+- **Device-side storage eviction — RESOLVED as rejection-only for the
+  frozen M0–M9 software scope by D-M1-04/D-RS-07.** No eviction is
+  silently introduced.
+- **Later Android transport choices — PROVISIONAL.** Nearby Connections
+  is first to implement behind the adapter, but remains unlocked until
+  AT-47 through AT-50 pass on hardware.
+
+## Remaining-scope design ledger — FROZEN AND SOFTWARE-AUTHORISED
+
+`REMAINING_SCOPE.md` and scope-freeze commit
+`f85a7c5e1f400b53c8f348284140b488ae677958` freeze the
+following design decisions against baseline `80b5fe8`. This section is
+the separate descendant approval record. It authorizes only the
+software-testable modules and acceptance IDs in the authorization table
+below.
+
+| ID | Frozen decision | Scope-freeze status |
+|---|---|---|
+| D-RS-01 | Android implementation uses Kotlin and Android Gradle | FROZEN |
+| D-RS-02 | Python remains canonical; Kotlin proves vector parity | FROZEN |
+| D-RS-03 | M2 uses a bounded four-byte-length-prefixed canonical JSON frame over stdio/loopback | FROZEN |
+| D-RS-04 | Transport adapters carry bytes/capabilities/liveness and make no policy decision | FROZEN |
+| D-RS-05 | Nearby Connections is provisional; hardware gate required before selection claims | FROZEN |
+| D-RS-06 | Single-activity Compose, unidirectional state and a platform-permitted background-transfer port | FROZEN |
+| D-RS-07 | Android persists the canonical envelope in app-private storage; storage pressure remains rejection-only | FROZEN |
+| D-RS-08 | Platform codecs sit behind `MediaPipeline`; source bytes and identity are preserved | FROZEN |
+| D-RS-09 | `SemanticExtractor` is optional; manual/unavailable is default and tests use a deterministic double | FROZEN |
+| D-RS-10 | Development signing mechanics only; production key custody and trust root are manual | FROZEN |
+| D-RS-11 | Platform key storage, app-private data and explicit backup exclusions; no bespoke crypto claim | FROZEN |
+| D-RS-12 | Least-privilege, point-of-use permissions; denial is a supported state | FROZEN |
+| D-RS-13 | Diagnostics are opt-in, allow-listed and content-free | FROZEN |
+| D-RS-14 | Reproducible local release candidate; store deployment and production signing remain manual | FROZEN |
+
+Manual release decisions MRD-01 through MRD-05 cover production signing
+custody, the production trust root, public-store deployment, any
+personal-data retention, and field-trial participants/consent. They are
+not delegated to an implementation agent and do not block the
+software-complete candidate.
+
+### Remaining software implementation authorization
+
+- `SOFTWARE_SCOPE_STATUS: APPROVED_FOR_SOFTWARE_IMPLEMENTATION`
+- `SOFTWARE_SCOPE_FREEZE_COMMIT: f85a7c5e1f400b53c8f348284140b488ae677958`
+- `SOFTWARE_TARGET: SOFTWARE_COMPLETE_RELEASE_CANDIDATE`
+- `FIELD_VALIDATION_STATUS: FIELD_VALIDATION_NOT_APPROVED`
+
+AT-38 through AT-78 are approved as the remaining acceptance
+specification. None is implemented or passing at this approval point.
+AT-38 through AT-46, AT-51 through AT-54, AT-58 through AT-60, AT-63,
+AT-64, AT-66 through AT-73, AT-75 and AT-76 are the 28
+software-complete blockers.
+
+| Milestone | Exact authorization | Authorized acceptance IDs | Explicit exclusions |
+|---|---|---|---|
+| M2 | `APPROVED_FOR_SOFTWARE_IMPLEMENTATION` | AT-38–AT-41 | No Android, radio or field claim |
+| M3 | `APPROVED_FOR_SOFTWARE_IMPLEMENTATION`; `FIELD_VALIDATION_NOT_APPROVED` | AT-39, AT-42–AT-46 | AT-47–AT-50; Nearby or other radio-selection claim |
+| M4 | `APPROVED_FOR_SOFTWARE_IMPLEMENTATION`; `FIELD_VALIDATION_NOT_APPROVED` | AT-51–AT-54 | AT-55–AT-57; real-device progressive-transfer claim |
+| M5 | `APPROVED_FOR_EVIDENCE_TOOLING_ONLY`; `FIELD_VALIDATION_NOT_APPROVED` | Harness/evidence preparation for AT-55–AT-57 | Passing AT-55–AT-57; real-device or real-radio completion claim |
+| M6 | `APPROVED_FOR_SOFTWARE_IMPLEMENTATION`; `FIELD_VALIDATION_NOT_APPROVED` | AT-58–AT-60 | Passing AT-61–AT-62; bundling a production model without a separate dependency decision |
+| M7 | `APPROVED_FOR_SOFTWARE_IMPLEMENTATION`; `FIELD_VALIDATION_NOT_APPROVED` | AT-63–AT-64, AT-66–AT-73 | Passing AT-65; production keys or trust-root decisions |
+| M8 | `APPROVED_FOR_EVIDENCE_TOOLING_ONLY`; `FIELD_VALIDATION_NOT_APPROVED` | Benchmark harness and evidence schema for AT-74 | Measured device results or a passing AT-74 claim |
+| M9 | `APPROVED_FOR_SOFTWARE_IMPLEMENTATION`; `FIELD_VALIDATION_NOT_APPROVED` | AT-75–AT-76 plus evidence-package assembly | Passing AT-77–AT-78; public-store deployment, production signing, or field-trial approval |
+
+This authorization permits the nine implementation slices in
+`REMAINING_SCOPE.md` only to the extent covered by the table. Physical
+device, real-radio and field-only success evidence remains a manual
+completion level. Production key custody, production trust roots,
+public-store deployment, personal-data retention policy, and field-trial
+participants/consent remain MRD-01 through MRD-05 and are not delegated
+to an implementation agent.

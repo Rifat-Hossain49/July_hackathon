@@ -2,17 +2,22 @@
 
 ## Status
 
-Planning-only. This repository contains planning documents. No
-implementation code has been authored yet (see
-[PRODUCT_DECISIONS.md](./PRODUCT_DECISIONS.md) `IMPLEMENTATION_STATUS`).
+This repository contains implemented M0/M1 code and planning for the
+remaining milestones. M0/M1 implementation evidence is recorded in
+`ACCEPTANCE_TESTS.md`; authorisation remains governed by
+[PRODUCT_DECISIONS.md](./PRODUCT_DECISIONS.md).
 
 ## Planning assistance
 
-Drafting of the planning documents in this repository was assisted
+Drafting and review of repository documentation and implementation was assisted
 by Claude Opus 4.8 (Anthropic), used as a planning-aid tool under
 human direction. The human product owner / principal architect
 remains responsible for every claim, every architectural decision,
 and every boundary stated in this plan.
+
+The interrupted remaining-scope recovery, scope freeze and approval
+documentation were completed with OpenAI Codex. This documentation task
+did not write or modify application code.
 
 ## What the AI was used for
 

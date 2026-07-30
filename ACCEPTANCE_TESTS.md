@@ -1,8 +1,8 @@
 # Shongket — Acceptance Tests (Draft 1)
 
-Planning-only. Each test: preconditions, input, steps, expected
-result, automation level, milestone, evidence required, failure
-severity.
+Canonical acceptance specification and evidence catalogue. Each test
+defines preconditions, input, steps, expected result, automation level,
+milestone, evidence and failure severity.
 
 Severity scale:
 - **S1 critical:** blocks M0 approval.
@@ -263,11 +263,10 @@ Severity scale:
 
 # Milestone 1 acceptance tests (AT-22 … AT-37)
 
-**Status: PROPOSED.** These define the M1-blocking catalogue approved in
-`M1_SCOPE_FREEZE.md`. They are specifications only — no M1
-implementation exists and no M1 result is recorded. `IMPLEMENTATION_STATUS`
-remains `APPROVED_FOR_MILESTONE_0`, so none of these may be implemented
-yet.
+**Status: COMPLETE.** These are the M1-blocking catalogue approved in
+`M1_SCOPE_FREEZE.md`. AT-22 through AT-37 are implemented and passing;
+the evidence below records 242 M1 tests plus the 125-test M0 regression
+gate. `IMPLEMENTATION_STATUS` is `APPROVED_FOR_MILESTONE_1`.
 
 Severity follows the existing scale: **S2 blocks M1 approval**; the two
 S1 rows (AT-30, AT-37) additionally protect M0 evidence already earned.
@@ -614,31 +613,631 @@ tests as follows. No clause is left untested:
 
 ---
 
+# Remaining-project acceptance tests (AT-38 … AT-78)
+
+**Status: APPROVED SPECIFICATION. None of these is implemented and none
+is passing.** The descendant approval record authorizes only the
+software/evidence-tooling portions named in `PRODUCT_DECISIONS.md`.
+Physical-device, real-radio and field definitions are gates, not
+authorization or success claims.
+
+Automation levels used below:
+
+- `AUTOMATED_LOCAL` — normal suite on a developer machine;
+- `TWO_PROCESS` — two real OS processes on one machine;
+- `JVM_OR_EMULATOR` — Android JVM or emulator, with no radio claim;
+- `PHYSICAL_DEVICE` — real handset evidence without a radio claim;
+- `REAL_RADIO` — real handsets communicating over the named radio;
+- `FIELD_ONLY` — a real partial-connectivity environment.
+
+Only *automated local*, *two-process* and *emulator* tests can gate a
+software-complete release candidate. Physical-device and field-only
+tests gate field validation and must never be claimed from a simulator
+or emulator run.
+
+## AT-38 Two-process framed transfer
+
+- Requirement: the M1 core exchanges protocol objects across two real OS processes (M2 objective).
+- Preconditions: two processes started from the same build; a shared loopback or stdio channel.
+- Input: a complete object — capsule, manifest and every fragment.
+- Steps: start both processes; transfer; verify on the receiver.
+- Expected result: the receiver reconstructs the representation; the SHA-256 equals the manifest hash; frames respect the 1048576-byte transport limit.
+- Automation level: TWO_PROCESS.
+- Milestone: M2.
+- Severity: S1.
+- Evidence: per-process event logs and the reconstructed hash.
+- Runtime boundary: `adapters/process`.
+
+## AT-39 Cross-language and cross-process conformance parity
+
+- Requirement: every implementation of the core produces byte-identical canonical output (D-RS-02).
+- Preconditions: the committed golden vectors.
+- Input: every vector in `shongket_core/testdata/`.
+- Steps: encode each vector in the Python core, in the sending process, in the receiving process, and in the Kotlin core once it exists; compare bytes and SHA-256.
+- Expected result: all implementations agree byte-for-byte; a divergence fails the build and names the vector.
+- Automation level: AUTOMATED_LOCAL, TWO_PROCESS, JVM_OR_EMULATOR.
+- Milestone: M2, M3.
+- Severity: S1.
+- Evidence: per-implementation SHA-256 table.
+- Runtime boundary: `shongket_core/codec`, `android/core-conformance`.
+
+## AT-40 Two-process interruption and resume
+
+- Requirement: an interrupted cross-process transfer resumes without re-sending verified chunks.
+- Preconditions: a transfer in progress across two processes.
+- Input: the channel is severed mid-transfer, then restored.
+- Steps: interrupt; reconnect; resume; enumerate requests.
+- Expected result: only missing chunk indexes are requested; verified chunks are retained; the object completes; no duplicate is stored.
+- Automation level: TWO_PROCESS.
+- Milestone: M2.
+- Severity: S1.
+- Evidence: resume request list and the store inventory.
+- Runtime boundary: `adapters/process`, `shongket_core/store`.
+
+## AT-41 Process crash and restart across the boundary
+
+- Requirement: a process killed mid-transfer recovers from durable state (extends AT-31 across processes).
+- Preconditions: a partially completed transfer with a durable snapshot.
+- Input: the receiving process is terminated without cleanup, then restarted.
+- Steps: kill; restart; reopen the store; resume.
+- Expected result: verified fragments survive; no partial snapshot is loaded; the resumed run requests only missing chunks; two identical runs produce identical evidence digests.
+- Automation level: TWO_PROCESS.
+- Milestone: M2.
+- Severity: S1.
+- Evidence: pre/post fragment inventory and evidence digests.
+- Runtime boundary: `shongket_core/persist`, `adapters/process`.
+
+## AT-42 Transport adapter interface conformance
+
+- Requirement: every adapter satisfies the frozen transport contract (`REMAINING_SCOPE.md` §6).
+- Preconditions: the simulated adapter and any further adapter.
+- Input: the shared adapter conformance suite.
+- Steps: run discovery, capability exchange, connect, send, receive, interrupt, close against each adapter.
+- Expected result: identical observable behaviour and identical event sequences from every adapter; capability reports are complete.
+- Automation level: AUTOMATED_LOCAL, JVM_OR_EMULATOR.
+- Milestone: M3.
+- Severity: S1.
+- Evidence: per-adapter event sequence comparison.
+- Runtime boundary: `adapters/transport_sim`, `android/data-transport`.
+
+## AT-43 Capability negotiation and graceful downgrade
+
+- Requirement: peers agree on a usable capability set, or decline cleanly.
+- Preconditions: two peers with differing `max_payload`, transports and `public_only`.
+- Input: capability exchange before transfer.
+- Steps: exchange; negotiate; attempt a transfer that exceeds the peer's limit.
+- Expected result: the negotiated frame size never exceeds the lower `max_payload`; an over-limit frame is refused with `PAYLOAD_TOO_LARGE` before transmission; an incompatible pair declines without crashing.
+- Automation level: AUTOMATED_LOCAL, JVM_OR_EMULATOR.
+- Milestone: M3.
+- Severity: S1.
+- Evidence: negotiated parameters and the refusal record.
+- Runtime boundary: `shongket_core/policy`, transport adapters.
+
+## AT-44 Adapter isolation — transports make no policy decisions
+
+- Requirement: D-RS-04; admission stays in the core.
+- Preconditions: the full adapter set.
+- Input: a static scan plus a behavioural probe.
+- Steps: scan adapter sources for references to expiry, consent, visibility, hop, copy or admission; drive an adapter with an object that the core would refuse.
+- Expected result: no adapter references a policy field; the refusal originates in the core and is identical regardless of adapter; the core imports no adapter.
+- Automation level: AUTOMATED_LOCAL.
+- Milestone: M3.
+- Severity: S1.
+- Evidence: scan output and paired refusal records.
+- Runtime boundary: whole package.
+
+## AT-45 Android lifecycle and background survival
+
+- Requirement: transfers survive backgrounding, configuration change and process death.
+- Preconditions: an Android build with a transfer in progress.
+- Input: background the app; rotate; trigger process death; return.
+- Steps: perform each event; observe state.
+- Expected result: no crash; the transfer continues or resumes from durable state; UI state is restored; no duplicate fragments; no work is silently abandoned.
+- Automation level: JVM_OR_EMULATOR.
+- Milestone: M3.
+- Severity: S1.
+- Evidence: lifecycle event log and the fragment inventory.
+- Runtime boundary: `android/app`, `android/data-persistence`.
+
+## AT-46 Permission refusal degrades gracefully
+
+- Requirement: refusal is a supported state (D-RS-12; extends AT-13).
+- Preconditions: an Android build; every runtime permission refusable.
+- Input: deny each permission individually and all together.
+- Steps: deny; use the app; observe.
+- Expected result: no crash and no dead end; the dependent feature is disabled with a plain-language reason; unaffected features keep working; nothing is retried silently.
+- Automation level: JVM_OR_EMULATOR.
+- Milestone: M3, M7.
+- Severity: S1.
+- Evidence: per-permission screen state and the reason string.
+- Runtime boundary: `android/app`.
+
+## AT-47 Real-radio discovery and session establishment
+
+- Requirement: the provisional transport discovers and connects on real hardware (smoke-test gate 1, 2).
+- Preconditions: two physical handsets, radios enabled, no internet.
+- Input: both devices running the app in range.
+- Steps: discover; connect; exchange capabilities.
+- Expected result: discovery succeeds offline; a session is established on the intended demo phones.
+- Automation level: REAL_RADIO.
+- Milestone: M3.
+- Severity: S1.
+- Evidence: device model list and session logs.
+- Runtime boundary: `android/data-transport`.
+
+## AT-48 Real-radio interruption and reconnection
+
+- Requirement: smoke-test gate criteria 3, 4, 5.
+- Preconditions: an established real-radio session with a large transfer running.
+- Input: physical separation beyond range, then return.
+- Steps: transfer; separate; return; resume.
+- Expected result: interruption is detected, not hung; reconnection succeeds; the transfer resumes without re-sending verified chunks; the large transfer completes.
+- Automation level: REAL_RADIO.
+- Milestone: M3.
+- Severity: S1.
+- Evidence: interruption and resume timestamps, resumed chunk list.
+- Runtime boundary: `android/data-transport`.
+
+## AT-49 Vendor and OEM compatibility
+
+- Requirement: smoke-test gate criterion 2 across the demo fleet.
+- Preconditions: the intended demo handsets, multiple vendors.
+- Input: the same build on each device.
+- Steps: run discovery, transfer and permission flows on each pairing.
+- Expected result: every intended demo pairing works, or the failure is recorded per device with its OEM and OS version; no undocumented device is claimed as supported.
+- Automation level: REAL_RADIO.
+- Milestone: M3.
+- Severity: S1.
+- Evidence: a per-device compatibility matrix.
+- Runtime boundary: `android/data-transport`.
+
+## AT-50 Transport smoke-test gate — ten consecutive cold runs
+
+- Requirement: smoke-test gate criterion 7; unlocks the provisional transport.
+- Preconditions: AT-47, AT-48, AT-49 passing.
+- Input: ten cold starts of the full discovery-to-transfer scenario.
+- Steps: run ten times from a cold app start; record every outcome.
+- Expected result: ten consecutive successes. Any failure fails the gate and the transport remains provisional.
+- Automation level: REAL_RADIO.
+- Milestone: M3.
+- Severity: S1.
+- Evidence: ten timestamped run records.
+- Runtime boundary: `android/data-transport`.
+
+## AT-51 Media capture produces the canonical representation set
+
+- Requirement: `MEDIA_PIPELINE.md` representations from a real source.
+- Preconditions: a capture source or a committed synthetic fixture.
+- Input: one photo, one short video, one audio clip, one text note.
+- Steps: capture or load; build representations; chunk; hash.
+- Expected result: `thumb`, `preview`, `standard` and `original` are produced where the modality supports them; each is fixed-size chunked and hashed; a representation that cannot be produced is reported unavailable, never silently omitted.
+- Automation level: AUTOMATED_LOCAL, JVM_OR_EMULATOR.
+- Milestone: M4.
+- Severity: S1.
+- Evidence: representation manifest and per-chunk hashes.
+- Runtime boundary: `android/media`, `shongket_core/media`.
+
+## AT-52 Progressive delivery ordering
+
+- Requirement: D-007 order in a real transfer.
+- Preconditions: an object with all four representations queued.
+- Input: a transfer to a receiver holding nothing.
+- Steps: transfer; record arrival order.
+- Expected result: capsule, then manifest, then thumb, then preview, then standard, then original; the receiver can act on the capsule before any media completes.
+- Automation level: AUTOMATED_LOCAL, TWO_PROCESS, JVM_OR_EMULATOR.
+- Milestone: M4.
+- Severity: S1.
+- Evidence: ordered arrival log.
+- Runtime boundary: `shongket_core/policy`.
+
+## AT-53 Preview playback and unavailable-representation status
+
+- Requirement: the UI shows progressive state honestly.
+- Preconditions: an object whose `preview` is present and whose `original` is incomplete.
+- Input: open the object.
+- Steps: view during and after transfer.
+- Expected result: the preview is viewable; the incomplete representation is labelled incomplete, never presented as complete; an unproducible representation shows a clear unavailable status.
+- Automation level: JVM_OR_EMULATOR.
+- Milestone: M4.
+- Severity: S1.
+- Evidence: UI state snapshots.
+- Runtime boundary: `android/ui`.
+
+## AT-54 Source preservation through capture and transcode
+
+- Requirement: AT-21 extended to the real pipeline.
+- Preconditions: known original bytes.
+- Input: capture, build representations, transfer, reconstruct.
+- Steps: hash the source before and after every stage.
+- Expected result: the original bytes and hash are unchanged at every stage; `object_id` still equals SHA-256 of the original source; no derived representation overwrites the original.
+- Automation level: AUTOMATED_LOCAL, JVM_OR_EMULATOR.
+- Milestone: M4.
+- Severity: S1.
+- Evidence: before/after source hashes per stage.
+- Runtime boundary: `android/media`, `shongket_core`.
+
+## AT-55 Progressive transfer on real devices
+
+- Requirement: M4 on hardware.
+- Preconditions: two physical devices, real radio, a real captured object.
+- Input: a full progressive transfer.
+- Steps: transfer; record arrival order and completion.
+- Expected result: the D-007 order holds over a real radio; the original reconstructs and its hash matches.
+- Automation level: REAL_RADIO.
+- Milestone: M4.
+- Severity: S1.
+- Evidence: ordered arrival log and reconstruction hash.
+- Runtime boundary: `android/data-transport`, `android/media`.
+
+## AT-56 Real-device multi-peer completion
+
+- Requirement: M5 objective; ordinary chunks from ≥ 3 physical peers.
+- Preconditions: three or more physical devices, each holding a different partial subset; no peer holds the whole object.
+- Input: a receiver requesting missing chunks.
+- Steps: encounter each peer; request only missing chunks; reconstruct.
+- Expected result: the object completes using chunks from at least two distinct peer IDs; no chunk is fetched twice; no coded reconstruction is involved.
+- Automation level: REAL_RADIO.
+- Milestone: M5.
+- Severity: S1.
+- Evidence: fragment-source report with peer IDs.
+- Runtime boundary: `android/data-transport`, `shongket_core/store`.
+
+## AT-57 Real-device reconstruction hash verification
+
+- Requirement: M0 criterion 8 on hardware.
+- Preconditions: AT-56 completed.
+- Input: the reconstructed representation.
+- Steps: hash the reconstruction; compare with the manifest.
+- Expected result: SHA-256 equals the manifest representation hash exactly.
+- Automation level: REAL_RADIO.
+- Milestone: M5.
+- Severity: S1.
+- Evidence: reconstruction hash beside the manifest hash.
+- Runtime boundary: `shongket_core/media`.
+
+## AT-58 Semantic extractor interface with a deterministic double
+
+- Requirement: D-RS-09; the interface is testable without a model.
+- Preconditions: the `TestDouble` extractor.
+- Input: the same source twice.
+- Steps: extract; extract again; compare.
+- Expected result: identical suggestions both times; no network access; no model file read; no download attempted during any automated test.
+- Automation level: AUTOMATED_LOCAL.
+- Milestone: M6.
+- Severity: S1.
+- Evidence: paired extraction outputs and a network-access assertion.
+- Runtime boundary: `android/semantic`.
+
+## AT-59 The app is fully usable with no model
+
+- Requirement: D-011; AT-15 extended to the real app.
+- Preconditions: the `Unavailable` extractor, which is the default.
+- Input: create a capsule manually.
+- Steps: open the capture flow; complete the manual form; confirm; publish.
+- Expected result: the structured manual form is presented; the capsule is created, confirmed and scheduled; nothing is blocked; no error is surfaced as a failure.
+- Automation level: AUTOMATED_LOCAL, JVM_OR_EMULATOR.
+- Milestone: M6.
+- Severity: S1.
+- Evidence: manual-path event log.
+- Runtime boundary: `android/semantic`, `android/ui`.
+
+## AT-60 Generated text never replaces source evidence
+
+- Requirement: AGENTS.md scope rule; D-003.
+- Preconditions: an extractor producing a suggestion.
+- Input: a source object with a suggested capsule.
+- Steps: accept the suggestion; inspect stored state.
+- Expected result: the original media bytes and hash are unchanged; the suggestion is stored as a capsule referencing the source, never in place of it; `human_confirmed` is required before publish; an unconfirmed suggestion is never forwarded.
+- Automation level: AUTOMATED_LOCAL.
+- Milestone: M6.
+- Severity: S1.
+- Evidence: source hash before/after and the capsule linkage.
+- Runtime boundary: `android/semantic`, `shongket_core/policy`.
+
+## AT-61 Model packaging and resource limits
+
+- Requirement: `MODEL_EVALUATION_PLAN.md` thresholds on device profiles.
+- Preconditions: a benchmark-selected model on target hardware.
+- Input: extraction on each device tier.
+- Steps: run; measure memory, latency and storage.
+- Expected result: the model stays within declared limits for its tier, or the tier is recorded as unsupported; exceeding a limit falls back to the manual form rather than degrading the app.
+- Automation level: PHYSICAL_DEVICE.
+- Milestone: M6.
+- Severity: S2.
+- Evidence: per-tier resource measurements.
+- Runtime boundary: `android/semantic`.
+
+## AT-62 Bangla extraction quality threshold
+
+- Requirement: `MODEL_EVALUATION_PLAN.md`; separate from protocol acceptance.
+- Preconditions: the benchmark corpus on target hardware.
+- Input: the Bangla evaluation set.
+- Steps: run the benchmark; score against declared thresholds.
+- Expected result: declared thresholds are met, or the model is rejected and the manual form remains the path. This test never gates a protocol acceptance test.
+- Automation level: PHYSICAL_DEVICE.
+- Milestone: M6.
+- Severity: S2.
+- Evidence: benchmark scores against thresholds.
+- Runtime boundary: `android/semantic`.
+
+## AT-63 Background restart mid-transfer
+
+- Requirement: M7 resilience; AT-31 on Android.
+- Preconditions: a transfer in progress in a foreground service.
+- Input: the OS terminates the process.
+- Steps: terminate; relaunch; observe.
+- Expected result: durable state is intact; the transfer resumes from the last verified chunk; no duplicate; the user is not asked to restart manually.
+- Automation level: JVM_OR_EMULATOR.
+- Milestone: M7.
+- Severity: S1.
+- Evidence: pre/post fragment inventory.
+- Runtime boundary: `android/app`, `android/data-persistence`.
+
+## AT-64 Storage pressure in the application
+
+- Requirement: AT-12 rule surfaced in the app; still rejection-only.
+- Preconditions: a store near its byte budget.
+- Input: an object that does not fit.
+- Steps: attempt ingest; inspect state and UI.
+- Expected result: refused with `OUT_OF_BUDGET` before mutation; existing fragments intact; byte accounting unchanged; the user sees a clear storage message; **no eviction occurs**.
+- Automation level: AUTOMATED_LOCAL, JVM_OR_EMULATOR.
+- Milestone: M7.
+- Severity: S1.
+- Evidence: quota values before and after, plus the UI message.
+- Runtime boundary: `shongket_core/store`, `android/ui`.
+
+## AT-65 Low-battery degradation
+
+- Requirement: M7 resilience; `PROTOCOL_SPEC.md` §6 factor 8.
+- Preconditions: a real device below the battery threshold.
+- Input: a queued mixed-priority transfer.
+- Steps: drop below threshold; observe scheduling.
+- Expected result: bulk media is deferred, the signal plane keeps flowing, nothing is dropped or corrupted, and the behaviour is reported to the user.
+- Automation level: PHYSICAL_DEVICE.
+- Milestone: M7.
+- Severity: S2.
+- Evidence: scheduling log at each battery state.
+- Runtime boundary: `android/app`, `shongket_core/policy`.
+
+## AT-66 Integrated denied-permission path
+
+- Requirement: AT-13 and AT-46 in the assembled app.
+- Preconditions: the full app with permissions denied.
+- Input: attempt a full capture-to-transfer flow.
+- Steps: run the flow with each permission denied.
+- Expected result: the flow stops at the first genuinely blocked step with a clear reason; already-created content is not lost; the app remains usable for unaffected functions.
+- Automation level: JVM_OR_EMULATOR.
+- Milestone: M7.
+- Severity: S1.
+- Evidence: per-permission flow transcript.
+- Runtime boundary: `android/app`.
+
+## AT-67 Malformed-input resistance at the application boundary
+
+- Requirement: R-12; extends AT-20 and AT-17 to real inputs.
+- Preconditions: the assembled app.
+- Input: malformed JSON, invalid UTF-8, oversized frames, truncated frames, duplicate keys, deeply nested payloads, wrong-type fields, unknown versions.
+- Steps: feed each through the transport boundary.
+- Expected result: every input is rejected with a canonical code before parse or mutation; no crash; no partial state; no unbounded allocation; the app stays responsive.
+- Automation level: AUTOMATED_LOCAL, JVM_OR_EMULATOR.
+- Milestone: M7.
+- Severity: S1.
+- Evidence: per-input rejection codes and a state-unchanged assertion.
+- Runtime boundary: `shongket_core/validate`, transport adapters.
+
+## AT-68 Private-content consent user experience
+
+- Requirement: D-M1-01/02/03 surfaced in the UI; AGENTS.md consent rule.
+- Preconditions: a private object.
+- Input: an attempt to forward it.
+- Steps: attempt without consent; grant consent explicitly; attempt to a `public_only` peer.
+- Expected result: forwarding is blocked until the user consents explicitly; consent is a deliberate action, never a default or a pre-checked control; a `public_only` peer is refused even with consent; the reason is shown plainly.
+- Automation level: JVM_OR_EMULATOR.
+- Milestone: M7.
+- Severity: S1.
+- Evidence: UI state and the refusal record naming the failing clause.
+- Runtime boundary: `android/ui`, `shongket_core/policy`.
+
+## AT-69 Local data protection and key storage
+
+- Requirement: D-RS-10, D-RS-11.
+- Preconditions: an installed app holding content and a key.
+- Input: inspection of on-device storage and backup configuration.
+- Steps: inspect app storage, the manifest backup flag and the key location.
+- Expected result: content lives in app-private storage; `allowBackup=false`; keys are held via the platform keystore abstraction and never in source, assets or preferences; no secret appears in the repository.
+- Automation level: AUTOMATED_LOCAL, JVM_OR_EMULATOR.
+- Milestone: M7.
+- Severity: S1.
+- Evidence: storage listing, manifest flag and scan output.
+- Runtime boundary: `android/security`.
+
+## AT-70 Diagnostic export contains no sensitive content
+
+- Requirement: D-RS-13; AGENTS.md logging rule.
+- Preconditions: a session with capsules, media and peers.
+- Input: a user-initiated diagnostic export.
+- Steps: export; inspect every field.
+- Expected result: the export contains identifiers, counters, codes and ticks only; it contains no capsule text, media bytes, location text, peer-identifying data or key material; export is explicit and never automatic.
+- Automation level: AUTOMATED_LOCAL, JVM_OR_EMULATOR.
+- Milestone: M7, M9.
+- Severity: S1.
+- Evidence: the exported document and a field-level scan.
+- Runtime boundary: `android/diagnostics`.
+
+## AT-71 Forged metadata and transport impersonation rejected
+
+- Requirement: `PROTOCOL_SPEC.md` §8.
+- Preconditions: development signing keys; a signed manifest.
+- Input: a manifest signed by an unknown key; a manifest with a valid signature over altered content; a peer claiming another peer's identity.
+- Steps: offer each.
+- Expected result: each is rejected with `SIGNATURE_INVALID`; nothing is stored or forwarded; the adapter carries no trust of its own.
+- Automation level: AUTOMATED_LOCAL.
+- Milestone: M7.
+- Severity: S1.
+- Evidence: rejection records with codes.
+- Runtime boundary: `android/security`, `shongket_core/validate`.
+
+## AT-72 Replay and duplicate-flood resistance
+
+- Requirement: R-13, R-22.
+- Preconditions: a peer replaying previously accepted objects and flooding duplicates.
+- Input: repeated identical objects and fragments at a high rate.
+- Steps: replay an expired object; replay a stored object; flood duplicate fragments.
+- Expected result: expired replays refused with `EXPIRED`; duplicates deduplicated with no extra storage; per-peer caps engage; memory and storage stay bounded; the app stays responsive.
+- Automation level: AUTOMATED_LOCAL.
+- Milestone: M7.
+- Severity: S1.
+- Evidence: dedup counters, per-peer caps and resource ceilings.
+- Runtime boundary: `shongket_core/store`, `shongket_core/policy`.
+
+## AT-73 Downgrade attempts rejected
+
+- Requirement: D-M1-05; R-24.
+- Preconditions: the schema registry at its current versions.
+- Input: payloads at an unknown major, an unregistered minor, and a snapshot newer than the build.
+- Steps: offer each.
+- Expected result: all refused with `VERSION_UNSUPPORTED`; no partial decode; no silent downgrade; no state change.
+- Automation level: AUTOMATED_LOCAL.
+- Milestone: M7.
+- Severity: S1.
+- Evidence: rejection records with declared versions.
+- Runtime boundary: `shongket_core/schema`, `shongket_core/migrate`.
+
+## AT-74 Measured benchmark results replace empty tables
+
+- Requirement: M8 objective; DR-EXP-01.
+- Preconditions: M7 complete on real devices.
+- Input: the `EXPERIMENT_PLAN.md` metric set.
+- Steps: run each scenario on real hardware; record measurements.
+- Expected result: every "hypothesis" target has a measured number with a confidence interval or an explicit failure note; unmeasured cells stay `UNMEASURED`, never zero; no simulator value is presented as a device measurement.
+- Automation level: PHYSICAL_DEVICE.
+- Milestone: M8.
+- Severity: S1.
+- Evidence: filled result tables with device and run metadata.
+- Runtime boundary: whole system.
+
+## AT-75 Reproducible release build
+
+- Requirement: D-RS-14.
+- Preconditions: a clean checkout at a known commit.
+- Input: two independent builds from that commit.
+- Steps: build twice; compare artifacts.
+- Expected result: byte-identical artifacts apart from the signature block; the build needs no network access for application code; the build script is committed; the development signing config is clearly marked non-production.
+- Automation level: AUTOMATED_LOCAL.
+- Milestone: M9.
+- Severity: S1.
+- Evidence: two artifact hashes and the diff of any variance.
+- Runtime boundary: build system.
+
+## AT-76 Install, upgrade and state preservation
+
+- Requirement: M9 release readiness; D-M1-06 migration on device.
+- Preconditions: a previous version installed with content and in-progress transfers.
+- Input: an upgrade install of the new version.
+- Steps: install the old build; create state; upgrade; reopen.
+- Expected result: the upgrade is transparent; persisted state migrates forward; verified fragments survive; in-progress transfers resume; a second launch performs no further migration; a failed migration rolls back and leaves the old state readable.
+- Automation level: JVM_OR_EMULATOR.
+- Milestone: M9.
+- Severity: S1.
+- Evidence: store version before and after, plus the fragment inventory.
+- Runtime boundary: `android/data-persistence`, `shongket_core/migrate`.
+
+## AT-77 Repeated demo reliability
+
+- Requirement: M9 acceptance; smoke-test gate criterion 7 at demo scale.
+- Preconditions: the demo script and the demo devices.
+- Input: ten consecutive cold demo runs.
+- Steps: run the scripted demo ten times from cold start.
+- Expected result: ten consecutive successes, or the failure and its countermeasure are documented before any public demonstration.
+- Automation level: REAL_RADIO.
+- Milestone: M9.
+- Severity: S1.
+- Evidence: ten timestamped run records.
+- Runtime boundary: whole system.
+
+## AT-78 Field trial in a partial-connectivity environment
+
+- Requirement: the field-validated release level; the product thesis.
+- Preconditions: a real partial-connectivity setting, real participants, informed consent, and a completed manual release decision on trial conduct.
+- Input: a scripted crisis-like scenario across separated participants.
+- Steps: run the scenario; collect measurements and observations.
+- Expected result: capsules reach separated participants; progressive media completes across encounters; measured results are recorded honestly, including failures. **No claim of field validation may be made from any simulator, emulator or lab run.**
+- Automation level: FIELD_ONLY.
+- Milestone: M9.
+- Severity: S1.
+- Evidence: field log, measurements and participant consent records.
+- Runtime boundary: whole system.
+
+## Remaining-scope classification summary
+
+The category counts below are measured from the definitions. An ID may
+appear in more than one category when the same requirement has separate
+local, process and emulator proofs.
+
+| Automation level | Acceptance IDs | Count |
+|---|---|---:|
+| `AUTOMATED_LOCAL` | AT-39, AT-42, AT-43, AT-44, AT-51, AT-52, AT-54, AT-58, AT-59, AT-60, AT-64, AT-67, AT-69, AT-70, AT-71, AT-72, AT-73, AT-75 | 18 |
+| `TWO_PROCESS` | AT-38, AT-39, AT-40, AT-41, AT-52 | 5 |
+| `JVM_OR_EMULATOR` | AT-39, AT-42, AT-43, AT-45, AT-46, AT-51, AT-52, AT-53, AT-54, AT-59, AT-63, AT-64, AT-66, AT-67, AT-68, AT-69, AT-70, AT-76 | 18 |
+| `PHYSICAL_DEVICE` | AT-61, AT-62, AT-65, AT-74 | 4 |
+| `REAL_RADIO` | AT-47, AT-48, AT-49, AT-50, AT-55, AT-56, AT-57, AT-77 | 8 |
+| `FIELD_ONLY` | AT-78 | 1 |
+
+**Software-complete blockers (28):** AT-38 through AT-46, AT-51
+through AT-54, AT-58 through AT-60, AT-63, AT-64, AT-66 through AT-73,
+AT-75 and AT-76. Every applicable `AUTOMATED_LOCAL`, `TWO_PROCESS` and
+`JVM_OR_EMULATOR` assertion must pass alongside the existing 367 tests.
+
+**Field-validation blockers (10):** AT-47 through AT-50, AT-55 through
+AT-57, AT-65, AT-77 and AT-78. They require the declared device, radio
+or field boundary and cannot be satisfied by a simulator or emulator.
+
+**Non-blocking research and benchmark evidence (3):** AT-61, AT-62 and
+AT-74 must be executed before making the corresponding model-resource,
+Bangla-quality or device-benchmark claim. A negative measurement selects
+the manual fallback or records an explicit limitation; it does not
+invalidate protocol correctness or block the software-complete build.
+
+### Legacy identifier mapping
+
+`MILESTONES.md` previously cited placeholder identifiers that were never
+defined. They now map to canonical IDs:
+
+| Legacy | Canonical |
+|---|---|
+| `AT-PROG-1` … `AT-PROG-3` | AT-51, AT-52, AT-53 (with AT-54, AT-55) |
+| `AT-MP-1` … `AT-MP-5` | AT-56, AT-57 |
+| `AT-AI-1` … `AT-AI-4` | AT-58, AT-59, AT-60 (with AT-61, AT-62) |
+
 ## Test-count inventory
 
-Milestone 0 figures below are unchanged; the Milestone 1 catalogue is
-counted separately so no M0 classification is disturbed.
+Counts are measured from the 78 definitions. The completed M0 and M1
+classifications are preserved; no AT-38 through AT-78 result is recorded
+as passing.
 
-- **Total acceptance tests:** 37 (AT-01 … AT-37)
-  - Milestone 0 catalogue: 21 (AT-01 … AT-21)
-  - Milestone 1 catalogue: 16 (AT-22 … AT-37), PROPOSED
-- **S1 tests across all milestone scopes:** 20 within AT-01 … AT-21,
-  plus AT-30 and AT-37 in the M1 catalogue
-- **S1 tests within Milestone 0 scope:** 17
-- **Milestone 0 blocking tests:** 18
-- **Milestone 1 blocking tests:** 16 (all of AT-22 … AT-37; 14 at S2,
-  and AT-30 and AT-37 at S1 because they protect M0 evidence already
-  earned)
+- **Total acceptance definitions:** 78
+  - Milestone 0 catalogue: 21 (AT-01 through AT-21), evidence preserved
+  - Milestone 1 catalogue: 16 (AT-22 through AT-37), COMPLETE
+  - Remaining-project catalogue: 41 (AT-38 through AT-78), SPECIFIED
+- **Definitions with an S1 scope:** 60
+  - 20 in AT-01 through AT-21
+  - 2 in AT-22 through AT-37 (AT-30 and AT-37)
+  - 38 in AT-38 through AT-78
+- **Definitions with an S2 scope:** 19
+  - AT-12 and AT-14 in the M0 catalogue
+  - 14 in the M1 catalogue
+  - AT-61, AT-62 and AT-65 in the remaining catalogue
 
-> The 18 Milestone 0 blocking tests comprise the 17 S1 tests in the M0
-> scope (AT-01 … AT-11, AT-15, AT-16, AT-17, AT-18, AT-20, AT-21) plus
-> AT-12 as the M0-blocking S2 unit-level storage-budget test. AT-12 is
-> included as blocking because its rule must be enforced even though its
-> on-device effect is later (M5+).
->
-> The 20 S1 tests across all milestone scopes add AT-13 (permissions,
-> M5+) and AT-19 (demo readiness, M9), both of which are release-blocking
-> but outside M0.
+AT-12 is intentionally counted in both severity sets because its
+unit-level M0 rule is S2 while its device-side effect is S1. Therefore,
+the two severity-set counts overlap and must not be added to infer the
+number of definitions.
+
+The 18 Milestone 0 blockers and all 16 Milestone 1 blockers retain their
+recorded passing evidence. The remaining catalogue has 28
+software-complete blockers, 10 field-validation blockers and 3
+non-blocking research/benchmark evidence definitions, as classified
+above.
 
 ---
 
@@ -730,11 +1329,11 @@ the canonical rows below per the cross-reference mappings recorded in
 
 ---
 
-## Test inventory
+## Milestone 0 test inventory (historical)
 
-> Counts are taken from the table below.
+> Counts in this subsection apply only to AT-01 through AT-21.
 
-- Total acceptance tests: 21
+- Milestone 0 acceptance definitions: 21
 - Severity S1 tests: 20 (S1 in any milestone scope)
 - Severity S1 tests, **M0 scope only**: 17
 - Severity S2 tests: AT-12 (M0 unit), AT-14

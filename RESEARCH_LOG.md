@@ -1,6 +1,6 @@
 # Shongket — Research Log (Draft 1)
 
-Planning-only. Sources cited with date accessed; each claim is tagged
+Research and planning log. Sources are cited with date accessed; each claim is tagged
 **fact** / **experiment** / **inference**. Where the entry below
 leaves a fact blank, this plan does **not** assert it; an entry is a
 placeholder for the real-device smoke-test phase to fill in.
@@ -29,17 +29,17 @@ For each entry:
 
 - Title: Connect to other devices — Nearby Connections API.
 - Organization: Google / Android Developers.
-- URL: https://developer.android.com/guide/topics/connectivity/nearby
-- Date accessed: 2026-07-28.
+- URL: https://developers.google.com/nearby/overview
+- Date accessed: 2026-07-30.
 - Relevant claim (fact): Nearby Connections is a discovery +
-  high-bandwidth peer transport abstraction that runs over a
-  combination of Wi-Fi / Wi-Fi Direct / Bluetooth; it is part of
-  Google Play Services and therefore unavailable on de-Googled /
-  GMS-less devices.
+  peer transport abstraction that can discover, connect and exchange
+  data without internet connectivity and uses Bluetooth, Wi-Fi and
+  other available technologies.
 - Effect on Shongket: provisional first adapter per DR-ARCH-04;
   behind `TransportAdapter`.
-- Limitations: Play Services dependency; permission complexity;
-  vendor-specific behavior on some OEMs.
+- Limitations: the Android setup requires the Google Play Services SDK
+  and runtime permissions; actual OEM/radio behaviour remains a
+  physical-device question.
 - Tag: fact.
 
 ### 1.2 Wi-Fi Direct (P2P)
@@ -134,6 +134,37 @@ Real-device transport selection and Android vendor testing belong to
 **Milestone 3**, not Milestone 2.
 
 Gate result drives M3 transport choice.
+
+### 1.8 Remaining-scope Android source verification
+
+Accessed 2026-07-30. These are platform facts used to bound D-RS-01,
+D-RS-05, D-RS-06, D-RS-11 and D-RS-12; none is device-success evidence.
+
+| Primary source | Verified fact | Effect on Shongket |
+|---|---|---|
+| Android Developers, [Architecture recommendations](https://developer.android.com/topic/architecture/recommendations) and [Compose UI architecture](https://developer.android.com/develop/ui/compose/architecture) | The current guidance recommends a single-activity structure, Compose, separated UI/data layers and unidirectional data flow | Supports the small Android shell in D-RS-06; these are recommendations, not protocol requirements |
+| Android Developers, [Data-transfer background options](https://developer.android.com/develop/background-work/background-tasks/data-transfer-options), [foreground-service overview](https://developer.android.com/develop/background-work/services/fgs) and [service types](https://developer.android.com/develop/background-work/services/fgs/service-types) | User-visible local-device transfers may use a connected-device foreground service, but background-start, type and timeout rules vary by target API | Freeze a background-work port and durable resume; do not assume a service is immortal |
+| Android Developers, [Compose state saving](https://developer.android.com/develop/ui/compose/state-saving) | `SavedStateHandle`/saveable state covers small UI state across recreation; complex durable state belongs in local persistence | UI saves identifiers only; canonical transfer state stays in the durable store |
+| Android Developers, [Runtime permissions](https://developer.android.com/training/permissions/requesting) | Permissions should be requested in context and denial should degrade gracefully | Supports D-RS-12 and AT-46/AT-66 |
+| Android Developers, [App-specific storage](https://developer.android.com/training/data-storage/app-specific) and [Auto Backup](https://developer.android.com/identity/data/autobackup) | Internal app-specific files are sandboxed; backup is configurable, but Android 12+ device-transfer behaviour can vary by manufacturer | Use app-private storage and explicit backup/data-extraction rules, then verify on target devices rather than claiming absolute exclusion |
+| Android Developers, [Android Keystore](https://developer.android.com/privacy-and-security/keystore) | Keystore keys can remain non-exportable while cryptographic operations are performed through the provider | Supports a key-store abstraction; does not establish a production trust root or security audit |
+| Google for Developers, [Nearby overview](https://developers.google.com/nearby/overview), [Android setup](https://developers.google.com/nearby/connections/android/get-started) and [Play Services setup](https://developers.google.com/android/guides/setup) | Nearby Connections supports offline nearby exchange, requires the Play Services SDK on Android, and requires version-dependent runtime permissions | Nearby remains provisional; denial/GMS absence is an explicit unsupported state and alternates remain behind the adapter |
+
+### 1.9 Provisional Nearby dependency admission record
+
+No dependency is added by this documentation task. Before the Android
+slice adds `play-services-nearby`, the implementation commit must
+refresh and close every row.
+
+| Required item | Current record |
+|---|---|
+| Purpose | Provisional direct peer discovery and payload exchange behind `TransportAdapter` |
+| License | Google Play Services SDK terms apply; not assumed open source; release/legal review remains manual |
+| Maintenance | Official setup and permission documentation updated in 2026; exact artifact/version must be pinned at implementation |
+| Binary size | `UNMEASURED`; measure resolved APK/AAB contribution before adding |
+| Offline behaviour | Nearby exchange does not require an internet connection; the Android client still requires compatible Google Play Services |
+| Platform requirements | Android plus version-dependent Bluetooth/Wi-Fi/local-network permissions; target API must be recorded |
+| Smaller alternative | Raw local-hotspot/LAN sockets or Wi-Fi Direct adapter; higher implementation cost but no Play Services runtime |
 
 ---
 
