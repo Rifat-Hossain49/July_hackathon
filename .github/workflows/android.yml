@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feat/software-complete-release-candidate
+      - feat/deployed-functional-demo
   pull_request:
   workflow_dispatch:
 

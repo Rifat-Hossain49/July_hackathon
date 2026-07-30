@@ -74,12 +74,13 @@ private fun ShongketDemo(controller: DemoController) {
             Button(onClick = { refresh(controller::createFixture) }) {
                 Text(stringResource(R.string.demo_create_media))
             }
-            if (state.objectId != null) {
+            val objectId = state.objectId
+            if (objectId != null) {
                 Text(
                     stringResource(
                         R.string.demo_media_metadata,
                         state.sourceBytes,
-                        state.objectId.take(12),
+                        objectId.take(12),
                     ),
                 )
             }
