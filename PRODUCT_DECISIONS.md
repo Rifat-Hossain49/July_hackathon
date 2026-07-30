@@ -327,6 +327,36 @@ software-complete candidate.
 - `SOFTWARE_TARGET: SOFTWARE_COMPLETE_RELEASE_CANDIDATE`
 - `FIELD_VALIDATION_STATUS: FIELD_VALIDATION_NOT_APPROVED`
 
+### Milestone 3 local-Wi-Fi implementation approval record
+
+- `M3_LOCAL_WIFI_IMPLEMENTATION_STATUS: APPROVED_FOR_MILESTONE_3_LOCAL_WIFI_IMPLEMENTATION`
+- `M3_LOCAL_WIFI_SCOPE_FREEZE_COMMIT: 050e1a50ea758dd9dcd7b43791c663941f54f0c2`
+- `M3_LOCAL_WIFI_SOFTWARE_ACCEPTANCE: LW-01_THROUGH_LW-09`
+- `M3_LOCAL_WIFI_FIELD_VALIDATION_STATUS: FIELD_VALIDATION_NOT_APPROVED`
+
+The product owner explicitly requested nearby-device communication over
+Wi-Fi without internet on 2026-07-30. That instruction authorizes the
+software implementation frozen in `M3_LOCAL_WIFI_SCOPE.md`: Android
+DNS-SD/mDNS discovery and bounded local TCP exchange between phones on the
+same Wi-Fi network or a user-enabled hotspot.
+
+This is a milestone-specific implementation approval, not a global approval.
+It narrowly permits:
+
+- a concrete local-Wi-Fi adapter behind the frozen transport boundary;
+- a human-confirmed, text-only capsule send/receive UI;
+- the permissions and foreground lifecycle needed by that adapter;
+- bounded schema, integrity, duplicate, timeout and denial handling; and
+- JVM, emulator and evidence-tooling verification for LW-01 through LW-09.
+
+It does not authorize marking AT-47 through AT-50 passing. Real-radio
+discovery, interruption, OEM compatibility and ten cold runs still require
+two named physical devices and captured evidence. It also does not authorize
+Wi-Fi Direct, automatic hotspot creation, Bluetooth, Nearby Connections,
+background execution after the app closes, media transfer, production
+identity/encryption, a locked transport-selection claim or any later field
+milestone.
+
 AT-38 through AT-78 are approved as the remaining acceptance
 specification. None is implemented or passing at this approval point.
 AT-38 through AT-46, AT-51 through AT-54, AT-58 through AT-60, AT-63,
