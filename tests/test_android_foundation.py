@@ -114,6 +114,29 @@ def test_semantic_default_is_manual_offline_and_human_confirmed() -> None:
     assert "complete && confirmed" in form
 
 
+def test_security_and_diagnostics_are_bounded_redacted_and_no_backup() -> None:
+    manifest = (
+        ANDROID / "app" / "src" / "main" / "AndroidManifest.xml"
+    ).read_text(encoding="utf-8")
+    security = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted((ANDROID / "security").rglob("*.kt"))
+    )
+    diagnostics = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted((ANDROID / "diagnostics").rglob("*.kt"))
+    )
+
+    assert 'android:allowBackup="false"' in manifest
+    assert "PlatformKeyStorePort" in security
+    assert "SIGNATURE_INVALID" in security
+    assert "MAX_APPLICATION_PAYLOAD_BYTES: Int = 1_048_576" in security
+    assert "MAX_REPLAY_ENTRIES_PER_PEER" in security
+    assert "EXPLICIT_ACTION_REQUIRED" in diagnostics
+    assert "MAX_DIAGNOSTIC_EXPORT_BYTES" in diagnostics
+    assert "capsuleText" not in diagnostics
+
+
 def test_core_conformance_has_no_android_or_transport_dependency() -> None:
     source_root = ANDROID / "core-conformance" / "src" / "main"
     source = "\n".join(

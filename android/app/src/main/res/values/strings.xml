@@ -16,4 +16,6 @@
     <string name="manual_summary_bn">Bangla summary</string>
     <string name="manual_human_confirmation">I reviewed this capsule against the source</string>
     <string name="manual_schedule">Confirm and schedule</string>
+    <string name="private_forward_consent">I explicitly consent to forwarding this private content</string>
+    <string name="private_forward_public_only">This peer accepts public content only; private forwarding is blocked.</string>
 </resources>
