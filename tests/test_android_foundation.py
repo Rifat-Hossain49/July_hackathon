@@ -70,6 +70,20 @@ def test_android_transport_adapters_are_policy_free_and_bounded() -> None:
         assert policy_term not in lowered
 
 
+def test_media_pipeline_preserves_source_and_reports_availability() -> None:
+    media = ANDROID / "media" / "src" / "main" / "kotlin"
+    source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(media.rglob("*.kt"))
+    )
+
+    assert "MAX_SOURCE_BYTES: Int = 8 * 1024 * 1024" in source
+    assert "encoder mutated source evidence" in source
+    assert "Availability.UNAVAILABLE" in source
+    assert "TRANSFER_INCOMPLETE" in source
+    assert "RepresentationId.ORIGINAL" in source
+
+
 def test_core_conformance_has_no_android_or_transport_dependency() -> None:
     source_root = ANDROID / "core-conformance" / "src" / "main"
     source = "\n".join(
