@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shongket</string>
+    <string name="home_title">Shongket</string>
+    <string name="software_preview_notice">Software preview. Nearby transfer is not configured.</string>
+    <string name="transport_unavailable_action">Nearby transfer unavailable</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">সংকেত</string>
+    <string name="home_title">সংকেত</string>
+    <string name="software_preview_notice">সফটওয়্যার প্রিভিউ। কাছাকাছি স্থানান্তর কনফিগার করা হয়নি।</string>
+    <string name="transport_unavailable_action">কাছাকাছি স্থানান্তর অনুপলব্ধ</string>
+</resources>
