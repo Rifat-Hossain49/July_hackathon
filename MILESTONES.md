@@ -121,8 +121,13 @@ interfaces, but does not add Android transport or coded delivery.
   radios, offline AI inference, production security, eviction and all
   M2+ work remain unauthorised. Approval for M1 does not authorise M2 or
   later. See `PRODUCT_DECISIONS.md` § Milestone 1 approval record.
-- **Implementation state:** NOT STARTED. No M1 code exists and no M1
-  acceptance result is recorded.
+- **Implementation state:** IN PROGRESS.
+  - **Slice 1 — canonical serialization, schema registry, version
+    handling: IMPLEMENTED** in `shongket_core/`. AT-22, AT-23 and AT-24
+    pass; 103 Slice-1 tests plus the 125 M0 regression tests, 228 total,
+    0 failed, 0 skipped.
+  - **Slices 2–5: NOT STARTED.** AT-25 through AT-37 have no
+    implementation and no recorded result.
 - **Scope freeze:** scope, architecture, acceptance catalogue and
   implementation slices are recorded in
   [M1_SCOPE_FREEZE.md](./M1_SCOPE_FREEZE.md). All thirteen design

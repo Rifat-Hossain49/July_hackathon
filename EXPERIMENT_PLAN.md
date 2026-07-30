@@ -222,18 +222,23 @@ marked unmeasured rather than converted.
 Both hashes were produced by running the same command twice and
 comparing the output byte-for-byte.
 
-### 5.5a Milestone 1 conformance evidence [PROPOSED — not yet run]
+### 5.5a Milestone 1 conformance evidence
 
-M1 adds a conformance suite (AT-22 … AT-37). The table below names the
-evidence each M1 test must produce. **Every cell is empty because no M1
-code exists**; filling any of them before the harness runs would violate
-DR-EXP-01. M1 is not approved for implementation.
+M1 adds a conformance suite (AT-22 … AT-37). **Slice 1 is implemented**;
+its three tests have run and their evidence is recorded below. Every
+other row remains empty because that code does not exist — filling any
+of them before the harness runs would violate DR-EXP-01.
+
+Slice 1 run: **228 passed, 0 failed, 0 skipped** (103 Slice-1 tests plus
+the 125 M0 regression tests).
 
 | Evidence | Source test | Value |
 |---|---|---|
-| Canonical serialization SHA-256 per schema | AT-22 | *not yet run* |
-| Registered-minor acceptance log | AT-23 | *not yet run* |
-| `VERSION_UNSUPPORTED` rejection log | AT-24 | *not yet run* |
+| Canonical serialization SHA-256 per schema | AT-22 | capsule `8b0a3231…` (555 B); content manifest `d61e057b…` (464 B); fragment descriptor `8eea53cc…` (283 B); non-ASCII capsule `028d7ab7…` (297 B) |
+| Insertion-order independence | AT-22 | reversed-order manifest hashes to `d61e057b…`, identical to the ordered manifest |
+| Identity excludes forwarding state | AT-22 | manifest carrying `hop_count` / `remaining_copy_budget` yields identity hash `d61e057b…`, equal to the manifest without them |
+| Registered-minor acceptance log | AT-23 | `shongket.content.v1.1` accepted via registered compatibility; ignored field reported as `("a_field_from_the_future",)` |
+| `VERSION_UNSUPPORTED` rejection log | AT-24 | major `2` rejected; major `2` + malformed rejected as `VERSION_UNSUPPORTED` (not `SCHEMA_INVALID`); unregistered minor `1.7` rejected; 8 malformed identifier forms rejected |
 | Migration input/output SHA-256 | AT-25 | *not yet run* |
 | Per-stage crash-recovery log | AT-26 | *not yet run* |
 | Partial-write recovery log | AT-27 | *not yet run* |

@@ -559,10 +559,14 @@ shongket.<object>.v<MAJOR>.<MINOR>
   unknown major and structurally malformed reports
   `VERSION_UNSUPPORTED`, never `SCHEMA_INVALID`, and no partial decode
   occurs.
-- **Unknown minor** → accepted only when the receiver holds an
-  explicitly registered compatibility entry for that
-  `(object, major, minor)`. Compatibility is declared, never inferred.
-  An unregistered minor is refused rather than optimistically parsed.
+- **Non-exact minor** → the exact registered minor is accepted; any
+  other minor, **numerically lower or higher**, is accepted only when
+  the receiver holds an explicitly registered compatibility entry for
+  that `(object, major, minor)`. Compatibility is declared, never
+  inferred from ordering. An unregistered minor is refused with
+  `VERSION_UNSUPPORTED` rather than optimistically parsed. A legacy
+  `...v<major>` identifier resolves to `<major>.0` and must then clear
+  this same rule; the alias is not a bypass.
 - **Additive minor changes** may only add optional fields. Unknown
   fields on a registered-compatible minor are ignored, not persisted and
   not echoed back.

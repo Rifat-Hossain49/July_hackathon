@@ -11,8 +11,19 @@ afterwards.
 
 Authorised work is limited to the scope in §1 and the slices in §8.
 Android, radios, offline AI inference, production security, eviction and
-all Milestone 2+ work remain unauthorised. Nothing in this document
-records an M1 result: **no M1 code has been written yet.**
+all Milestone 2+ work remain unauthorised.
+
+**Progress — M1 overall: IN PROGRESS.**
+
+| Slice | Status |
+|---|---|
+| Slice 1 — canonical serialization, schema registry, version handling | **IMPLEMENTED** in `shongket_core/`; AT-22, AT-23, AT-24 pass |
+| Slice 2 — durable atomic persistence | NOT STARTED |
+| Slice 3 — migration, rollback, corrupted-state handling | NOT STARTED |
+| Slice 4 — privacy rules, `public_only`, failure taxonomy | NOT STARTED |
+| Slice 5 — conformance suite, adapter isolation, golden vectors | NOT STARTED |
+
+AT-25 through AT-37 have no implementation and no recorded result.
 
 Baseline this freeze was written against:
 
@@ -266,15 +277,23 @@ rules:
 - **Major** = breaking. A receiver seeing an unknown major rejects with
   `VERSION_UNSUPPORTED` and performs **no partial decode**.
 - **Minor** = additive only, and **compatibility must be explicitly
-  registered**. A higher minor is accepted only when the receiver holds
-  a registered compatibility entry for that `(object, major, minor)`;
-  an unregistered minor is refused with `VERSION_UNSUPPORTED`. A lower
-  minor is always accepted.
+  registered**. The exact registered version is accepted. *Any* other
+  minor — numerically lower or higher — is accepted only when the
+  receiver holds a registered compatibility entry for that
+  `(object, major, minor)`; otherwise it is refused with
+  `VERSION_UNSUPPORTED`.
+- **Ordering grants nothing.** An earlier draft of this decision said "a
+  lower minor is always accepted", reasoning that an older sender is one
+  we already understand. That was ratified out: a receiver holds no
+  record of what an unregistered earlier release actually looked like,
+  so treating "lower" as "safe" is inference from numeric ordering —
+  precisely what this decision forbids. This wording previously
+  contradicted `PROTOCOL_SPEC.md` §9.1; the two now agree.
 - Accepted rule is **stricter than originally proposed**. The draft
   accepted any higher minor optimistically and ignored unknown fields.
   The accepted rule requires compatibility to be *declared, never
   inferred*, so a receiver cannot silently accept a payload shaped by a
-  future release it knows nothing about.
+  release it knows nothing about, in either direction.
 - On an accepted minor, unknown fields are ignored, not persisted and
   not echoed back.
 - A schema registry maps `(object, major)` to a validator and holds the
