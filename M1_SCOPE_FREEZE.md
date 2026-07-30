@@ -13,17 +13,22 @@ Authorised work is limited to the scope in §1 and the slices in §8.
 Android, radios, offline AI inference, production security, eviction and
 all Milestone 2+ work remain unauthorised.
 
-**Progress — M1 overall: IN PROGRESS.**
+**Progress — M1 overall: COMPLETE.** All five slices are implemented and
+all sixteen M1-blocking acceptance IDs pass (367 tests, 0 failed,
+0 skipped). `IMPLEMENTATION_STATUS` remains
+`APPROVED_FOR_MILESTONE_1`; Milestone 2 is neither approved nor started.
 
 | Slice | Status |
 |---|---|
 | Slice 1 — canonical serialization, schema registry, version handling | **IMPLEMENTED** in `shongket_core/`; AT-22, AT-23, AT-24 pass |
-| Slice 2 — durable atomic persistence | NOT STARTED |
-| Slice 3 — migration, rollback, corrupted-state handling | NOT STARTED |
-| Slice 4 — privacy rules, `public_only`, failure taxonomy | NOT STARTED |
-| Slice 5 — conformance suite, adapter isolation, golden vectors | NOT STARTED |
+| Slice 2 — durable atomic persistence | **IMPLEMENTED**; AT-26, AT-27, AT-28, AT-30, AT-31 pass |
+| Slice 3 — migration, rollback, corrupted-state handling | **IMPLEMENTED**; AT-25, AT-29, AT-36 pass |
+| Slice 4 — privacy rules, `public_only`, failure taxonomy | **IMPLEMENTED**; AT-32, AT-33, AT-34, AT-35 pass |
+| Slice 5 — conformance suite, adapter isolation, golden vectors | **IMPLEMENTED**; AT-37 passes |
 
-AT-25 through AT-37 have no implementation and no recorded result.
+All sixteen M1-blocking acceptance IDs (AT-22 … AT-37) are implemented
+and passing. Measured evidence is recorded in `ACCEPTANCE_TESTS.md` and
+`EXPERIMENT_PLAN.md`.
 
 Baseline this freeze was written against:
 

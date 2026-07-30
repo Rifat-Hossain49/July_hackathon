@@ -229,8 +229,8 @@ its three tests have run and their evidence is recorded below. Every
 other row remains empty because that code does not exist — filling any
 of them before the harness runs would violate DR-EXP-01.
 
-Slice 1 run: **228 passed, 0 failed, 0 skipped** (103 Slice-1 tests plus
-the 125 M0 regression tests).
+Complete M1 run: **367 passed, 0 failed, 0 skipped** (242 M1 tests plus
+the 125 M0 regression tests). All sixteen M1-blocking IDs implemented.
 
 | Evidence | Source test | Value |
 |---|---|---|
@@ -239,19 +239,19 @@ the 125 M0 regression tests).
 | Identity excludes forwarding state | AT-22 | manifest carrying `hop_count` / `remaining_copy_budget` yields identity hash `d61e057b…`, equal to the manifest without them |
 | Registered-minor acceptance log | AT-23 | `shongket.content.v1.1` accepted via registered compatibility; ignored field reported as `("a_field_from_the_future",)` |
 | `VERSION_UNSUPPORTED` rejection log | AT-24 | major `2` rejected; major `2` + malformed rejected as `VERSION_UNSUPPORTED` (not `SCHEMA_INVALID`); unregistered minor `1.7` rejected; 8 malformed identifier forms rejected |
-| Migration input/output SHA-256 | AT-25 | *not yet run* |
-| Per-stage crash-recovery log | AT-26 | *not yet run* |
-| Partial-write recovery log | AT-27 | *not yet run* |
-| Quarantine path + integrity report | AT-28 | *not yet run* |
-| Pre/post rollback SHA-256 | AT-29 | *not yet run* |
-| Fragment inventory + byte accounting | AT-30 | *not yet run* |
-| Restart event-log SHA-256 (×2) | AT-31 | *not yet run* |
-| Error-code coverage matrix | AT-32 | *not yet run* |
-| Paired retryable/terminal attempt logs | AT-33 | *not yet run* |
-| Privacy migration log + AT-16 re-run | AT-34 | *not yet run* |
-| `PEER_REFUSES_PRIVATE` refusal evidence | AT-35 | *not yet run* |
-| Store version before/after + resumed chunks | AT-36 | *not yet run* |
-| M0 regression counts, import scan, both hashes | AT-37 | *not yet run* |
+| Migration input/output SHA-256 | AT-25 | v0.9 input `b8a72f83…` (1365 B) → v1.0 output; two runs from identical bytes produced identical output |
+| Per-stage crash-recovery log | AT-26 | 4 interruption stages injected; after temp write / temp fsync the previous document survives, after replace / before parent fsync the new one does; 0 blended reads; parent-dir sync outcome recorded per platform |
+| Partial-write recovery log | AT-27 | Truncated temp discarded by name; previous snapshot loaded intact; 3 stray temps in the multi-artefact case all removed |
+| Quarantine path + integrity report | AT-28 | Corrupt primary renamed to `*.quarantine-0` and still readable; fallback loaded; in case (b) 1 of 4 fragments dropped, 3 preserved |
+| Pre/post rollback SHA-256 | AT-29 | Original document byte-identical before and after a failed migration; still stamped `shongket.snapshot.v0.9`; failure classified retryable |
+| Fragment inventory + byte accounting | AT-30 | All 5 recovery paths preserve every fragment digest; `used_bytes == recompute_used_bytes()` in every case |
+| Restart event-log SHA-256 (×2) | AT-31 | Two independent runs produced identical evidence digests and identical stores; resume requested exactly indexes 3–7 of 0–7 |
+| Error-code coverage matrix | AT-32 | 16 enum members; 13 triggered by executable probes; 3 recorded unreachable-by-design (`SIGNATURE_INVALID`, `UNKNOWN_OBJECT`, `INTERNAL`) with reasons |
+| Paired retryable/terminal attempt logs | AT-33 | Terminal repeated 3× with one distinct code and one distinct detail, no state change; retryable `OUT_OF_BUDGET` succeeded after capacity freed |
+| Privacy migration log + AT-16 re-run | AT-34 | 3 legacy mappings; 8 malformed `visibility` → `SCHEMA_INVALID`; 6 non-boolean consent → `CONSENT_REQUIRED`; AT-16 refusal matrix green post-migration |
+| `PEER_REFUSES_PRIVATE` refusal evidence | AT-35 | Private + valid consent → refused at clause `peer_public_only`; ordinary peer and public object both admitted; manifest unmutated |
+| Store version before/after + resumed chunks | AT-36 | v0.9 → v1.0; resumed indexes (3, 4, 5) without re-requesting 0–2; second open reported `migrated=False`, 0 steps |
+| M0 regression counts, import scan, both hashes | AT-37 | 125 M0 tests pass unchanged in a subprocess; AST scan finds 0 non-stdlib and 0 adapter imports; CLI `D5AC79B1…2CB4DF` and metrics `E10E11D4…891B28` unchanged; `git diff` shows `app/` untouched |
 
 AT-37 additionally re-verifies the M0 values already recorded in §5.5:
 125 passing tests and the two determinism hashes. Those are the M0
