@@ -3,6 +3,7 @@ package org.shongket.data.persistence
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.nio.charset.StandardCharsets
 import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
 import org.junit.Assert.assertEquals
@@ -66,9 +67,9 @@ class DurableStateTest {
         val repository = DurableTransferRepository(AppPrivateStateStore(it))
         repository.begin("transfer-4", OBJECT_ID, "original", 2, 64)
         repository.ingest(fragment(0, "safe"))
-        Files.writeString(
+        Files.write(
             it.resolve("transfer-state.json.tmp"),
-            """{"truncated":""",
+            """{"truncated":""".toByteArray(StandardCharsets.UTF_8),
             StandardOpenOption.CREATE,
             StandardOpenOption.TRUNCATE_EXISTING,
         )
@@ -86,9 +87,9 @@ class DurableStateTest {
         repository.begin("transfer-5", OBJECT_ID, "original", 3, 64)
         repository.ingest(fragment(0, "first"))
         repository.ingest(fragment(1, "second"))
-        Files.writeString(
+        Files.write(
             it.resolve("transfer-state.json"),
-            """{"broken":true}""",
+            """{"broken":true}""".toByteArray(StandardCharsets.UTF_8),
             StandardOpenOption.TRUNCATE_EXISTING,
         )
 
@@ -111,9 +112,9 @@ class DurableStateTest {
     fun corruptFirstSnapshotIsQuarantinedAndAppCanStartEmpty() = withDirectory {
         val repository = DurableTransferRepository(AppPrivateStateStore(it))
         repository.begin("transfer-empty", OBJECT_ID, "original", 2, 64)
-        Files.writeString(
+        Files.write(
             it.resolve("transfer-state.json"),
-            """{"broken":true}""",
+            """{"broken":true}""".toByteArray(StandardCharsets.UTF_8),
             StandardOpenOption.TRUNCATE_EXISTING,
         )
 
@@ -131,7 +132,9 @@ class DurableStateTest {
         repository.ingest(fragment(0, "first"))
         repository.ingest(fragment(1, "second"))
         val path = it.resolve("transfer-state.json")
-        val document = CanonicalJson.parse(Files.readString(path)).asMutableMap()
+        val document = CanonicalJson.parse(
+            String(Files.readAllBytes(path), StandardCharsets.UTF_8),
+        ).asMutableMap()
         val state = document["state"].asMutableMap()
         val fragments = (state["fragments"] as List<*>)
             .map { value -> value.asMutableMap() }
@@ -142,7 +145,10 @@ class DurableStateTest {
         document["document_checksum"] = CanonicalJson.sha256Hex(
             linkedMapOf("schema" to document["schema"], "state" to state),
         )
-        Files.writeString(path, CanonicalJson.encode(document))
+        Files.write(
+            path,
+            CanonicalJson.encode(document).toByteArray(StandardCharsets.UTF_8),
+        )
 
         val loaded = AppPrivateStateStore(it).load()
 

@@ -48,6 +48,28 @@ def test_app_private_persistence_is_bounded_and_rejection_only() -> None:
     assert "nothing was evicted" in strings
 
 
+def test_android_transport_adapters_are_policy_free_and_bounded() -> None:
+    transport = ANDROID / "data-transport" / "src" / "main" / "kotlin"
+    source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(transport.rglob("*.kt"))
+    )
+    lowered = source.lower()
+
+    assert "MAX_TRANSPORT_FRAME_BYTES: Int = 1_048_576" in source
+    assert "PAYLOAD_TOO_LARGE" in source
+    assert "FIELD_VALIDATION_REQUIRED" in source
+    for policy_term in (
+        "visibility",
+        "consent",
+        "expiry",
+        "hop_limit",
+        "copy_budget",
+        "storage_admission",
+    ):
+        assert policy_term not in lowered
+
+
 def test_core_conformance_has_no_android_or_transport_dependency() -> None:
     source_root = ANDROID / "core-conformance" / "src" / "main"
     source = "\n".join(

@@ -7,4 +7,6 @@
     <string name="no_active_transfer">কোনো সক্রিয় স্থানান্তর নেই। টেকসই পুনরুদ্ধার প্রস্তুত।</string>
     <string name="transfer_recovery_status">%1$d / %2$d যাচাইকৃত অংশ পুনরুদ্ধার হয়েছে।</string>
     <string name="storage_limit_message">স্টোরেজ সীমা পূর্ণ। বিদ্যমান যাচাইকৃত তথ্য রাখা হয়েছে; কিছুই মুছে ফেলা হয়নি।</string>
+    <string name="transport_permission_available">নিকটবর্তী স্থানান্তরের অনুমতি পাওয়া গেছে।</string>
+    <string name="transport_permission_blocked">%1$s অনুমতি দেওয়া হয়নি। নিকটবর্তী স্থানান্তর বন্ধ থাকবে; হাতে চালানো সুবিধাগুলো চলবে।</string>
 </resources>

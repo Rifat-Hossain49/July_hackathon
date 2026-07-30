@@ -22,11 +22,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import java.io.File
 import org.shongket.data.persistence.AppPrivateStateStore
-import org.shongket.data.persistence.BackgroundTransferPort
 import org.shongket.data.persistence.DurableTransferRepository
 import org.shongket.data.persistence.LifecycleRecovery
 import org.shongket.data.persistence.SavedUiIdentifiers
 import org.shongket.data.persistence.TransferLifecycleCoordinator
+import org.shongket.data.transport.BackgroundTransferCoordinator
+import org.shongket.data.transport.DevicePermission
+import org.shongket.data.transport.PermissionDecision
+import org.shongket.data.transport.PermissionGate
+import org.shongket.data.transport.SimulatedTransportAdapter
+import org.shongket.data.transport.TransportCapabilities
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,11 +40,19 @@ class MainActivity : ComponentActivity() {
         val repository = DurableTransferRepository(
             AppPrivateStateStore(File(filesDir, "shongket-state").toPath()),
         )
+        val softwareAdapter = SimulatedTransportAdapter(
+            TransportCapabilities(
+                protocolVersions = setOf(1),
+                maxPayloadBytes = 1_048_576,
+            ),
+        )
         val recovery = TransferLifecycleCoordinator(repository).recover(
             savedUi = SavedUiIdentifiers(activeTransferId = null),
-            backgroundTransfer = BackgroundTransferPort {
-                // Slice 4 binds this port to the selected transport adapter.
-            },
+            backgroundTransfer = BackgroundTransferCoordinator(softwareAdapter),
+        )
+        val permissionDecision = PermissionGate.evaluate(
+            required = setOf(DevicePermission.NEARBY_DEVICES),
+            states = emptyMap(),
         )
         setContent {
             val savedTransferId by rememberSaveable {
@@ -48,6 +61,7 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 ShongketHome(
                     recovery.copy(activeTransferId = savedTransferId),
+                    permissionDecision,
                 )
             }
         }
@@ -55,7 +69,10 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun ShongketHome(recovery: LifecycleRecovery) {
+private fun ShongketHome(
+    recovery: LifecycleRecovery,
+    permissionDecision: PermissionDecision,
+) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
@@ -72,6 +89,18 @@ private fun ShongketHome(recovery: LifecycleRecovery) {
             Text(
                 text = stringResource(R.string.software_preview_notice),
                 style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                text = when (permissionDecision) {
+                    PermissionDecision.Allowed ->
+                        stringResource(R.string.transport_permission_available)
+                    is PermissionDecision.Blocked ->
+                        stringResource(
+                            R.string.transport_permission_blocked,
+                            permissionDecision.permission.name,
+                        )
+                },
+                style = MaterialTheme.typography.bodyMedium,
             )
             Text(
                 text = if (recovery.activeTransferId == null) {
