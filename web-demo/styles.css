@@ -208,6 +208,10 @@ dt { color: var(--dim); } dd { margin: 0; color: var(--muted); word-break: break
 .evidence-links { border-top: 1px solid var(--line); }
 .evidence-links a, .evidence-links button { width: 100%; display: flex; justify-content: space-between; padding: 17px 3px; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); cursor: pointer; font-size: .76rem; }
 .evidence-links b { color: var(--green); }
+.evidence-shot { grid-column: 1 / -1; margin: 4px 0 0; display: grid; justify-items: center; gap: 12px; }
+.evidence-shot a { display: block; width: min(100%, 420px); border: 1px solid var(--line-strong); background: var(--panel); }
+.evidence-shot img { display: block; width: 100%; height: auto; }
+.evidence-shot figcaption { color: var(--dim); font-size: .72rem; text-align: center; }
 footer { border-top: 1px solid var(--line); padding: 28px clamp(20px, 5vw, 76px); display: flex; align-items: center; justify-content: space-between; gap: 20px; color: var(--dim); font-size: .68rem; }
 footer p { margin: 0; }
 footer strong { color: var(--amber); }
