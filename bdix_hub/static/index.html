@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07110c">
+  <meta name="description" content="Shongket public crisis capsules over a Bangladesh domestic network route.">
+  <title>Shongket — Bangladesh Domestic Hub</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Shongket domestic hub home">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>SHONGKET</span>
+    </a>
+    <div class="network-state" id="network-state" data-state="checking">
+      <span class="pulse" aria-hidden="true"></span>
+      <span id="network-label">Checking domestic hub</span>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">BANGLADESH DOMESTIC ROUTE • PUBLIC CAPSULES</p>
+        <h1>Stay connected when the <em>global</em> Internet goes dark.</h1>
+        <p class="lede">
+          Open the same Shongket hub from a laptop, Android phone or iPad.
+          Messages cross different Wi-Fi networks only while both ISPs can
+          still reach this Bangladesh-hosted server.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="#hub">Open a channel <span>↓</span></a>
+          <button class="button secondary" id="install-app" type="button">Install on this device</button>
+        </div>
+        <p class="install-help" id="install-help">
+          On iPad/iPhone: Safari → Share → Add to Home Screen. HTTPS is required.
+        </p>
+      </div>
+      <div class="route-card" aria-label="Domestic route diagram">
+        <div class="route-row"><span class="device">A</span><b>ISP A</b><i></i></div>
+        <div class="hub-node"><small>BANGLADESH HOST</small><strong>SHONGKET HUB</strong><span>PUBLIC TEXT ONLY</span></div>
+        <div class="route-row reverse"><span class="device">B</span><b>ISP B</b><i></i></div>
+        <p>ISP A → domestic / BDIX route → hub → ISP B</p>
+      </div>
+    </section>
+
+    <section class="truth-strip" role="note">
+      <strong>IMPORTANT LIMIT</strong>
+      <span>
+        This is not magic communication without every network. If domestic
+        ISP/BDIX routing also fails, use Shongket's nearby local-Wi-Fi mode.
+        Cross-ISP field validation has not yet been run.
+      </span>
+    </section>
+
+    <section class="hub-shell" id="hub">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">DOMESTIC CRISIS BULLETIN</p>
+          <h2>Join an incident channel</h2>
+        </div>
+        <span class="public-badge">PUBLIC • NO ACCOUNT</span>
+      </div>
+
+      <form class="join-bar" id="channel-form" novalidate>
+        <div>
+          <label for="channel">Channel code</label>
+          <input id="channel" name="channel" maxlength="32" autocomplete="off"
+                 placeholder="DHAKA-RELIEF" pattern="[A-Za-z0-9-]{3,32}" required>
+        </div>
+        <button class="button primary" type="submit">Join / refresh</button>
+        <p id="channel-error" class="form-error" role="alert" aria-live="polite"></p>
+      </form>
+
+      <div class="workspace">
+        <form class="panel composer" id="capsule-form" novalidate>
+          <div class="panel-head">
+            <span class="step">01</span>
+            <div>
+              <h3>Publish a crisis capsule</h3>
+              <p>Text-only. An image is never required.</p>
+            </div>
+          </div>
+
+          <label for="message">Crisis message <span>বাংলা / English</span></label>
+          <textarea id="message" maxlength="1024" required
+                    placeholder="যেমন: নদীর পূর্ব পাড়ে বিশুদ্ধ পানি প্রয়োজন"></textarea>
+
+          <label for="location">Location description</label>
+          <input id="location" maxlength="200" required
+                 placeholder="Operator-supplied location, not automatic GPS">
+
+          <div class="field-row">
+            <div>
+              <label for="urgency">Urgency</label>
+              <select id="urgency">
+                <option value="important">Important</option>
+                <option value="normal">Normal</option>
+                <option value="critical">Critical / life safety</option>
+              </select>
+            </div>
+            <div>
+              <label for="expiry">Keep visible for</label>
+              <select id="expiry">
+                <option value="3600">1 hour</option>
+                <option value="21600" selected>6 hours</option>
+                <option value="86400">24 hours</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="confirm-row">
+            <input id="human-confirmed" type="checkbox">
+            <span>I reviewed this capsule. It is not automatically verified as fact.</span>
+          </label>
+          <label class="confirm-row public">
+            <input id="public-consent" type="checkbox">
+            <span>I understand this message and location will be public in this channel.</span>
+          </label>
+
+          <button class="button primary full" type="submit">Queue & publish public capsule</button>
+          <p class="form-error" id="publish-error" role="alert" aria-live="polite"></p>
+          <p class="form-success" id="publish-success" role="status" aria-live="polite"></p>
+        </form>
+
+        <section class="panel feed-panel" aria-labelledby="feed-title">
+          <div class="panel-head">
+            <span class="step">02</span>
+            <div>
+              <h3 id="feed-title">Public channel feed</h3>
+              <p id="feed-subtitle">Enter a channel code to begin.</p>
+            </div>
+          </div>
+
+          <div class="feed-toolbar">
+            <div>
+              <span>CHANNEL</span>
+              <strong id="active-channel">—</strong>
+            </div>
+            <div>
+              <span>OUTBOX</span>
+              <strong id="outbox-count">0 queued</strong>
+            </div>
+            <button class="mini-button" id="refresh-feed" type="button">Refresh now</button>
+          </div>
+
+          <div class="feed-notice" id="feed-notice" role="status" aria-live="polite">
+            No channel selected.
+          </div>
+          <ol class="capsule-feed" id="capsule-feed"></ol>
+        </section>
+      </div>
+    </section>
+
+    <section class="modes">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">KNOW WHICH MODE YOU HAVE</p>
+          <h2>Two outage paths, one honest boundary</h2>
+        </div>
+      </div>
+      <div class="mode-grid">
+        <article>
+          <span>01</span>
+          <h3>Domestic hub</h3>
+          <p>Different Wi-Fi/ISPs can exchange public text while each can reach this Bangladesh server.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h3>Nearby local Wi-Fi</h3>
+          <p>Two devices on the same Wi-Fi or hotspot exchange directly when no server route is available.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h3>Total network loss</h3>
+          <p>No website can bridge distant users. People must move data through nearby encounters or restored links.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>SHONGKET</span>
+    </div>
+    <p>Public text only • No analytics • No automatic location • No guaranteed delivery</p>
+    <p>BDIX / cross-ISP field validation: <strong>NOT RUN</strong></p>
+  </footer>
+</body>
+</html>

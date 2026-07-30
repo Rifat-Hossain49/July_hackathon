@@ -181,6 +181,38 @@ Automation vocabulary is defined in `ACCEPTANCE_TESTS.md`:
 
 ---
 
+## Separate delivery path — Bangladesh domestic/BDIX hub
+
+**Status:** SCOPE_FROZEN; APPROVED_FOR_BDIX_DOMESTIC_HUB_SOFTWARE;
+FIELD_VALIDATION_NOT_APPROVED.
+**Classification:** software/deployment package plus a separate domestic
+network field gate.
+
+- **Objective:** exchange public, human-confirmed text capsules between
+  browsers on different Bangladeshi ISP/Wi-Fi networks while those networks
+  can still reach one Bangladesh-hosted hub through a domestic route.
+- **Scope freeze:** `BDIX_HUB_SCOPE.md`, commit
+  `3b77dfe367a0e5c1d5b2ca242d6496824e868384`.
+- **Deliverables:** strict bounded WSGI API; SQLite durability, expiry and
+  idempotency; public-only browser client with a persistent outbox and cached
+  shell; health/backup/deployment package.
+- **Acceptance IDs:** BH-01 through BH-12.
+- **Exclusions:** private chat, accounts, media, end-to-end encryption claims,
+  global-Internet replacement, cross-hub federation and any claim that the
+  route works when domestic ISP/BDIX connectivity is also unavailable.
+- **Software gate:** automated API/storage/static/deployment tests plus a real
+  browser publish/fetch/reload exercise and Linux Gunicorn smoke.
+- **Field gate:** one named Bangladesh host, two named ISPs, controlled loss of
+  global reachability, bidirectional exchange, interruption/reconnect evidence
+  and ten cold runs.
+- **Fallback:** the existing same-Wi-Fi/hotspot transport is the deeper-outage
+  nearby path. It is not silently presented as distant connectivity.
+
+This path is centralized and optional. It does not modify the M0/M1
+deterministic core or imply approval for any numbered milestone.
+
+---
+
 ## Milestone 2 — Local two-process transfer
 
 **Status:** SCOPE_FROZEN; APPROVED_FOR_SOFTWARE_IMPLEMENTATION.

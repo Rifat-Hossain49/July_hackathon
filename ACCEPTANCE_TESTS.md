@@ -1209,6 +1209,39 @@ defined. They now map to canonical IDs:
 | `AT-MP-1` … `AT-MP-5` | AT-56, AT-57 |
 | `AT-AI-1` … `AT-AI-4` | AT-58, AT-59, AT-60 (with AT-61, AT-62) |
 
+# Separate BDIX domestic-hub acceptance (BH-01 … BH-12)
+
+**Software status: IMPLEMENTED. Field status: NOT RUN.** This catalogue is
+governed by `BDIX_HUB_SCOPE.md` and the exact separate approval record in
+`PRODUCT_DECISIONS.md`. It does not alter the AT-01 through AT-78 counts or
+convert software evidence into a cross-ISP/BDIX claim.
+
+| ID | Software result | Evidence |
+|---|---|---|
+| BH-01 Cross-client exchange | PASS | WSGI test publishes from one simulated source address and fetches the same capsule from another |
+| BH-02 Bounded strict schema | PASS | exact message/location limits, malformed JSON, duplicate/unknown fields, wrong types, unsupported versions, truncation and 8193-byte refusal |
+| BH-03 Public confirmation gate | PASS | private, unconfirmed, non-boolean and non-consented requests refused before storage |
+| BH-04 Durable restart | PASS | a newly created application opens the same SQLite file and retains capsule/cursor |
+| BH-05 Idempotency and conflict | PASS | identical `client_id` replay returns one original row; conflicting replay returns `CLIENT_ID_CONFLICT` |
+| BH-06 Expiry and retention | PASS | expiry boundary removes the capsule from results; freed active capacity accepts a new capsule |
+| BH-07 Interruption recovery | PASS (software) | bounded local-storage outbox, stable UUID and retryable/terminal separation; a real Chromium exercise joined `BROWSER-TEST`, published with an empty final outbox, reloaded and fetched the same capsule without error |
+| BH-08 Abuse/resource boundary | PASS | per-address rate, global active count, per-channel active count and database-byte limit produce bounded refusals |
+| BH-09 Content-free operations | PASS | unique capsule marker absent from application stdout/stderr; deployment disables Gunicorn access logging |
+| BH-10 Offline application shell | PASS (software) | same-origin manifest/assets, service-worker shell cache and explicit API-cache exclusion |
+| BH-11 Deployment readiness | PASS (software) | health API, pinned Gunicorn, loopback systemd unit, bounded TLS proxy example, verified non-overwriting SQLite backup and Linux production smoke workflow |
+| BH-12 Honest status | PASS | interface distinguishes domestic hub, nearby mode and total network loss; field state is visibly `NOT RUN` |
+
+Focused local evidence command:
+
+```text
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q -p no:cacheprovider \
+  tests/test_bdix_hub.py tests/test_bdix_hub_static.py tests/test_bdix_backup.py
+```
+
+The automated field gate remains **not passing**. It requires the named
+Bangladesh host, two named ISPs and controlled international-route loss in
+`BDIX_HUB_SCOPE.md` §8.
+
 ## Test-count inventory
 
 Counts are measured from the 78 definitions. The completed M0 and M1

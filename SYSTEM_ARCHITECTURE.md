@@ -1,8 +1,10 @@
 # Shongket — System Architecture
 
 **Status:** M0 and M1 architecture implemented; M2 through M9 scope
-frozen for a separately approved software-complete implementation.
-Physical-device, real-radio and field behaviour remains unvalidated.
+frozen for a separately approved software-complete implementation. A separate
+BDIX domestic-hub software milestone is implemented behind an optional
+transport/application boundary. Physical-device, real-radio, cross-ISP/BDIX
+and field behaviour remains unvalidated.
 
 ## 1. Architecture summary
 
@@ -131,6 +133,7 @@ lower-priority media-plane traffic of equal or lower criticality
 | Public content | Signer trust only; freshness / accuracy not implied | expiry enforced |
 | Private content | Forwarding requires explicit user consent | never auto-forwarded |
 | Optional gateway | Untrusted transport bridge | must not bypass integrity checks |
+| BDIX domestic hub | Untrusted public application endpoint | public capsules only; validates and bounds every request; reachable only while a domestic route survives |
 | External storage (SD card, etc.) | Untrusted host | fragments must be re-verified after read |
 
 ---
@@ -154,6 +157,7 @@ observable, not silent.
 | Model failure | automatic fallback to manual form (D-011) |
 | Malformed payload | reject, log, surface a generic protocol error to UI |
 | Protocol-version mismatch | reject, do not partially process; surface clear error |
+| Domestic hub unreachable | retain a bounded confirmed public outbox in the browser; retry when the route returns; nearby mode remains separate |
 
 Note on "Insufficient storage": the eviction row above describes the
 **device-side effect**, which remains later-milestone work (AT-12 is
@@ -486,6 +490,43 @@ Every network boundary validates the 1,048,576-byte frame limit before
 parse, canonical schema limits before mutation, and fragment integrity
 before storage. Test doubles implement the same interfaces and may not
 relax those checks.
+
+### 6.4 Optional Bangladesh domestic hub [IMPLEMENTED SOFTWARE]
+
+The separately approved `BDIX_HUB_SCOPE.md` path is an optional centralized
+application/transport adapter for the case where global Internet routes fail
+but customer access and Bangladesh domestic/BDIX routes remain alive:
+
+```mermaid
+flowchart LR
+  A[Browser on ISP A] -->|HTTPS over domestic route| H[Shongket domestic hub]
+  H --> V[Strict public-capsule validator]
+  V --> S[(Bounded SQLite store)]
+  S -->|short polling| H
+  H -->|HTTPS over domestic route| B[Browser on ISP B]
+  A -. deeper outage .-> N[Nearby local-Wi-Fi mode]
+  B -. deeper outage .-> N
+```
+
+`bdix_hub/validation.py` owns canonical request validation and identity;
+`bdix_hub/store.py` owns expiry, idempotency, rejection-only resource caps and
+durability; `bdix_hub/app.py` owns the WSGI/API boundary; and
+`bdix_hub/static/` is the same-origin progressive web client. None of these
+modules is imported by `shongket_core`, Android or iOS transport code.
+
+The hub accepts only public, human-confirmed text capsules with explicit
+public-forwarding acknowledgement. It has no accounts, media upload,
+automatic location, analytics, cloud AI or private-content path. The browser
+outbox is bounded and preserves a confirmed request across reload or temporary
+route loss; the stable `client_id` makes retry idempotent.
+
+The application is standard-library-only. Gunicorn is a deployment-only WSGI
+process server; Nginx terminates HTTPS and overwrites the trusted real-client
+address header. The backend stays bound to loopback. Operational logs contain
+no capsule message or location text.
+
+This diagram proves a software path, not network reachability. The host and two
+named ISP paths must pass `BDIX_HUB_SCOPE.md` §8 before a cross-ISP/BDIX claim.
 
 ---
 

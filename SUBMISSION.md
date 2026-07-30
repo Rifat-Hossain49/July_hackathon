@@ -1,4 +1,4 @@
-# Shongket 0.2.0 Local-Wi-Fi Demo Submission
+# Shongket Multi-Path Software Demo Submission
 
 ## Project
 
@@ -19,6 +19,9 @@ Repository owner: [Rifat-Hossain49](https://github.com/Rifat-Hossain49)
   <https://github.com/Rifat-Hossain49/July_hackathon/releases/tag/v0.2.0-local-wifi.1>
 - Direct demo APK:
   <https://github.com/Rifat-Hossain49/July_hackathon/releases/download/v0.2.0-local-wifi.1/Shongket-0.2.0-local-wifi.1-debug.apk>
+- Bangladesh domestic hub: software and deployment package are in
+  `bdix_hub/` and `deploy/bdix/`; a public BDIX-hosted URL is pending host,
+  DNS and SSH inputs.
 
 ## Demonstration
 
@@ -43,6 +46,13 @@ network (or join one to the other phone's manually enabled hotspot), open the
 app on both, tap **Start nearby Wi-Fi**, select the discovered peer and send a
 human-confirmed text capsule. Internet service is not required.
 
+For the different-Wi-Fi domestic path, run `python -m bdix_hub` locally for
+software verification or deploy the approved package to a Bangladesh host
+using `deploy/bdix/README.md`. A laptop, Android phone and iPad then open the
+same HTTPS origin, join the same public incident channel and publish/fetch
+text-only capsules. This path works only if both ISPs can still reach that
+host; it has not yet passed the named-host/two-ISP BDIX field gate.
+
 ## Functional scope
 
 - Bengali and English crisis-message input.
@@ -57,6 +67,8 @@ human-confirmed text capsule. Internet service is not required.
 - Browser-local state, no login, no analytics, and no silent network upload.
 - Experimental foreground Android DNS-SD/mDNS discovery and bounded local TCP
   text-capsule exchange on a shared Wi-Fi network.
+- Public-only, text-only domestic hub with strict validation, durable SQLite,
+  expiry, idempotent retry, bounded abuse controls and a cached browser shell.
 
 ## Architecture
 
@@ -65,7 +77,9 @@ Semantic extraction, media processing, storage, diagnostics, and transport
 have separate boundaries. The web demo is a dependency-free static
 HTML/CSS/JavaScript application. The Android app is a Kotlin single-activity
 application backed by the shared deterministic protocol concepts and durable
-local state.
+local state. The optional domestic hub is a standard-library WSGI application
+behind a transport boundary; it does not change the nearby Android/iOS wire
+protocol.
 
 ## Evidence
 
@@ -83,11 +97,19 @@ The web demo uses simulated peer transport. The Android APK contains the
 experimental local-Wi-Fi implementation, but physical-device and real-radio
 validation have not been run.
 
+The BDIX hub software uses a real central-server API rather than simulated peer
+transport, but it is not yet deployed to a named Bangladesh host and
+cross-ISP/BDIX validation has not been run.
+
 - This is a functional software demo, not a production or field-validated
   emergency system.
 - The published APK uses Android debug/demo signing and is not production
   signed.
 - Real radios, physical-device testing, and field trials were not run.
+- A domestic route is still a network: if ISP access or BDIX/domestic routing
+  fails, the hub cannot connect distant users.
+- The hub accepts public capsules only and does not provide end-to-end
+  encryption, verified identity or factual verification.
 - Delivery is disruption-tolerant but never guaranteed.
 - No cloud AI is required or used by the offline demo core.
 - The screenshot and bundled media are synthetic; source evidence is

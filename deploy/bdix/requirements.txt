@@ -1,0 +1,2 @@
+# Production process server only. Application and tests remain stdlib-only.
+gunicorn==26.0.0

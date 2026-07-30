@@ -11,13 +11,15 @@ encounters.
 **Status:** Milestone 0 is implemented in `app/simulator/`; Milestone 1
 is implemented in `shongket_core/`; and an experimental Milestone 3
 Android local-Wi-Fi slice is implemented in `android/`, and the compatible
-native iOS software slice is implemented in `ios/`. The top-level
+native iOS software slice is implemented in `ios/`. A separately approved
+public text-only Bangladesh domestic hub is implemented in `bdix_hub/`. The
+top-level
 `IMPLEMENTATION_STATUS` remains `APPROVED_FOR_MILESTONE_1`; the exact
 local-Wi-Fi software authorization is recorded separately as
 `APPROVED_FOR_MILESTONE_3_LOCAL_WIFI_IMPLEMENTATION` in
-`PRODUCT_DECISIONS.md`, along with the exact iOS interoperability approval.
-Physical-device, cross-platform radio and field validation remain unapproved
-and unclaimed.
+`PRODUCT_DECISIONS.md`, along with the exact iOS interoperability and BDIX-hub
+software approvals. Physical-device, cross-platform radio, cross-ISP/BDIX and
+field validation remain unapproved and unclaimed.
 
 The Android and iOS apps use the same bounded wire protocol to exchange
 human-confirmed text capsules between phones on the same Wi-Fi network or a
@@ -26,6 +28,14 @@ apps do not provide Bluetooth, Wi-Fi Direct, background relaying, media
 transfer, end-to-end encryption or offline AI inference. See
 [android/README.md](./android/README.md) and
 [ios/README.md](./ios/README.md) for build and phone instructions.
+
+The optional domestic hub lets a laptop, Android phone or iPad exchange
+**public text capsules** through one Bangladesh-hosted HTTPS origin while both
+ISPs can still reach it through a domestic route. It needs no image or account,
+but it is not private chat and cannot work if domestic routing also fails. The
+software and deployment package exist; a live BDIX host and two-ISP field test
+are still pending. See [BDIX_HUB_SCOPE.md](./BDIX_HUB_SCOPE.md) and
+[deploy/bdix/README.md](./deploy/bdix/README.md).
 
 > **Public tag discipline:** throughout this document, every
 > capability is labelled as
@@ -90,8 +100,9 @@ Shongket designs for that in-between state.
   in-flight bulk transfers.
 - **Content addressing.** Objects are identified by their hash;
   duplicates are not re-stored.
-- **Offline-first.** All transfers are peer-to-peer with no
-  required infrastructure.
+- **Two disruption paths.** Nearby mode is peer-to-peer with no server; the
+  optional domestic hub bridges different ISPs only while Bangladesh domestic
+  routing remains available.
 - **Human-confirmed AI.** AI suggestions are proposals until a
   human confirms them.
 - **Manual fallback.** When the offline model is disabled or
@@ -119,7 +130,7 @@ Capture ── Semantic engine (offline) ── Human review ── Confirmed ca
             Priority scheduler (signal plane first)
                               │
                               ▼
-     Transport adapter (experimental local Wi-Fi; future transports TBD)
+     Transport adapter (local Wi-Fi or optional public domestic hub)
                               │
                               ▼
                     Peer fragment inventory
@@ -168,6 +179,7 @@ left to M3+.
 | Multi-peer simulator run | SIMULATED (deterministic simulated multi-peer completion) |
 | Android text-capsule local-Wi-Fi transfer | IMPLEMENTED (experimental software; physical-device validation pending) |
 | iOS text-capsule local-Wi-Fi transfer | IMPLEMENTED (native iOS 16+ software; Android-to-iPhone validation pending) |
+| Bangladesh domestic public-capsule hub | IMPLEMENTED (software/deployment package; BDIX/cross-ISP validation pending) |
 | Progressive real-media transfer | PLANNED |
 | Offline AI extraction | PLANNED |
 | Reed-Solomon / RaptorQ | RESEARCH ONLY |
@@ -188,6 +200,7 @@ Shongket does not currently claim:
 - guaranteed multimedia transfer rates;
 - tested Android compatibility;
 - tested Android-to-iPhone radio interoperability;
+- tested cross-ISP/BDIX reachability or blackout availability;
 - tested battery performance;
 - implemented coded reconstruction;
 - automatic verification of factual truth.
@@ -227,6 +240,16 @@ scope:
 - language-neutral golden vectors;
 - all 16 M1-blocking acceptance IDs.
 
+The separately approved `bdix_hub/` software slice implements:
+
+- a strict 8192-byte public text-capsule API with human/public confirmation;
+- durable SQLite cursors, expiry and idempotent retry;
+- bounded publish rate, channel count, active count and database size;
+- an iPad/Android/laptop progressive web client with a persistent outbox;
+- an offline-cached same-origin application shell; and
+- a pinned Gunicorn, loopback service, HTTPS proxy and verified-backup
+  deployment package.
+
 ### 9.2 What is NOT completed
 
 None of the following is completed in this repository:
@@ -236,13 +259,14 @@ None of the following is completed in this repository:
 - Wi-Fi Direct;
 - Nearby Connections;
 - automatic hotspot setup or communication between devices that share no
-  local network;
+  local network **and** have no reachable domestic hub route;
 - real camera or audio capture pipeline;
 - production encryption and cryptographic identity;
 - real offline model inference;
 - Bloom-filter inventory;
 - coded reconstruction (Reed-Solomon / fountain / RaptorQ);
 - field testing.
+- a deployed, named BDIX-connected production hub and two-ISP blackout test.
 
 ### 9.3 Standing caveats
 
@@ -252,6 +276,8 @@ None of the following is completed in this repository:
   wall-clock time base.
 - The local-Wi-Fi text transport is experimental; no future multimedia or
   store-and-forward transport is locked.
+- The domestic hub is centralized and public-only. Its software tests do not
+  prove that a particular ISP will route to it during a shutdown.
 - No model is locked.
 - No claim is made about Android vendor compatibility until M3.
 - No claim is made about battery performance until M3.
@@ -286,6 +312,8 @@ See [MILESTONES.md](./MILESTONES.md). Milestones:
 - M3: experimental Android text-capsule transfer on the same Wi-Fi or a
   user-enabled hotspot is implemented in software; the two-phone real-radio
   smoke-test gate remains pending.
+- BDIX domestic hub (separate approval): public text-capsule software and
+  deployment package implemented; named-host/two-ISP field gate pending.
 - M4: progressive media transfer on real devices.
 - M5: real-device multi-peer completion (ordinary verified chunks).
 - M6: offline semantic extraction.
@@ -337,8 +365,9 @@ per [MODEL_EVALUATION_PLAN.md](./MODEL_EVALUATION_PLAN.md).
 Implementation is gated by the exact milestone/scope ledger in
 `PRODUCT_DECISIONS.md`. M0 and M1 are complete. Later software work is
 authorized only by its exact descendant ledger entry; the local-Wi-Fi slice
-uses `APPROVED_FOR_MILESTONE_3_LOCAL_WIFI_IMPLEMENTATION`. Physical-device,
-real-radio and field-validation success claims, production signing/trust
+uses `APPROVED_FOR_MILESTONE_3_LOCAL_WIFI_IMPLEMENTATION`, and the domestic hub
+uses `APPROVED_FOR_BDIX_DOMESTIC_HUB_SOFTWARE`. Physical-device, real-radio,
+cross-ISP/BDIX and field-validation success claims, production signing/trust
 decisions and public-store deployment remain unauthorized.
 
 Run the complete baseline with:
@@ -346,6 +375,16 @@ Run the complete baseline with:
 ```
 python -m pytest -q
 ```
+
+Run the domestic hub locally:
+
+```text
+python -m bdix_hub --host 127.0.0.1 --port 8787
+```
+
+Then open `http://127.0.0.1:8787`. Local serving is for software testing; a
+real different-ISP blackout test requires the HTTPS deployment described in
+`deploy/bdix/README.md`.
 
 ---
 
