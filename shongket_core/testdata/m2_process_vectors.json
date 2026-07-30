@@ -1,0 +1,67 @@
+{
+  "_comment": [
+    "Language-neutral M2 process and capability vectors.",
+    "The hello bytes and digest were computed with platform UTF-8 and",
+    "SHA-256 primitives, independently of shongket_core.",
+    "Transport selection is lexical after declared/enabled intersection."
+  ],
+  "frames": [
+    {
+      "name": "process_hello_v1_0",
+      "value": {
+        "schema": "shongket.process.v1.0",
+        "type": "hello",
+        "request_id": 0,
+        "payload": {}
+      },
+      "canonical_text": "{\"payload\":{},\"request_id\":0,\"schema\":\"shongket.process.v1.0\",\"type\":\"hello\"}",
+      "body_bytes": 77,
+      "header_hex": "0000004d",
+      "sha256": "521011a50020e7680c06a4eec44f4d04996675052b3dfa04e352e4e7d8e59b29"
+    }
+  ],
+  "capability_negotiation": [
+    {
+      "name": "shared_transports_lower_limit_public_only",
+      "sender": {
+        "peer_id": "peer-A",
+        "transports": ["loopback", "stdio"],
+        "max_payload": 900,
+        "public_only": false
+      },
+      "receiver": {
+        "peer_id": "peer-B",
+        "transports": ["stdio", "loopback"],
+        "max_payload": 400,
+        "public_only": true
+      },
+      "enabled_transports": ["stdio", "loopback"],
+      "expected": {
+        "accepted": true,
+        "transport": "loopback",
+        "max_payload": 400,
+        "receiver_public_only": true
+      }
+    },
+    {
+      "name": "no_shared_transport",
+      "sender": {
+        "peer_id": "peer-A",
+        "transports": ["stdio"],
+        "max_payload": 900,
+        "public_only": false
+      },
+      "receiver": {
+        "peer_id": "peer-B",
+        "transports": ["loopback"],
+        "max_payload": 400,
+        "public_only": false
+      },
+      "enabled_transports": ["stdio", "loopback"],
+      "expected": {
+        "accepted": false,
+        "reason": "no_usable_transport"
+      }
+    }
+  ]
+}

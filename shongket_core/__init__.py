@@ -5,19 +5,26 @@ scoped by ``M1_SCOPE_FREEZE.md``. Standard library only: this package
 must never import from ``adapters/``, from ``app.simulator``, or from
 any third-party distribution (``SYSTEM_ARCHITECTURE.md`` §3.4).
 
-**Slice 1 only.** Implemented here: canonical serialization, the schema
-registry, protocol version parsing and explicitly registered
-minor-version compatibility. Persistence, migration, rollback, policy
-enforcement and the evidence layer belong to later slices and are absent
-by design — not stubbed, not partially present.
+Milestone 1 is complete: canonical serialization, versioning, durable
+persistence, migration, policy, storage and deterministic evidence live
+in this package. The authorized M2 process slice adds canonical capability
+negotiation here so every adapter consumes the same decision.
 
-The M0 simulator under ``app/simulator`` is untouched and continues to
-use its own validation boundary. Reconciling the two is Slice 4/5 work.
+The M0 simulator under ``app/simulator`` remains frozen and continues to
+use its own validation boundary.
 """
 
 from __future__ import annotations
 
 from . import codec
+from .capabilities import (
+    MAX_TRANSPORT_PAYLOAD,
+    NegotiatedCapabilities,
+    NegotiationResult,
+    PeerCapabilities,
+    ensure_payload_fits,
+    negotiate_capabilities,
+)
 from .errors import ErrorClass, ErrorCode, ProtocolError, classify
 from .schema import (
     AcceptedPayload,
@@ -33,6 +40,12 @@ __all__ = [
     "ErrorCode",
     "ProtocolError",
     "classify",
+    "MAX_TRANSPORT_PAYLOAD",
+    "PeerCapabilities",
+    "NegotiatedCapabilities",
+    "NegotiationResult",
+    "negotiate_capabilities",
+    "ensure_payload_fits",
     "SchemaVersion",
     "SchemaId",
     "parse_schema_id",

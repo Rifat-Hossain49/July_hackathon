@@ -166,6 +166,85 @@ refresh and close every row.
 | Platform requirements | Android plus version-dependent Bluetooth/Wi-Fi/local-network permissions; target API must be recorded |
 | Smaller alternative | Raw local-hotspot/LAN sockets or Wi-Fi Direct adapter; higher implementation cost but no Play Services runtime |
 
+### 1.10 Android build and UI dependency admission record
+
+Accessed and measured 2026-07-30. These entries close the dependency
+gate for the Android foundation only. Artifact sizes are the exact
+compressed files downloaded from the official Gradle, Google Maven and
+Maven Central repositories; they are not APK-size claims. Transitive
+size and final APK contribution must be measured from the resolved
+release graph before a release-size claim is made.
+
+Primary sources:
+
+- Android Developers, [AGP 9.2 release notes](https://developer.android.com/build/releases/agp-9-2-0-release-notes):
+  AGP 9.2 supports API 37, requires/defaults to Gradle 9.4.1, defaults
+  to Build Tools 36.0.0 and requires JDK 17; the page records the 9.2.1
+  patch.
+- Gradle, [9.4.1 release notes](https://docs.gradle.org/9.4.1/release-notes.html)
+  and [release checksums](https://gradle.org/release-checksums/):
+  the pinned binary ZIP SHA-256 is
+  `2ab2958f2a1e51120c326cad6f385153bb11ee93b3c216c5fccebfdfbb7ec6cb`
+  and the wrapper JAR SHA-256 is
+  `55243ef57851f12b070ad14f7f5bb8302daceeebc5bce5ece5fa6edb23e1145c`.
+- Android Developers, [built-in Kotlin migration](https://developer.android.com/build/migrate-to-built-in-kotlin):
+  AGP 9.0 and later enable built-in Kotlin by default, so the Android
+  foundation does not apply a separate Kotlin Android plugin. The AGP
+  9.2 fixed-issue ledger records its Kotlin Gradle plugin dependency as
+  `2.3.10`.
+- Android Developers, [Compose BOM](https://developer.android.com/develop/ui/compose/bom),
+  [Activity releases](https://developer.android.com/jetpack/androidx/releases/activity)
+  and [Material 3 releases](https://developer.android.com/jetpack/androidx/releases/compose-material3):
+  the stable versions selected here are BOM `2026.06.00`, Activity
+  Compose `1.13.0` and Material 3 `1.4.0`.
+- The relevant upstream license texts are the
+  [Gradle Apache-2.0 license](https://github.com/gradle/gradle/blob/v9.4.1/LICENSE),
+  [AndroidX Apache-2.0 license](https://github.com/androidx/androidx/blob/androidx-main/LICENSE.txt),
+  [JUnit 4.13.2 EPL-1.0 license](https://github.com/junit-team/junit4/blob/r4.13.2/LICENSE-junit.txt)
+  and [Hamcrest 1.3 BSD license](https://github.com/hamcrest/JavaHamcrest/blob/v1.3/LICENSE.txt).
+
+| Dependency | Purpose | License | Maintenance | Exact downloaded size | Offline behaviour | Platform requirements | Smaller alternative |
+|---|---|---|---|---:|---|---|---|
+| Gradle wrapper/distribution `9.4.1` | Reproducible Android build entry point | Apache-2.0 | Current AGP 9.2 default; patch release recommended by Gradle | 137,878,901-byte binary ZIP; wrapper checksum pinned | Works after the distribution and dependencies are cached | JDK 17+; Java 24 on this workstation is supported | None compatible with AGP 9.2's stated Gradle floor |
+| Android Gradle Plugin `9.2.1` | Compile, test and package Android modules | Apache-2.0 source; Android SDK terms also apply to SDK components | Current documented AGP 9.2 patch | 12,974,080-byte direct plugin JAR | Works after plugin and SDK artifacts are cached | Gradle 9.4.1, JDK 17+, Build Tools 36.0.0; compile SDK 36 selected | A custom Android toolchain would be much larger in project complexity |
+| AGP built-in Kotlin | Compile Kotlin sources without a separately applied Kotlin Android plugin | Apache-2.0 | Shipped and maintained with AGP 9.2 | No separately admitted artifact; included in the resolved AGP graph | Same as AGP after cache warm-up | AGP 9.0+ | Java-only code would lose the approved Kotlin conformance target |
+| Kotlin Compose compiler plugin `2.3.10` | Compile Compose functions with the same Kotlin compiler line embedded by AGP | Apache-2.0 | Maintained with Kotlin; version exactly matches AGP 9.2's recorded KGP dependency | 1,434-byte marker POM, 98,165-byte Gradle plugin JAR and 936,054-byte embeddable compiler JAR | Works after the build-plugin graph is cached | Kotlin/KGP 2.3.10 | No supported smaller compiler path exists for Compose |
+| Compose BOM `2026.06.00` | Pin a compatible stable Compose graph | Apache-2.0 | Official stable BOM current at access date | 40,411-byte POM; no runtime code | Resolution is offline after cache warm-up | Android/Compose build | Individually pin every Compose artifact, with greater drift risk |
+| Activity Compose `1.13.0` | Single-activity Compose host | Apache-2.0 | Official stable Activity release | 144,321-byte direct AAR | Fully local at runtime | Android min SDK 23 upstream; Shongket selects 26 | A framework Activity plus manual Compose owner integration is smaller only in declared dependencies, not complexity |
+| Material 3 `1.4.0` | Accessible standard UI primitives and theme | Apache-2.0 | Official stable Material 3 release | 5,167,765-byte direct Android AAR | Fully local at runtime | Android with Compose | Raw Compose UI primitives reduce bytes but duplicate accessibility and component behavior |
+| JUnit `4.13.2` | JVM conformance test runner | EPL-1.0 | Mature final JUnit 4 line; test-only | 384,581-byte JAR | Test execution works after cache warm-up | JVM test runtime | A bespoke runner would save a test-only dependency but weaken standard reporting |
+| Hamcrest Core `1.3` | JUnit 4's test-only transitive matcher API | BSD 3-Clause | Mature compatibility dependency | 45,024-byte JAR | Test execution works after cache warm-up | JVM test runtime | Excluding it risks incompatible JUnit runtime linkage |
+
+The downloaded AAR metadata sets Activity Compose 1.13.0's
+`minCompileSdk` to 36 and Material 3 1.4.0's to 35. The admitted BOM
+maps Compose UI to 1.11.3. Shongket therefore selects the stable,
+available API 36 platform; API 37 is within AGP's maximum but is not a
+build requirement for this graph.
+
+No runtime internet permission, analytics SDK, cloud dependency,
+production signing material or transport SDK is admitted by this
+record. The Google Nearby row above remains open and provisional.
+
+### 1.11 Android CI action admission record
+
+Accessed and measured 2026-07-30. Every action is pinned to a full
+Git commit rather than a mutable tag. Sizes below are the exact
+compressed source snapshots downloaded from GitHub; downloaded JDK,
+Gradle and emulator images are separate build-environment inputs and
+are not application payload.
+
+| Action and immutable revision | Purpose | License | Maintenance | Exact source snapshot size | Offline behaviour | Platform requirements | Smaller alternative |
+|---|---|---|---|---:|---|---|---|
+| [`actions/checkout@11d5960a326750d5838078e36cf38b85af677262`](https://github.com/actions/checkout/tree/11d5960a326750d5838078e36cf38b85af677262) | Materialize the repository in CI | MIT | Official GitHub action, current `v4` target at access | 434,773 bytes | CI-only; needs GitHub to fetch source | GitHub Actions runner | A shell `git` invocation is smaller but duplicates authentication and cleanup handling |
+| [`actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9`](https://github.com/actions/setup-java/tree/c1e323688fd81a25caa38c78aa6df2d33d3e20d9) | Pin Temurin JDK 17 and cache Gradle dependencies | MIT | Official GitHub action, current `v4` target at access | 2,518,151 bytes | CI-only; cold runners download a JDK | GitHub Actions runner | Preinstalled Java is less deterministic |
+| [`android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407`](https://github.com/android-actions/setup-android/tree/9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407) | Provision Android command-line tools and expose `sdkmanager` after the hosted image stopped doing so | MIT | Active, non-archived repository; current `v3` target at access | 393,066 bytes | CI-only; cold runners download command-line tools and SDK packages | GitHub Actions runner and JDK | Hand-installing command-line tools duplicates checksum, path and cache handling |
+| [`ReactiveCircus/android-emulator-runner@4c44018e59b437e86cdfc41da381398f93ed8808`](https://github.com/ReactiveCircus/android-emulator-runner/tree/4c44018e59b437e86cdfc41da381398f93ed8808) | Boot a software emulator for install/launch smoke evidence | MIT | Maintained third-party action, current `v2` target at access | 470,455 bytes | CI-only; a cold runner downloads the selected emulator image | macOS GitHub runner with Android SDK and hardware acceleration | Hand-written `sdkmanager`/`avdmanager`/emulator lifecycle shell is dependency-free but materially more fragile |
+| [`actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02`](https://github.com/actions/upload-artifact/tree/ea165f8d65b6e75b540449e92b4886f43607fa02) | Retain test reports and the debug APK as inspectable CI evidence | MIT | Official GitHub action, current `v4` target at access | 2,222,593 bytes | CI-only and requires GitHub artifact storage | GitHub Actions runner | Omitting uploads is smaller but removes inspectable evidence |
+
+The emulator job is software evidence only. It does not establish
+Bluetooth/Wi-Fi behavior, OEM compatibility, battery use or any
+physical-device acceptance result.
+
 ---
 
 ## 2. Coded-delivery candidates

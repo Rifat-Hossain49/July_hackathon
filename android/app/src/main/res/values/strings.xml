@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shongket</string>
+    <string name="home_title">Shongket</string>
+    <string name="software_preview_notice">Software preview. Nearby transfer is not configured.</string>
+    <string name="transport_unavailable_action">Nearby transfer unavailable</string>
+    <string name="no_active_transfer">No active transfer. Durable recovery is ready.</string>
+    <string name="transfer_recovery_status">Recovered %1$d of %2$d verified fragments.</string>
+    <string name="storage_limit_message">Storage limit reached. Existing verified data was kept; nothing was evicted.</string>
+    <string name="transport_permission_available">Peer transport permission is available.</string>
+    <string name="transport_permission_blocked">%1$s permission is not granted. Peer transport stays off; manual features remain available.</string>
+    <string name="manual_form_title">Manual crisis capsule (works without a model)</string>
+    <string name="manual_event_type">Event type</string>
+    <string name="manual_location">Location description</string>
+    <string name="manual_action">Required action</string>
+    <string name="manual_summary_bn">Bangla summary</string>
+    <string name="manual_human_confirmation">I reviewed this capsule against the source</string>
+    <string name="manual_schedule">Confirm and schedule</string>
+    <string name="private_forward_consent">I explicitly consent to forwarding this private content</string>
+    <string name="private_forward_public_only">This peer accepts public content only; private forwarding is blocked.</string>
+    <string name="demo_simulated_notice">Offline demo: transfer uses a deterministic simulated peer, not a real radio.</string>
+    <string name="demo_create_media">1. Create local demo media</string>
+    <string name="demo_media_metadata">%1$d-byte document, source %2$s…</string>
+    <string name="demo_visibility">2. Visibility (public is the default)</string>
+    <string name="demo_public">Choose public</string>
+    <string name="demo_private">Choose private</string>
+    <string name="demo_private_selected">Private selected: explicit forwarding consent is required.</string>
+    <string name="demo_select_peer">4. Select simulated nearby peer</string>
+    <string name="demo_start_transfer">5. Start simulated transfer</string>
+    <string name="demo_interrupt">6. Simulate interruption</string>
+    <string name="demo_resume">7. Resume missing chunks</string>
+    <string name="demo_export_diagnostics">Export redacted diagnostics</string>
+    <string name="demo_stage">Stage: %1$s</string>
+    <string name="demo_progress">Progress: %1$d%% (%2$d/%3$d verified chunks)</string>
+    <string name="demo_peer">Selected peer: %1$s (simulated)</string>
+    <string name="demo_received_verified">Received item reconstructed and SHA-256 verified.</string>
+    <string name="demo_error">Action needed: %1$s</string>
+    <string name="demo_diagnostics_ready">Redacted diagnostics ready (%1$d characters; no message or media content).</string>
+</resources>
