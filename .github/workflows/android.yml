@@ -33,9 +33,17 @@ jobs:
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
       - name: Install pinned Android SDK components
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
-      - name: Run Kotlin conformance and assemble debug APK
+      - name: Verify unsigned release-candidate reproducibility
         working-directory: android
-        run: ./gradlew --no-daemon testDebugUnitTest :app:assembleDebug
+        run: |
+          ./gradlew --no-daemon :app:assembleReleaseCandidate
+          cp app/build/outputs/apk/releaseCandidate/app-releaseCandidate-unsigned.apk /tmp/shongket-first.apk
+          ./gradlew --no-daemon clean :app:assembleReleaseCandidate
+          cmp /tmp/shongket-first.apk app/build/outputs/apk/releaseCandidate/app-releaseCandidate-unsigned.apk
+          sha256sum /tmp/shongket-first.apk app/build/outputs/apk/releaseCandidate/app-releaseCandidate-unsigned.apk
+      - name: Run Kotlin tests, lint and assemble release candidates
+        working-directory: android
+        run: ./gradlew --no-daemon testDebugUnitTest lintDebug :app:assembleDebug :app:assembleReleaseCandidate
       - name: Upload inspectable software evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -46,6 +54,7 @@ jobs:
             android/core-conformance/build/reports/tests/
             android/core-conformance/build/reports/conformance/
             android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/releaseCandidate/app-releaseCandidate-unsigned.apk
 
   emulator-smoke:
     name: API 35 emulator install and launch

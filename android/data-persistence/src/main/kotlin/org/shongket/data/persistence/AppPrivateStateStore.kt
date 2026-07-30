@@ -68,9 +68,21 @@ class AppPrivateStateStore(
 
         return try {
             val decoded = decodeDocument(primary)
+            val migrationEvents = if (
+                RecoveryEvent.MIGRATED_SCHEMA_V0_TO_V1 in decoded.events
+            ) {
+                try {
+                    save(decoded.snapshot)
+                    emptyList()
+                } catch (_: Exception) {
+                    listOf(RecoveryEvent.MIGRATION_ROLLED_BACK)
+                }
+            } else {
+                emptyList()
+            }
             LoadResult(
                 snapshot = decoded.snapshot,
-                events = events + decoded.events,
+                events = events + decoded.events + migrationEvents,
             )
         } catch (error: StatePersistenceException) {
             quarantinePrimary()
@@ -153,7 +165,8 @@ class AppPrivateStateStore(
         if (document.keys != ENVELOPE_KEYS) {
             throw StatePersistenceException("state envelope fields are invalid")
         }
-        if (document["schema"] != ENVELOPE_SCHEMA) {
+        val schema = document["schema"]
+        if (schema != ENVELOPE_SCHEMA && schema != PREVIOUS_ENVELOPE_SCHEMA) {
             throw StatePersistenceException("state envelope version is unsupported")
         }
         val checksum = document["document_checksum"] as? String
@@ -165,7 +178,14 @@ class AppPrivateStateStore(
         if (CanonicalJson.sha256Hex(unsigned) != checksum) {
             throw StatePersistenceException("state checksum mismatch")
         }
-        return decodeSnapshot(document["state"])
+        val decoded = decodeSnapshot(document["state"])
+        return if (schema == PREVIOUS_ENVELOPE_SCHEMA) {
+            decoded.copy(
+                events = listOf(RecoveryEvent.MIGRATED_SCHEMA_V0_TO_V1) + decoded.events,
+            )
+        } else {
+            decoded
+        }
     }
 
     private fun decodeSnapshot(value: Any?): DecodedState {
@@ -334,6 +354,7 @@ class AppPrivateStateStore(
     private companion object {
         const val PRIMARY_FILE = "transfer-state.json"
         const val ENVELOPE_SCHEMA = "shongket.android-state.v1.0"
+        const val PREVIOUS_ENVELOPE_SCHEMA = "shongket.android-state.v0.0"
         val ENVELOPE_KEYS = setOf("document_checksum", "schema", "state")
         val STATE_KEYS = setOf(
             "capacity_bytes",

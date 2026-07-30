@@ -128,6 +128,8 @@ enum class RecoveryEvent {
     LOADED_LAST_GOOD,
     LAST_GOOD_UNREADABLE,
     DROPPED_CORRUPT_FRAGMENT,
+    MIGRATED_SCHEMA_V0_TO_V1,
+    MIGRATION_ROLLED_BACK,
 }
 
 data class LoadResult(

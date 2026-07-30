@@ -170,6 +170,38 @@ class DurableStateTest {
         assertEquals(before, repository.currentSnapshot())
     }
 
+    @Test
+    fun previousSchemaMigratesAtomicallyAndSecondLaunchIsIdempotent() = withDirectory {
+        val repository = DurableTransferRepository(AppPrivateStateStore(it))
+        repository.begin("transfer-migrate", OBJECT_ID, "original", 3, 64)
+        repository.ingest(fragment(1, "preserved"))
+        val path = it.resolve("transfer-state.json")
+        val document = CanonicalJson.parse(
+            String(Files.readAllBytes(path), StandardCharsets.UTF_8),
+        ).asMutableMap()
+        document["schema"] = "shongket.android-state.v0.0"
+        document["document_checksum"] = CanonicalJson.sha256Hex(
+            linkedMapOf("schema" to document["schema"], "state" to document["state"]),
+        )
+        Files.write(
+            path,
+            CanonicalJson.encode(document).toByteArray(StandardCharsets.UTF_8),
+            StandardOpenOption.TRUNCATE_EXISTING,
+        )
+
+        val first = AppPrivateStateStore(it).load()
+        val second = AppPrivateStateStore(it).load()
+
+        assertTrue(RecoveryEvent.MIGRATED_SCHEMA_V0_TO_V1 in first.events)
+        assertEquals(listOf(1), first.snapshot?.fragments?.map { fragment -> fragment.chunkIndex })
+        assertTrue(RecoveryEvent.MIGRATED_SCHEMA_V0_TO_V1 !in second.events)
+        assertEquals(first.snapshot, second.snapshot)
+        assertTrue(
+            String(Files.readAllBytes(path), StandardCharsets.UTF_8)
+                .contains("shongket.android-state.v1.0"),
+        )
+    }
+
     private fun fragment(index: Int, text: String): VerifiedFragment =
         VerifiedFragment.fromBytes(
             objectId = OBJECT_ID,

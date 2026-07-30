@@ -18,4 +18,22 @@
     <string name="manual_schedule">নিশ্চিত করে তালিকাভুক্ত করুন</string>
     <string name="private_forward_consent">এই ব্যক্তিগত তথ্য পাঠাতে আমি স্পষ্টভাবে সম্মতি দিচ্ছি</string>
     <string name="private_forward_public_only">এই গ্রাহক শুধু প্রকাশ্য তথ্য নেয়; ব্যক্তিগত তথ্য পাঠানো বন্ধ আছে।</string>
+    <string name="demo_simulated_notice">অফলাইন ডেমো: স্থানান্তরটি নির্ধারিত সিমুলেটেড গ্রাহক ব্যবহার করে, বাস্তব রেডিও নয়।</string>
+    <string name="demo_create_media">১. স্থানীয় ডেমো মিডিয়া তৈরি করুন</string>
+    <string name="demo_media_metadata">%1$d-বাইট নথি, উৎস %2$s…</string>
+    <string name="demo_visibility">২. দৃশ্যমানতা (প্রকাশ্য ডিফল্ট)</string>
+    <string name="demo_public">প্রকাশ্য বেছে নিন</string>
+    <string name="demo_private">ব্যক্তিগত বেছে নিন</string>
+    <string name="demo_private_selected">ব্যক্তিগত বাছাই করা হয়েছে: পাঠাতে স্পষ্ট সম্মতি প্রয়োজন।</string>
+    <string name="demo_select_peer">৪. সিমুলেটেড কাছাকাছি গ্রাহক বাছুন</string>
+    <string name="demo_start_transfer">৫. সিমুলেটেড স্থানান্তর শুরু করুন</string>
+    <string name="demo_interrupt">৬. বিচ্ছিন্নতা সিমুলেট করুন</string>
+    <string name="demo_resume">৭. অনুপস্থিত অংশগুলো আবার নিন</string>
+    <string name="demo_export_diagnostics">সম্পাদিত ডায়াগনস্টিক রপ্তানি করুন</string>
+    <string name="demo_stage">ধাপ: %1$s</string>
+    <string name="demo_progress">অগ্রগতি: %1$d%% (%2$d/%3$d যাচাইকৃত অংশ)</string>
+    <string name="demo_peer">বাছাই করা গ্রাহক: %1$s (সিমুলেটেড)</string>
+    <string name="demo_received_verified">প্রাপ্ত তথ্য পুনর্গঠন ও SHA-256 দিয়ে যাচাই করা হয়েছে।</string>
+    <string name="demo_error">প্রয়োজনীয় পদক্ষেপ: %1$s</string>
+    <string name="demo_diagnostics_ready">সম্পাদিত ডায়াগনস্টিক প্রস্তুত (%1$d অক্ষর; বার্তা বা মিডিয়া নেই)।</string>
 </resources>

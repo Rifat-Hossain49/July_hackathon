@@ -137,6 +137,24 @@ def test_security_and_diagnostics_are_bounded_redacted_and_no_backup() -> None:
     assert "capsuleText" not in diagnostics
 
 
+def test_release_candidate_is_unsigned_reproducible_and_integrated() -> None:
+    app_build = (ANDROID / "app" / "build.gradle.kts").read_text(encoding="utf-8")
+    workflow = (ROOT / ".github" / "workflows" / "android.yml").read_text(
+        encoding="utf-8"
+    )
+    integration = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted((ANDROID / "release-integration").rglob("*.kt"))
+    )
+
+    assert 'create("releaseCandidate")' in app_build
+    assert "signingConfig = null" in app_build
+    assert "cmp /tmp/shongket-first.apk" in workflow
+    assert ":app:assembleReleaseCandidate" in workflow
+    assert "SoftwareReleaseFlow" in integration
+    assert "explicitPrivateForwardConsent" in integration
+
+
 def test_core_conformance_has_no_android_or_transport_dependency() -> None:
     source_root = ANDROID / "core-conformance" / "src" / "main"
     source = "\n".join(
