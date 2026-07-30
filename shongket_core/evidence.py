@@ -68,10 +68,16 @@ class EvidenceLog:
     def __init__(self) -> None:
         self._records: list[EvidenceRecord] = []
 
-    def record(self, code: EventCode, **detail: Any) -> EvidenceRecord:
-        """Append a record. ``detail`` must be canonically serializable."""
+    def record(self, event: EventCode, **detail: Any) -> EvidenceRecord:
+        """Append a record. ``detail`` must be canonically serializable.
+
+        The first parameter is named ``event`` rather than ``code`` so
+        that ``code`` — the canonical :class:`ErrorCode` value carried by
+        most refusal evidence — can be passed as an ordinary detail
+        field without colliding with it.
+        """
         codec.check_canonical(detail)
-        entry = EvidenceRecord(seq=len(self._records), code=code, detail=dict(detail))
+        entry = EvidenceRecord(seq=len(self._records), code=event, detail=dict(detail))
         self._records.append(entry)
         return entry
 

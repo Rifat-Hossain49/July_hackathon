@@ -53,6 +53,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Iterable, Mapping
 
+from . import codec
 from .errors import ErrorCode, ProtocolError
 from .version import SchemaId, SchemaVersion, parse_schema_id
 
@@ -75,6 +76,9 @@ class SchemaDefinition:
     version: SchemaVersion
     required_fields: tuple[str, ...] = ()
     optional_fields: tuple[str, ...] = ()
+    #: Canonical serialized size limit in bytes (PROTOCOL_SPEC §9.3).
+    #: ``None`` means this family declares no limit.
+    size_limit_bytes: int | None = None
 
     @property
     def key(self) -> tuple[str, int]:
@@ -274,8 +278,26 @@ class SchemaRegistry:
             )
 
         resolution = self.resolve(payload.get("schema"))
-
         definition = resolution.definition
+
+        # Size before structure: PROTOCOL_SPEC §8 requires size limits
+        # "enforced before parse", so an oversized payload reports
+        # PAYLOAD_TOO_LARGE even when it is also malformed.
+        if definition.size_limit_bytes is not None:
+            encoded = len(codec.canonical_bytes(dict(payload)))
+            if encoded > definition.size_limit_bytes:
+                raise ProtocolError(
+                    ErrorCode.PAYLOAD_TOO_LARGE,
+                    f"payload of {encoded} bytes exceeds the "
+                    f"{definition.size_limit_bytes} byte limit for "
+                    f"{resolution.family!r}",
+                    object_id=(
+                        payload.get("object_id")
+                        if isinstance(payload.get("object_id"), str)
+                        else None
+                    ),
+                )
+
         missing = sorted(
             f for f in definition.required_fields if f not in payload
         )
